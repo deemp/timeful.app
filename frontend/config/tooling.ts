@@ -1,3 +1,5 @@
+import { mkdirSync } from "node:fs"
+import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { loadEnv } from "vite"
@@ -267,6 +269,19 @@ export function createFrontendDevServerConfig(
       },
     },
   }
+}
+
+export function createFrontendPlaywrightArtifactsDir(): string {
+  const artifactsRoot =
+    process.env.E2E_ARTIFACTS_DIR?.trim() ||
+    path.join(os.tmpdir(), "opencode", "timeful-e2e-artifacts")
+  const runId =
+    process.env.E2E_ARTIFACTS_RUN_ID?.trim() ||
+    `${new Date().toISOString().replaceAll(":", "-")}-p${process.pid}`
+  const artifactsDir = path.join(artifactsRoot, runId)
+  mkdirSync(artifactsDir, { recursive: true })
+  process.env.E2E_ARTIFACTS_RUN_ID ??= runId
+  return artifactsDir
 }
 
 export function createFrontendPlaywrightConfig(

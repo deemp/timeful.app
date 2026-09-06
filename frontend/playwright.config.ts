@@ -1,15 +1,17 @@
 import { defineConfig, devices } from "@playwright/test"
 import {
+  createFrontendPlaywrightArtifactsDir,
   createFrontendPlaywrightConfig,
   getActiveToolingMode,
 } from "./config/tooling"
 
 const { baseURL, webServerCommand, webServerPort } =
   createFrontendPlaywrightConfig(getActiveToolingMode())
+const outputDir = createFrontendPlaywrightArtifactsDir()
 
 export default defineConfig({
   testDir: "./e2e",
-  outputDir: "./tmp/playwright",
+  outputDir,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -19,6 +21,8 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
     actionTimeout: 15_000,
   },
   webServer: {
