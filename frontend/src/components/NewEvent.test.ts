@@ -867,13 +867,17 @@ describe("NewEvent", () => {
     expect(appCssSource).toMatch(/:root\s*\{/)
     expect(appCssSource).toMatch(/--timeful-selection-bg:\s*#f2faf6;/)
     expect(appCssSource).toMatch(/--timeful-selection-fg:\s*#00994c;/)
-    expect(appCssSource).toMatch(/--timeful-error-foreground:\s*#dc2626;/i)
-    expect(appCssSource).toMatch(/--timeful-unavailable-bg:\s*#e523230d;/i)
     expect(appCssSource).toMatch(
-      /--timeful-unavailable-bg-time-grid:\s*#f9cccc;/i,
+      /--timeful-error-foreground:\s*var\(--timeful-red-canonical\);/i,
     )
     expect(appCssSource).toMatch(
-      /--timeful-unavailable-bg-day-grid:\s*#e523233b;/i,
+      /--timeful-unavailable-bg:\s*color-mix\(\s*in srgb,\s*var\(--timeful-red-canonical\) 5%,\s*transparent\s*\);/i,
+    )
+    expect(appCssSource).toMatch(
+      /--timeful-unavailable-bg-time-grid:\s*color-mix\(\s*in srgb,\s*var\(--timeful-red-canonical\) 22%,\s*white\s*\);/i,
+    )
+    expect(appCssSource).toMatch(
+      /--timeful-unavailable-bg-day-grid:\s*color-mix\(\s*in srgb,\s*var\(--timeful-red-canonical\) 23%,\s*transparent\s*\);/i,
     )
     expect(appCssSource).toMatch(/--timeful-grid-line-color:\s*#999999;/i)
     expect(appCssSource).toMatch(/--timeful-grid-line-width:\s*1px;/i)
@@ -907,6 +911,21 @@ describe("NewEvent", () => {
     )
     expect(appCssSource).toMatch(
       /--timeful-primary-action-disabled-fg:\s*rgba\(0,\s*0,\s*0,\s*0\.26\);/i,
+    )
+  })
+
+  it("derives every red role from one canonical hue", () => {
+    const vuetifyThemeSource = readFileSync("src/plugins/vuetify.ts", "utf8")
+    const tailwindConfigSource = readFileSync("tailwind.config.cjs", "utf8")
+
+    expect(appCssSource).toMatch(/--timeful-red-canonical:\s*#db1616;/i)
+    expect(appCssSource).toMatch(
+      /--timeful-error-foreground:\s*var\(--timeful-red-canonical\);/i,
+    )
+    expect(appCssSource).not.toMatch(/#dc2626|#e52323|#fee2e2/i)
+    expect(vuetifyThemeSource).toMatch(/error:\s*"#DB1616"/i)
+    expect(tailwindConfigSource).toMatch(
+      /red:\s*"var\(--timeful-red-canonical\)"/,
     )
   })
 

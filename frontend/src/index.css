@@ -10,14 +10,31 @@
   --timeful-weekday-segment-foreground: rgba(0, 0, 0, 0.72);
   --timeful-grid-cursor-outline: #000000;
   --timeful-outline-neutral: #bdbdbd;
-  --timeful-error-foreground: #dc2626;
-  --timeful-destructive-btn-bg: #fee2e2;
+  --timeful-red-canonical: #db1616;
+  --timeful-error-foreground: var(--timeful-red-canonical);
+  --timeful-destructive-btn-bg: color-mix(
+    in srgb,
+    var(--timeful-red-canonical) 12%,
+    white
+  );
   --timeful-destructive-btn-fg: #991b1b;
   --timeful-destructive-btn-border: var(--timeful-destructive-btn-fg);
   --timeful-collapsed-hours-bg: #f8f8f8;
-  --timeful-unavailable-bg: #e523230d;
-  --timeful-unavailable-bg-time-grid: #f9cccc;
-  --timeful-unavailable-bg-day-grid: #e523233b;
+  --timeful-unavailable-bg: color-mix(
+    in srgb,
+    var(--timeful-red-canonical) 5%,
+    transparent
+  );
+  --timeful-unavailable-bg-time-grid: color-mix(
+    in srgb,
+    var(--timeful-red-canonical) 22%,
+    white
+  );
+  --timeful-unavailable-bg-day-grid: color-mix(
+    in srgb,
+    var(--timeful-red-canonical) 23%,
+    transparent
+  );
   --timeful-grid-line-color: #999999;
   --timeful-grid-line-width: 1px;
   --timeful-grid-line-half-width: 0.5px;
