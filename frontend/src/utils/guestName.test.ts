@@ -27,7 +27,9 @@ describe("guestName boundary", () => {
   })
 
   it("returns specific guest-name validation messages", () => {
-    expect(getGuestNameValidationMessage("required")).toBe("Name is required")
+    expect(getGuestNameValidationMessage("required")).toBe(
+      "Name must be non-empty",
+    )
     expect(getGuestNameValidationMessage("invalidFormatting")).toContain(
       "formatting",
     )

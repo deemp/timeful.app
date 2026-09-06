@@ -294,6 +294,7 @@ describe("ScheduleOverlapMobileOverlay", () => {
           ...buildScheduleOverlapMobileOverlayViewModel(),
           editing: true,
           availabilityType: availabilityTypes.AVAILABLE,
+          newGuestName: "d",
           editingAvailabilityAs: {
             visible: true,
             actionText: "Editing",

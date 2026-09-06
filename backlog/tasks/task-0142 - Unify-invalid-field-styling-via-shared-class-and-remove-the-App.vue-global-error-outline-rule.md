@@ -6,6 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-09-02 14:49'
+updated_date: '2026-09-06 09:40'
 labels:
   - frontend
 dependencies: []
@@ -19,6 +20,7 @@ references:
   - frontend/src/components/sign_up_form/SignUpForSlotDialog.vue
   - frontend/src/components/event/EmailInput.vue
   - frontend/src/components/schedule_overlap/ConfirmDetailsDialog.vue
+  - frontend/src/components/schedule_overlap/EditingAvailabilityAs.vue
 modified_files:
   - frontend/src/App.vue
   - frontend/src/index.css
@@ -29,6 +31,7 @@ modified_files:
   - frontend/src/components/sign_up_form/SignUpForSlotDialog.vue
   - frontend/src/components/event/EmailInput.vue
   - frontend/src/components/schedule_overlap/ConfirmDetailsDialog.vue
+  - frontend/src/components/schedule_overlap/EditingAvailabilityAs.vue
 priority: medium
 type: enhancement
 ordinal: 155300
@@ -71,3 +74,12 @@ Follow-up to TASK-0141 (single bold red invalid state for the event name field).
 - [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
 - [ ] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+created: 2026-09-06 09:40
+---
+Inventory update from TASK-0158's follow-up round: the Edit guest name dialog field (schedule_overlap/EditingAvailabilityAs.vue) is another outlined error-capable field that currently carries a scoped copy of the NewEvent outline neutralization (class editing-availability-as__guest-name-field); migrate it onto the shared invalid-field class when this task executes.
+---
+<!-- COMMENTS:END -->

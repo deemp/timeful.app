@@ -1,4 +1,4 @@
-const GUEST_NAME_MAX_LENGTH = 100
+export const GUEST_NAME_MAX_LENGTH = 100
 const DISALLOWED_NAME_CHARACTERS_PATTERN = /[\p{Cc}\p{Cf}]/gu
 const OBJECT_ID_LIKE_PATTERN = /^[a-f\d]{24}$/iu
 export type GuestNameValidationCode =
@@ -67,7 +67,7 @@ export function getGuestNameValidationMessage(
 ): string | undefined {
   switch (code) {
     case "required":
-      return "Name is required"
+      return "Name must be non-empty"
     case "invalidFormatting":
       return "Name contains only unsupported formatting characters"
     case "objectIdLike":

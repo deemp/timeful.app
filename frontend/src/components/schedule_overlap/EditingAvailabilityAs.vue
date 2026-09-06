@@ -49,11 +49,16 @@
         <v-card-text>
           <v-text-field
             :model-value="newGuestName"
-            label="Guest name"
+            label="Guest name (required)"
+            :maxlength="GUEST_NAME_MAX_LENGTH"
+            variant="outlined"
+            class="editing-availability-as__guest-name-field"
+            :error-messages="guestNameErrorMessages"
             autofocus
-            hide-details
+            hide-details="auto"
             @update:model-value="emit('update:newGuestName', $event)"
-            @keydown.enter="emit('saveGuestName')"
+            @blur="showSaveValidationError = true"
+            @keydown.enter="saveIfValid"
           ></v-text-field>
         </v-card-text>
         <v-card-actions>
@@ -63,7 +68,7 @@
             @click="emit('update:editGuestNameDialog', false)"
             >Cancel</v-btn
           >
-          <v-btn variant="text" color="primary" @click="emit('saveGuestName')"
+          <v-btn variant="text" color="primary" @click="saveIfValid"
             >Save</v-btn
           >
         </v-card-actions>
@@ -73,7 +78,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref, watch } from "vue"
+import {
+  GUEST_NAME_MAX_LENGTH,
+  getGuestNameValidationMessage,
+  validateGuestName,
+} from "@/utils/guestName"
 import type { ScheduleOverlapEditingAvailabilityAsViewModel } from "./scheduleOverlapViewModelContracts"
 
 const props = withDefaults(
@@ -96,4 +106,49 @@ const emit = defineEmits<{
   "update:newGuestName": [value: string]
   "update:editGuestNameDialog": [value: boolean]
 }>()
+
+const showSaveValidationError = ref(false)
+const guestNameValidation = computed(() =>
+  validateGuestName(props.newGuestName),
+)
+const guestNameValidationMessage = computed(() =>
+  getGuestNameValidationMessage(guestNameValidation.value.code),
+)
+const guestNameErrorMessages = computed(() => {
+  if (!guestNameValidationMessage.value) {
+    return []
+  }
+  if (guestNameValidation.value.code === "required") {
+    return [guestNameValidationMessage.value]
+  }
+  return showSaveValidationError.value ? [guestNameValidationMessage.value] : []
+})
+
+const saveIfValid = () => {
+  if (!guestNameValidationMessage.value) {
+    emit("saveGuestName")
+    return
+  }
+  showSaveValidationError.value = true
+}
+
+watch(
+  () => props.editGuestNameDialog,
+  (isOpen) => {
+    if (isOpen) {
+      showSaveValidationError.value = false
+    }
+  },
+)
 </script>
+
+<style>
+.editing-availability-as__guest-name-field .v-field,
+.editing-availability-as__guest-name-field.v-input--error .v-field {
+  outline: none;
+}
+
+.editing-availability-as__guest-name-field.v-input--error .v-field__outline {
+  --v-field-border-width: 2px;
+}
+</style>

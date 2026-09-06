@@ -3,10 +3,12 @@
 import { mount } from "@vue/test-utils"
 import { describe, expect, it } from "vitest"
 import EditingAvailabilityAs from "./EditingAvailabilityAs.vue"
+import editingAvailabilityAsSource from "./EditingAvailabilityAs.vue?raw"
 import {
   buildEditingAvailabilityAsViewModel,
   scheduleOverlapGlobalStubs,
 } from "./scheduleOverlapTestUtils"
+import { GUEST_NAME_MAX_LENGTH } from "@/utils/guestName"
 
 describe("EditingAvailabilityAs", () => {
   const dialogContentStubs = {
@@ -40,6 +42,16 @@ describe("EditingAvailabilityAs", () => {
         },
       },
     })
+
+  const getDialogButton = (wrapper: ReturnType<typeof mount>, text: string) => {
+    const button = wrapper
+      .findAll("button")
+      .find((node) => node.text() === text)
+    if (!button) {
+      throw new Error(`Expected dialog ${text} button to be rendered`)
+    }
+    return button
+  }
 
   it("renders the plain actor fallback when no editable guest is targeted", () => {
     const wrapper = mountIndicator({
@@ -82,6 +94,172 @@ describe("EditingAvailabilityAs", () => {
     await cancelButton.trigger("click")
 
     expect(wrapper.emitted("update:editGuestNameDialog")).toEqual([[false]])
+  })
+
+  it("styles the guest name field like the new event name field and caps it at 100 characters", () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "" },
+    )
+
+    const field = wrapper.get("v-text-field-stub")
+    expect(field.classes()).toContain(
+      "editing-availability-as__guest-name-field",
+    )
+    expect(field.attributes("variant")).toBe("outlined")
+    expect(field.attributes("label")).toBe("Guest name (required)")
+    expect(field.attributes("hide-details")).toBe("auto")
+    expect(field.attributes("autofocus")).toBeDefined()
+    expect(field.attributes("maxlength")).toBe(String(GUEST_NAME_MAX_LENGTH))
+  })
+
+  it("shows the required message immediately for an empty or whitespace-only name", () => {
+    for (const emptyName of ["", "   "]) {
+      const wrapper = mountIndicator(
+        { editableGuestName: "Dana" },
+        { editGuestNameDialog: true, newGuestName: emptyName },
+      )
+
+      const field = wrapper.get("v-text-field-stub")
+      expect(field.attributes("error-messages")).toBe("Name must be non-empty")
+      expect(wrapper.emitted("saveGuestName")).toBeUndefined()
+    }
+  })
+
+  it("shows the required message immediately once the name is cleared", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "Dee" },
+    )
+
+    const field = wrapper.get("v-text-field-stub")
+    expect(field.attributes("error-messages") ?? "").toBe("")
+
+    await wrapper.setProps({ newGuestName: "" })
+
+    expect(field.attributes("error-messages")).toBe("Name must be non-empty")
+  })
+
+  it("keeps a non-required invalid name silent until blur", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "a".repeat(24) },
+    )
+
+    const field = wrapper.get("v-text-field-stub")
+    expect(field.attributes("error-messages") ?? "").toBe("")
+
+    await field.trigger("blur")
+
+    expect(field.attributes("error-messages")).toBe(
+      "Name cannot look like an account ID",
+    )
+  })
+
+  it("shows no message when the field loses focus with a valid name", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "Dee" },
+    )
+
+    const field = wrapper.get("v-text-field-stub")
+    await field.trigger("blur")
+
+    expect(field.attributes("error-messages") ?? "").toBe("")
+  })
+
+  it("neutralizes the doubled global error outline with a single 2px invalid border", () => {
+    const styleBlock =
+      /<style>([\s\S]*)<\/style>/.exec(editingAvailabilityAsSource)?.[1] ?? ""
+    expect(styleBlock).toMatch(
+      /\.editing-availability-as__guest-name-field \.v-field,\s*\.editing-availability-as__guest-name-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
+    )
+    expect(styleBlock).toMatch(
+      /\.editing-availability-as__guest-name-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    )
+  })
+
+  it("blocks saving an empty guest name and shows the required message", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "" },
+    )
+
+    const field = wrapper.get("v-text-field-stub")
+    await field.trigger("keydown.enter")
+
+    expect(wrapper.emitted("saveGuestName")).toBeUndefined()
+    expect(field.attributes("error-messages")).toBe("Name must be non-empty")
+
+    await getDialogButton(wrapper, "Save").trigger("click")
+
+    expect(wrapper.emitted("saveGuestName")).toBeUndefined()
+    expect(field.attributes("error-messages")).toBe("Name must be non-empty")
+  })
+
+  it("treats a whitespace-only guest name as empty", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "   " },
+    )
+
+    await getDialogButton(wrapper, "Save").trigger("click")
+
+    const field = wrapper.get("v-text-field-stub")
+    expect(wrapper.emitted("saveGuestName")).toBeUndefined()
+    expect(field.attributes("error-messages")).toBe("Name must be non-empty")
+  })
+
+  it("saves a valid guest name from the Save button and the Enter key", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "Dee" },
+    )
+
+    const field = wrapper.get("v-text-field-stub")
+    await field.trigger("keydown.enter")
+
+    expect(wrapper.emitted("saveGuestName")).toHaveLength(1)
+
+    await getDialogButton(wrapper, "Save").trigger("click")
+
+    expect(wrapper.emitted("saveGuestName")).toHaveLength(2)
+    expect(field.attributes("error-messages") ?? "").toBe("")
+  })
+
+  it("clears the inline validation message once the name becomes valid", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "" },
+    )
+
+    await getDialogButton(wrapper, "Save").trigger("click")
+
+    const field = wrapper.get("v-text-field-stub")
+    expect(field.attributes("error-messages")).toBe("Name must be non-empty")
+
+    await wrapper.setProps({ newGuestName: "Dee" })
+
+    expect(field.attributes("error-messages") ?? "").toBe("")
+  })
+
+  it("clears the save validation error when the dialog is reopened", async () => {
+    const wrapper = mountIndicator(
+      { editableGuestName: "Dana" },
+      { editGuestNameDialog: true, newGuestName: "a".repeat(24) },
+    )
+
+    await getDialogButton(wrapper, "Save").trigger("click")
+
+    const field = wrapper.get("v-text-field-stub")
+    expect(field.attributes("error-messages")).toBe(
+      "Name cannot look like an account ID",
+    )
+
+    await wrapper.setProps({ editGuestNameDialog: false })
+    await wrapper.setProps({ editGuestNameDialog: true })
+
+    expect(field.attributes("error-messages") ?? "").toBe("")
   })
 
   it("renders the sentence variant by default", () => {
