@@ -2668,9 +2668,16 @@ describe("Event guest edit action", () => {
       wrapper.get("#desktop-editing-overlay-availability-slot").classes(),
     ).toContain("tw-flex-1")
     expect(eventViewSource).toContain("Overlay availability")
-    expect(wrapper.get("#desktop-delete-availability-btn").classes()).toContain(
+    const desktopDeleteButton = wrapper.get("#desktop-delete-availability-btn")
+    expect(desktopDeleteButton.attributes("data-variant")).toBe("outlined")
+    expect(desktopDeleteButton.classes()).toContain(
       "desktop-editing-delete-button",
     )
+    expect(desktopDeleteButton.classes()).toContain(
+      "destructive-outlined-button",
+    )
+    expect(desktopDeleteButton.text()).toContain("Delete")
+    expect(desktopDeleteButton.text()).toContain("mdi-trash-can-outline")
     expect(wrapper.get(".desktop-editing-delete-actions").classes()).toContain(
       "sm:tw-ml-auto",
     )
@@ -2682,6 +2689,15 @@ describe("Event guest edit action", () => {
     )
     expect(eventViewSource).toContain(
       ".desktop-editing-delete-button {\n  inline-size: 100%;",
+    )
+    expect(eventViewSource).toContain(
+      'class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw-normal-case"',
+    )
+    expect(eventViewSource).toContain(
+      ".destructive-outlined-button {\n  color: var(--timeful-red-canonical) !important;\n  border: 1px solid var(--timeful-red-canonical) !important;\n  --v-hover-opacity: 0;\n}",
+    )
+    expect(eventViewSource).toContain(
+      ".destructive-outlined-button:hover {\n  background-color: color-mix(\n    in srgb,\n    var(--timeful-red-canonical) 5%,\n    transparent\n  ) !important;\n}",
     )
     expect(eventViewSource).toContain(
       ".desktop-editing-overlay-availability-toggle :deep(.v-selection-control) {\n  align-items: center;\n  inline-size: 100%;\n  justify-content: center;\n  min-inline-size: 0;",
@@ -2927,6 +2943,52 @@ describe("Event guest edit action", () => {
     expect(saveButton.classes()).not.toContain("timeful-elevated-button")
     expect(saveButton.attributes("disabled")).toBeUndefined()
     expect(wrapper.text()).not.toContain("Options")
+  })
+
+  it("renders the mobile editing delete button as an outlined trash-icon button", async () => {
+    isPhoneState.value = true
+    curGuestIdState.value = "guest-1"
+
+    const wrapper = shallowMount(EventView, {
+      props: {
+        eventId: "dEeaF",
+      },
+      global: {
+        stubs: {
+          ScheduleOverlap: ScheduleOverlapEditingStub,
+          NewDialog: true,
+          GuestDialog: true,
+          SignUpForSlotDialog: true,
+          SignInNotSupportedDialog: true,
+          MarkAvailabilityDialog: true,
+          InvitationDialog: true,
+          HelpDialog: true,
+          EventDescription: true,
+          AccessDenied: true,
+          NotSignedIn: true,
+          RouterLink: true,
+          "v-chip": true,
+          "v-icon": iconTextStub,
+          "v-card": true,
+          "v-card-title": true,
+          "v-card-text": true,
+          "v-card-actions": true,
+          "v-dialog": true,
+          "v-spacer": true,
+          "v-btn": buttonSemanticStub,
+        },
+      },
+    })
+
+    await flushDeferredMount()
+
+    const deleteButton = wrapper.get(".destructive-outlined-button")
+    expect(deleteButton.attributes("data-variant")).toBe("outlined")
+    expect(deleteButton.text()).toContain("Delete")
+    expect(deleteButton.text()).toContain("mdi-trash-can-outline")
+    expect(eventViewSource).toContain(
+      'class="destructive-outlined-button tw-text-sm tw-normal-case"',
+    )
   })
 
   it("disables the mobile editing save button when respondent availability is empty", async () => {

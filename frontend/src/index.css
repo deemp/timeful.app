@@ -12,13 +12,6 @@
   --timeful-outline-neutral: #bdbdbd;
   --timeful-red-canonical: #db1616;
   --timeful-error-foreground: var(--timeful-red-canonical);
-  --timeful-destructive-btn-bg: color-mix(
-    in srgb,
-    var(--timeful-red-canonical) 12%,
-    white
-  );
-  --timeful-destructive-btn-fg: #991b1b;
-  --timeful-destructive-btn-border: var(--timeful-destructive-btn-fg);
   --timeful-collapsed-hours-bg: #f8f8f8;
   --timeful-unavailable-bg: color-mix(
     in srgb,

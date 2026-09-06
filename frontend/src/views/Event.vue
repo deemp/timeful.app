@@ -654,11 +654,12 @@
                 >
                   <v-btn
                     id="desktop-delete-availability-btn"
-                    variant="flat"
-                    class="destructive-tonal-button desktop-editing-delete-button desktop-event-header-control tw-normal-case"
+                    variant="outlined"
+                    class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw-normal-case"
                     @click="deleteAvailabilityDialog = true"
                   >
-                    Delete
+                    <v-icon>mdi-trash-can-outline</v-icon>
+                    <span class="tw-ml-1">Delete</span>
                   </v-btn>
                 </div>
                 <div
@@ -928,10 +929,12 @@
           <template v-else-if="isEditing">
             <v-btn
               v-if="showDeleteAvailabilityAction"
-              class="destructive-tonal-button tw-text-sm tw-normal-case"
+              variant="outlined"
+              class="destructive-outlined-button tw-text-sm tw-normal-case"
               @click="deleteAvailabilityDialog = true"
             >
-              Delete
+              <v-icon>mdi-trash-can-outline</v-icon>
+              <span class="tw-ml-1">Delete</span>
             </v-btn>
             <v-spacer />
             <div class="tw-flex tw-gap-2">
@@ -2382,11 +2385,18 @@ watch(
   inline-size: 100%;
 }
 
-.destructive-tonal-button {
-  background-color: var(--timeful-destructive-btn-bg) !important;
-  color: var(--timeful-destructive-btn-fg) !important;
-  border: 1px solid var(--timeful-destructive-btn-border) !important;
-  box-shadow: none !important;
+.destructive-outlined-button {
+  color: var(--timeful-red-canonical) !important;
+  border: 1px solid var(--timeful-red-canonical) !important;
+  --v-hover-opacity: 0;
+}
+
+.destructive-outlined-button:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--timeful-red-canonical) 5%,
+    transparent
+  ) !important;
 }
 
 .event-header-description {

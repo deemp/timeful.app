@@ -923,6 +923,8 @@ describe("NewEvent", () => {
       /--timeful-error-foreground:\s*var\(--timeful-red-canonical\);/i,
     )
     expect(appCssSource).not.toMatch(/#dc2626|#e52323|#fee2e2/i)
+    expect(appCssSource).not.toMatch(/--timeful-destructive-btn/)
+    expect(appCssSource).not.toMatch(/#991b1b/i)
     expect(vuetifyThemeSource).toMatch(/error:\s*"#DB1616"/i)
     expect(tailwindConfigSource).toMatch(
       /red:\s*"var\(--timeful-red-canonical\)"/,
