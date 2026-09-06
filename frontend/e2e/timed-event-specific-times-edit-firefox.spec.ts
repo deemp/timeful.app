@@ -46,7 +46,7 @@ test("mobile compatibility mouse press shows the selected-slot tooltip", async (
     clientY: selectedSlotBox.y + selectedSlotBox.height / 2,
   })
 
-  const tooltip = page.locator(".tw-fixed.tw-z-50")
+  const tooltip = page.locator(".tw-fixed.timeful-tooltip-layer")
   await expect(tooltip).toBeVisible()
   expect(await tooltip.textContent()).not.toBe("")
 })
@@ -66,7 +66,7 @@ test("mobile timeslot click shows the selected-slot tooltip", async ({
   await selectedSlot.scrollIntoViewIfNeeded()
   await selectedSlot.dispatchEvent("click")
 
-  const tooltip = page.locator(".tw-fixed.tw-z-50")
+  const tooltip = page.locator(".tw-fixed.timeful-tooltip-layer")
   await expect(tooltip).toBeVisible()
   expect(await tooltip.textContent()).not.toBe("")
 
@@ -146,7 +146,7 @@ test("mobile Responses heading does not dispatch a gesture to the grid", async (
       })),
     )
     .toEqual({ pointerDowns: 0, clicks: 0 })
-  await expect(page.locator(".tw-fixed.tw-z-50")).toHaveCount(0)
+  await expect(page.locator(".tw-fixed.timeful-tooltip-layer")).toHaveCount(0)
 })
 
 test("enabling specific-times and saving without grid edits preserves canonical timed fields", async ({
