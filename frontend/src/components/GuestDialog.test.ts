@@ -2,7 +2,7 @@
 /* eslint-disable vue/one-component-per-file */
 
 import { readFileSync } from "node:fs"
-import { defineComponent, ref } from "vue"
+import { defineComponent, ref, type PropType } from "vue"
 import { mount } from "@vue/test-utils"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -11,8 +11,10 @@ import {
   nullStub,
   passThroughStub,
 } from "@/test/componentStubs"
+import { GUEST_NAME_MAX_LENGTH } from "@/utils/guestName"
 import type { Event } from "@/types"
 import GuestDialog from "./GuestDialog.vue"
+import guestDialogSource from "./GuestDialog.vue?raw"
 
 const formRefMethods = {
   validate: vi.fn<() => Promise<{ valid: boolean }>>(() =>
@@ -39,6 +41,7 @@ const VBtnStub = defineComponent({
 
 const VTextFieldStub = defineComponent({
   name: "VTextField",
+  inheritAttrs: false,
   props: {
     modelValue: {
       type: String,
@@ -52,15 +55,45 @@ const VTextFieldStub = defineComponent({
       type: String,
       default: "",
     },
+    label: {
+      type: String,
+      default: undefined,
+    },
+    maxlength: {
+      type: [Number, String] as PropType<number | string | undefined>,
+      default: undefined,
+    },
+    errorMessages: {
+      type: [String, Array] as PropType<string | string[] | undefined>,
+      default: undefined,
+    },
+    appendInnerIcon: {
+      type: String,
+      default: undefined,
+    },
+    hideDetails: {
+      type: [Boolean, String] as PropType<boolean | string | undefined>,
+      default: undefined,
+    },
   },
-  emits: ["update:modelValue", "keyup.enter"],
+  emits: ["update:modelValue", "keyup"],
   template: `
     <input
       :value="modelValue"
       :placeholder="placeholder"
+      :maxlength="maxlength"
       @input="$emit('update:modelValue', $event.target.value)"
-      @keyup.enter="$emit('keyup.enter')"
+      @keyup="$emit('keyup', $event)"
     />
+    <span
+      v-if="errorMessages && errorMessages.length > 0"
+      class="stub-field-message"
+      >{{
+        Array.isArray(errorMessages)
+          ? errorMessages.join("; ")
+          : errorMessages
+      }}</span
+    >
   `,
 })
 
@@ -103,13 +136,43 @@ const getSubmitButton = (wrapper: ReturnType<typeof mount>) => {
   return button
 }
 
+const stubGroups = mergeComponentStubs({
+  "v-btn": VBtnStub,
+  "v-card": passThroughStub,
+  "v-card-text": passThroughStub,
+  "v-card-title": passThroughStub,
+  "v-checkbox": VCheckboxStub,
+  "v-dialog": passThroughStub,
+  "v-form": createFormStub(formRefMethods),
+  "v-icon": nullStub,
+  "v-spacer": nullStub,
+  "v-text-field": VTextFieldStub,
+})
+
+const mountDialog = (
+  options: { collectEmails?: boolean; respondents?: string[] } = {},
+) =>
+  mount(GuestDialog, {
+    props: {
+      modelValue: true,
+      event: { ...baseEvent, collectEmails: options.collectEmails ?? true },
+      respondents: options.respondents ?? [],
+    },
+    global: {
+      stubs: stubGroups,
+    },
+  })
+
+const getFieldMessages = (wrapper: ReturnType<typeof mount>) =>
+  wrapper.findAll(".stub-field-message").map((node) => node.text())
+
 describe("GuestDialog", () => {
   beforeEach(() => {
     formRefMethods.validate.mockClear()
     formRefMethods.resetValidation.mockClear()
   })
 
-  it("uses explicit Vuetify 3 solo variants and enables submit from typed guest details", async () => {
+  it("uses the outlined guest-name field with the solo email field and enables submit from typed guest details", async () => {
     const wrapper = mount(GuestDialog, {
       props: {
         modelValue: true,
@@ -117,24 +180,13 @@ describe("GuestDialog", () => {
         respondents: [],
       },
       global: {
-        stubs: mergeComponentStubs({
-          "v-btn": VBtnStub,
-          "v-card": passThroughStub,
-          "v-card-text": passThroughStub,
-          "v-card-title": passThroughStub,
-          "v-checkbox": VCheckboxStub,
-          "v-dialog": passThroughStub,
-          "v-form": createFormStub(formRefMethods),
-          "v-icon": nullStub,
-          "v-spacer": nullStub,
-          "v-text-field": VTextFieldStub,
-        }),
+        stubs: stubGroups,
       },
     })
 
     const fields = wrapper.findAllComponents(VTextFieldStub)
     expect(fields).toHaveLength(2)
-    expect(fields[0]?.props("variant")).toBe("solo")
+    expect(fields[0]?.props("variant")).toBe("outlined")
     expect(fields[1]?.props("variant")).toBe("solo")
 
     expect(getSubmitButton(wrapper).attributes("disabled")).toBeDefined()
@@ -151,6 +203,84 @@ describe("GuestDialog", () => {
     expect(wrapper.emitted("submit")).toEqual([
       [{ name: "guest", email: "guest@example.com", allowOthersToEdit: false }],
     ])
+  })
+
+  it("styles the guest name field like the edit guest name field and caps it at 100 characters", () => {
+    const wrapper = mountDialog({ collectEmails: false })
+
+    const field = wrapper.getComponent(VTextFieldStub)
+    expect(field.props("variant")).toBe("outlined")
+    expect(field.props("label")).toBe("Guest name (required)")
+    expect(field.props("maxlength")).toBe(GUEST_NAME_MAX_LENGTH)
+    expect(field.props("appendInnerIcon")).toBe("mdi-alert-circle")
+    expect(field.props("hideDetails")).toBe("auto")
+  })
+
+  it("neutralizes the doubled error outline and shows the alert icon only on error", () => {
+    expect(guestDialogSource).toMatch(
+      /\.guest-dialog__name-field \.v-field,\s*\.guest-dialog__name-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
+    )
+    expect(guestDialogSource).toMatch(
+      /\.guest-dialog__name-field \.v-field__append-inner\s*\{\s*visibility:\s*hidden;/,
+    )
+    expect(guestDialogSource).toMatch(
+      /\.guest-dialog__name-field\.v-input--error \.v-field__append-inner\s*\{\s*visibility:\s*visible;/,
+    )
+    expect(guestDialogSource).toMatch(
+      /\.guest-dialog__name-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    )
+  })
+
+  it("shows no validation message while the pristine name field is empty", () => {
+    const wrapper = mountDialog({ collectEmails: false })
+
+    expect(getFieldMessages(wrapper)).toEqual([])
+  })
+
+  it("shows the required-name message once a dirtied name input is emptied", async () => {
+    const wrapper = mountDialog({ collectEmails: false })
+
+    const nameInput = wrapper.get("input")
+    await nameInput.setValue("Ada")
+    expect(getFieldMessages(wrapper)).toEqual([])
+
+    await nameInput.setValue("")
+
+    expect(getFieldMessages(wrapper)).toContain("Name must be non-empty")
+  })
+
+  it("shows the taken-name message once the dirtied name matches an existing respondent", async () => {
+    const wrapper = mountDialog({
+      collectEmails: false,
+      respondents: ["guest"],
+    })
+
+    await wrapper.findAll("input")[0]?.setValue(" guest ")
+
+    expect(getFieldMessages(wrapper)).toContain("Name already taken")
+  })
+
+  it("shows the required-name message and blocks submit when Enter is pressed on the pristine empty field", async () => {
+    const wrapper = mountDialog({ collectEmails: false })
+
+    await wrapper.findAll("input")[0]?.trigger("keyup.enter")
+
+    expect(getFieldMessages(wrapper)).toContain("Name must be non-empty")
+    expect(wrapper.emitted("submit")).toBeUndefined()
+  })
+
+  it("returns to the pristine no-message state when the dialog is reopened", async () => {
+    const wrapper = mountDialog({ collectEmails: false })
+
+    const nameInput = wrapper.get("input")
+    await nameInput.setValue("Ada")
+    await nameInput.setValue("")
+    expect(getFieldMessages(wrapper)).toHaveLength(1)
+
+    await wrapper.setProps({ modelValue: false })
+    await wrapper.setProps({ modelValue: true })
+
+    expect(getFieldMessages(wrapper)).toEqual([])
   })
 
   it("forwards the guest payload to a parent submit listener", async () => {

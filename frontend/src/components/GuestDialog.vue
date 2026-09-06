@@ -23,13 +23,15 @@
         >
           <v-text-field
             v-model="name"
-            :rules="nameRules"
-            class="timeful-solo-field"
-            variant="solo"
-            placeholder="Enter your name..."
+            label="Guest name (required)"
+            :maxlength="GUEST_NAME_MAX_LENGTH"
+            variant="outlined"
+            class="guest-dialog__name-field"
+            :error-messages="nameErrorMessages"
+            append-inner-icon="mdi-alert-circle"
             autofocus
             hide-details="auto"
-            autocomplete="off"
+            @update:model-value="nameDirty = true"
             @keyup.enter="submit"
           ></v-text-field>
           <v-text-field
@@ -76,8 +78,8 @@ import { computed, ref, watch } from "vue"
 import { validateEmail } from "@/utils"
 import type { Event } from "@/types"
 import {
+  GUEST_NAME_MAX_LENGTH,
   getGuestNameValidationMessage,
-  normalizeGuestName,
   validateGuestName,
 } from "@/utils/guestName"
 
@@ -101,25 +103,37 @@ const emit = defineEmits<{
 
 const formValid = ref(false)
 const name = ref("")
+const nameDirty = ref(false)
 const email = ref("")
 const allowOthersToEdit = ref(false)
 const validationRequested = ref(false)
 const formRef = ref<FormRef | null>(null)
 const validatedName = computed(() => validateGuestName(name.value))
 const normalizedName = computed(() => validatedName.value.normalizedName)
-const trimmedEmail = computed(() => email.value.trim())
-const isNameAvailable = (candidate: string) =>
-  !props.respondents.includes(normalizeGuestName(candidate) ?? "")
-const nameRules = computed<Rule[]>(() => [
-  (candidate) =>
-    (!validationRequested.value ||
-      getGuestNameValidationMessage(validateGuestName(candidate).code)) ??
-    true,
-  (candidate) =>
-    !validationRequested.value ||
-    isNameAvailable(candidate) ||
-    "Name already taken",
-])
+const nameValidationMessage = computed(() =>
+  getGuestNameValidationMessage(validatedName.value.code),
+)
+const isNameTaken = computed(
+  () =>
+    normalizedName.value != null &&
+    props.respondents.includes(normalizedName.value),
+)
+const shouldShowNameValidation = computed(
+  () => nameDirty.value || validationRequested.value,
+)
+const nameErrorMessages = computed<string[]>(() => {
+  if (!shouldShowNameValidation.value) {
+    return []
+  }
+  const messages: string[] = []
+  if (nameValidationMessage.value) {
+    messages.push(nameValidationMessage.value)
+  }
+  if (isNameTaken.value) {
+    messages.push("Name already taken")
+  }
+  return messages
+})
 const emailRules = computed<Rule[]>(() => [
   (candidate) =>
     !validationRequested.value ||
@@ -128,6 +142,7 @@ const emailRules = computed<Rule[]>(() => [
   (candidate) =>
     !validationRequested.value || !!validateEmail(candidate) || "Invalid email",
 ])
+const trimmedEmail = computed(() => email.value.trim())
 const canSubmit = computed(
   () =>
     normalizedName.value != null &&
@@ -136,6 +151,7 @@ const canSubmit = computed(
 
 const initializeForm = () => {
   name.value = ""
+  nameDirty.value = false
   email.value = ""
   allowOthersToEdit.value = false
   validationRequested.value = false
@@ -147,6 +163,7 @@ const submit = async () => {
   const result = await formRef.value?.validate()
   const valid = typeof result === "boolean" ? result : result?.valid
   if (!valid) return
+  if (nameErrorMessages.value.length > 0) return
   emit("submit", {
     name: normalizedName.value ?? "",
     email: trimmedEmail.value,
@@ -163,3 +180,22 @@ watch(
   },
 )
 </script>
+
+<style>
+.guest-dialog__name-field .v-field,
+.guest-dialog__name-field.v-input--error .v-field {
+  outline: none;
+}
+
+.guest-dialog__name-field .v-field__append-inner {
+  visibility: hidden;
+}
+
+.guest-dialog__name-field.v-input--error .v-field__append-inner {
+  visibility: visible;
+}
+
+.guest-dialog__name-field.v-input--error .v-field__outline {
+  --v-field-border-width: 2px;
+}
+</style>
