@@ -52,7 +52,7 @@
             label="Guest name (required)"
             :maxlength="GUEST_NAME_MAX_LENGTH"
             variant="outlined"
-            class="editing-availability-as__guest-name-field"
+            class="timeful-invalid-field"
             :error-messages="guestNameErrorMessages"
             autofocus
             hide-details="auto"
@@ -141,14 +141,3 @@ watch(
   },
 )
 </script>
-
-<style>
-.editing-availability-as__guest-name-field .v-field,
-.editing-availability-as__guest-name-field.v-input--error .v-field {
-  outline: none;
-}
-
-.editing-availability-as__guest-name-field.v-input--error .v-field__outline {
-  --v-field-border-width: 2px;
-}
-</style>

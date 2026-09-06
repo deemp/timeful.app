@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { readFileSync } from "node:fs"
 import { mount } from "@vue/test-utils"
 import { describe, expect, it } from "vitest"
 import EditingAvailabilityAs from "./EditingAvailabilityAs.vue"
@@ -9,6 +10,8 @@ import {
   scheduleOverlapGlobalStubs,
 } from "./scheduleOverlapTestUtils"
 import { GUEST_NAME_MAX_LENGTH } from "@/utils/guestName"
+
+const appCssSource = readFileSync("src/index.css", "utf8")
 
 describe("EditingAvailabilityAs", () => {
   const dialogContentStubs = {
@@ -103,9 +106,7 @@ describe("EditingAvailabilityAs", () => {
     )
 
     const field = wrapper.get("v-text-field-stub")
-    expect(field.classes()).toContain(
-      "editing-availability-as__guest-name-field",
-    )
+    expect(field.classes()).toContain("timeful-invalid-field")
     expect(field.attributes("variant")).toBe("outlined")
     expect(field.attributes("label")).toBe("Guest name (required)")
     expect(field.attributes("hide-details")).toBe("auto")
@@ -168,14 +169,14 @@ describe("EditingAvailabilityAs", () => {
     expect(field.attributes("error-messages") ?? "").toBe("")
   })
 
-  it("neutralizes the doubled global error outline with a single 2px invalid border", () => {
-    const styleBlock =
-      /<style>([\s\S]*)<\/style>/.exec(editingAvailabilityAsSource)?.[1] ?? ""
-    expect(styleBlock).toMatch(
-      /\.editing-availability-as__guest-name-field \.v-field,\s*\.editing-availability-as__guest-name-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
+  it("relies on the shared invalid-field treatment instead of local overrides", () => {
+    expect(editingAvailabilityAsSource).toContain("timeful-invalid-field")
+    expect(editingAvailabilityAsSource).not.toMatch(/<style>/)
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field \.v-field,\s*\.timeful-invalid-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
     )
-    expect(styleBlock).toMatch(
-      /\.editing-availability-as__guest-name-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
     )
   })
 

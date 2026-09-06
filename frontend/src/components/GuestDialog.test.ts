@@ -16,6 +16,8 @@ import type { Event } from "@/types"
 import GuestDialog from "./GuestDialog.vue"
 import guestDialogSource from "./GuestDialog.vue?raw"
 
+const appCssSource = readFileSync("src/index.css", "utf8")
+
 const formRefMethods = {
   validate: vi.fn<() => Promise<{ valid: boolean }>>(() =>
     Promise.resolve({ valid: true }),
@@ -214,20 +216,28 @@ describe("GuestDialog", () => {
     expect(field.props("maxlength")).toBe(GUEST_NAME_MAX_LENGTH)
     expect(field.props("appendInnerIcon")).toBe("mdi-alert-circle")
     expect(field.props("hideDetails")).toBe("auto")
+    expect(guestDialogSource).toMatch(
+      /label="Guest name \(required\)"[^>]*class="timeful-invalid-field"/,
+    )
   })
 
-  it("neutralizes the doubled error outline and shows the alert icon only on error", () => {
-    expect(guestDialogSource).toMatch(
-      /\.guest-dialog__name-field \.v-field,\s*\.guest-dialog__name-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
+  it("relies on the shared invalid-field treatment instead of local overrides", () => {
+    expect(guestDialogSource).toContain("timeful-invalid-field")
+    expect(guestDialogSource).not.toMatch(/<style>/)
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field \.v-field,\s*\.timeful-invalid-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
     )
-    expect(guestDialogSource).toMatch(
-      /\.guest-dialog__name-field \.v-field__append-inner\s*\{\s*visibility:\s*hidden;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field \.v-field__append-inner\s*\{\s*visibility:\s*hidden;/,
     )
-    expect(guestDialogSource).toMatch(
-      /\.guest-dialog__name-field\.v-input--error \.v-field__append-inner\s*\{\s*visibility:\s*visible;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field__append-inner\s*\{\s*visibility:\s*visible;/,
     )
-    expect(guestDialogSource).toMatch(
-      /\.guest-dialog__name-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    )
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field--variant-solo\s*\{\s*outline: 2px solid rgb\(var\(--v-theme-error\)\);/,
     )
   })
 

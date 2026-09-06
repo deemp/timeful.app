@@ -80,7 +80,7 @@
                 </div>
                 <v-text-field
                   v-model="email"
-                  class="timeful-solo-field tw-mb-2"
+                  class="timeful-solo-field timeful-invalid-field tw-mb-2"
                   placeholder="Enter your email..."
                   type="email"
                   variant="solo"
@@ -228,7 +228,7 @@
               maxlength="6"
               :error-messages="otpError"
               autofocus
-              class="timeful-solo-field tw-mb-2"
+              class="timeful-solo-field timeful-invalid-field tw-mb-2"
               @keydown.enter="verifyOtp"
             />
             <v-btn

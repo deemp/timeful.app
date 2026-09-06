@@ -43,7 +43,7 @@
             :maxlength="EVENT_NAME_MAX_LENGTH"
             hide-details="auto"
             variant="outlined"
-            class="new-event-name-field"
+            class="timeful-invalid-field"
             append-inner-icon="mdi-alert-circle"
             :rules="eventNameRules"
             autofocus
@@ -1122,23 +1122,6 @@ watch(
 <style>
 .email-me-after-text-field input {
   padding: 0px !important;
-}
-
-.new-event-name-field .v-field,
-.new-event-name-field.v-input--error .v-field {
-  outline: none;
-}
-
-.new-event-name-field .v-field__append-inner {
-  visibility: hidden;
-}
-
-.new-event-name-field.v-input--error .v-field__append-inner {
-  visibility: visible;
-}
-
-.new-event-name-field.v-input--error .v-field__outline {
-  --v-field-border-width: 2px;
 }
 
 .editor-dow-toggle {

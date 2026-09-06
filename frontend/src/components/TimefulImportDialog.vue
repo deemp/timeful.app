@@ -29,6 +29,7 @@
           placeholder="https://example.com/e/abc123"
           variant="outlined"
           density="compact"
+          class="timeful-invalid-field"
           :disabled="loading"
           :error-messages="error"
           @keydown.enter="importEvent"

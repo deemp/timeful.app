@@ -26,7 +26,7 @@
             label="Guest name (required)"
             :maxlength="GUEST_NAME_MAX_LENGTH"
             variant="outlined"
-            class="guest-dialog__name-field"
+            class="timeful-invalid-field"
             :error-messages="nameErrorMessages"
             append-inner-icon="mdi-alert-circle"
             autofocus
@@ -38,7 +38,7 @@
             v-if="event.collectEmails"
             v-model="email"
             :rules="emailRules"
-            class="timeful-solo-field"
+            class="timeful-solo-field timeful-invalid-field"
             variant="solo"
             placeholder="Enter your email..."
             hint="The event creator has requested your email. It will only be visible to them."
@@ -180,22 +180,3 @@ watch(
   },
 )
 </script>
-
-<style>
-.guest-dialog__name-field .v-field,
-.guest-dialog__name-field.v-input--error .v-field {
-  outline: none;
-}
-
-.guest-dialog__name-field .v-field__append-inner {
-  visibility: hidden;
-}
-
-.guest-dialog__name-field.v-input--error .v-field__append-inner {
-  visibility: visible;
-}
-
-.guest-dialog__name-field.v-input--error .v-field__outline {
-  --v-field-border-width: 2px;
-}
-</style>

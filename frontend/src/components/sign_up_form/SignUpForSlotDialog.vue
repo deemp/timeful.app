@@ -29,7 +29,7 @@
             <v-text-field
               v-model="name"
               :rules="nameRules"
-              class="timeful-solo-field"
+              class="timeful-solo-field timeful-invalid-field"
               variant="solo"
               placeholder="Enter your name..."
               autofocus
@@ -41,7 +41,7 @@
               v-if="event.collectEmails"
               v-model="email"
               :rules="emailRules"
-              class="timeful-solo-field"
+              class="timeful-solo-field timeful-invalid-field"
               variant="solo"
               placeholder="Enter your email..."
               hint="The event creator has requested your email. It will only be visible to them."

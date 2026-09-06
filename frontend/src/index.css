@@ -117,6 +117,27 @@
   border: 1px solid var(--timeful-outline-neutral) !important;
 }
 
+.timeful-invalid-field .v-field,
+.timeful-invalid-field.v-input--error .v-field {
+  outline: none;
+}
+
+.timeful-invalid-field .v-field__append-inner {
+  visibility: hidden;
+}
+
+.timeful-invalid-field.v-input--error .v-field__append-inner {
+  visibility: visible;
+}
+
+.timeful-invalid-field.v-input--error .v-field__outline {
+  --v-field-border-width: 2px;
+}
+
+.timeful-invalid-field.v-input--error .v-field--variant-solo {
+  outline: 2px solid rgb(var(--v-theme-error));
+}
+
 .timeful-switch {
   color: #29bc68 !important;
 }

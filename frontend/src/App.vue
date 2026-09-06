@@ -395,11 +395,4 @@ html {
 .v-dialog > .v-overlay__content {
   pointer-events: auto !important;
 }
-
-/** Error color */
-.v-input--error .v-field,
-.v-field--error {
-  outline: red solid;
-  border-radius: 3px;
-}
 </style>

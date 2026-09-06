@@ -16,7 +16,7 @@
     <div class="tw-flex tw-flex-col tw-gap-3">
       <v-text-field
         v-model="feedUrl"
-        class="timeful-solo-field"
+        class="timeful-solo-field timeful-invalid-field"
         variant="solo"
         placeholder="Feed URL"
         hide-details="auto"

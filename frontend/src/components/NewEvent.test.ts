@@ -1337,20 +1337,26 @@ describe("NewEvent", () => {
     expect(newEventSource).toContain(
       'class="new-event-submit-error tw-mt-1 tw-text-xs"',
     )
-    expect(newEventStyleBlock).not.toMatch(/new-event-name-field--invalid/)
+    expect(newEventStyleBlock).not.toMatch(/new-event-name-field/)
     expect(newEventStyleBlock).not.toMatch(/#ff0000/i)
     expect(newEventStyleBlock).not.toMatch(/--v-theme-error:/)
-    expect(newEventStyleBlock).toMatch(
-      /\.new-event-name-field \.v-field,\s*\.new-event-name-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
+    const templateSource =
+      /<template>([\s\S]*)<\/template>/.exec(newEventSource)?.[1] ?? ""
+    expect(templateSource).toContain("timeful-invalid-field")
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field \.v-field,\s*\.timeful-invalid-field\.v-input--error \.v-field\s*\{\s*outline:\s*none;/,
     )
-    expect(newEventStyleBlock).toMatch(
-      /\.new-event-name-field \.v-field__append-inner\s*\{\s*visibility:\s*hidden;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field \.v-field__append-inner\s*\{\s*visibility:\s*hidden;/,
     )
-    expect(newEventStyleBlock).toMatch(
-      /\.new-event-name-field\.v-input--error \.v-field__append-inner\s*\{\s*visibility:\s*visible;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field__append-inner\s*\{\s*visibility:\s*visible;/,
     )
-    expect(newEventStyleBlock).toMatch(
-      /\.new-event-name-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field__outline\s*\{\s*--v-field-border-width:\s*2px;/,
+    )
+    expect(appCssSource).toMatch(
+      /\.timeful-invalid-field\.v-input--error \.v-field--variant-solo\s*\{\s*outline: 2px solid rgb\(var\(--v-theme-error\)\);/,
     )
     expect(newEventStyleBlock).toMatch(
       /\.new-event-submit-error\s*\{\s*color:\s*var\(--timeful-error-foreground\);/,

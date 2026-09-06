@@ -35,7 +35,7 @@
           placeholder="Name your group..."
           hide-details="auto"
           variant="solo"
-          class="timeful-solo-field"
+          class="timeful-solo-field timeful-invalid-field"
           :rules="nameRules"
           required
           @keyup.enter="blurNameField"

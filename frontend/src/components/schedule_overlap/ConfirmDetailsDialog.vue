@@ -80,7 +80,7 @@
                           hide-no-data
                           return-object
                           append-icon=""
-                          class="tw-pt-2"
+                          class="timeful-invalid-field tw-pt-2"
                           placeholder="Email (optional)"
                           variant="outlined"
                           density="compact"
