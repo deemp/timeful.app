@@ -1377,7 +1377,7 @@ describe("NewEvent", () => {
     expect(nameField?.props("variant")).toBe("outlined")
     expect(nameField?.props("appendInnerIcon")).toBe("mdi-alert-circle")
     expect(nameField?.props("placeholder")).toBe("Name your event ...")
-    expect(nameField?.props("maxlength")).toBe("100")
+    expect(nameField?.props("maxlength")).toBe(100)
 
     const input = wrapper.get("input[placeholder='Name your event ...']")
     expect(input.attributes("maxlength")).toBe("100")
@@ -1385,11 +1385,12 @@ describe("NewEvent", () => {
     const rules = nameField?.props("rules") as unknown as Array<
       (value: string) => true | string
     >
-    expect(rules).toHaveLength(2)
-    expect(rules[0]?.("")).toBe("Event name is required")
+    expect(rules).toHaveLength(1)
+    expect(rules[0]?.("")).toBe("Event name must be non-empty")
+    expect(rules[0]?.("   ")).toBe("Event name must be non-empty")
     expect(rules[0]?.("Planning sync")).toBe(true)
-    expect(rules[1]?.("a".repeat(100))).toBe(true)
-    expect(rules[1]?.("a".repeat(101))).toBe(
+    expect(rules[0]?.("a".repeat(100))).toBe(true)
+    expect(rules[0]?.("a".repeat(101))).toBe(
       "Event name must be 100 characters or fewer",
     )
   })

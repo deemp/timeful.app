@@ -40,7 +40,7 @@
             v-model="name"
             label="Event name (required)"
             placeholder="Name your event ..."
-            maxlength="100"
+            :maxlength="EVENT_NAME_MAX_LENGTH"
             hide-details="auto"
             variant="outlined"
             class="new-event-name-field"
@@ -548,6 +548,11 @@ import {
   timeNumToPlainTime,
 } from "@/utils"
 import { signInEnabled } from "@/utils/signInAvailability"
+import {
+  EVENT_NAME_MAX_LENGTH,
+  getEventNameValidationMessage,
+  validateEventName,
+} from "@/utils/eventName"
 import { useMainStore } from "@/stores/main"
 import { posthog } from "@/plugins/posthog"
 import TimezoneSelector from "./schedule_overlap/TimezoneSelector.vue"
@@ -746,7 +751,6 @@ const {
   eventTimeType,
   timezone,
   hasMounted,
-  nameRules,
   selectedDaysRules,
   dayOfWeekButtons,
   times,
@@ -759,12 +763,9 @@ const {
   hasEventBeenEdited,
 } = editorState
 
-const EVENT_NAME_MAX_LENGTH = 100
 const eventNameRules = computed(() => [
-  ...nameRules.value,
   (value: string) =>
-    value.length <= EVENT_NAME_MAX_LENGTH ||
-    `Event name must be ${EVENT_NAME_MAX_LENGTH} characters or fewer`,
+    getEventNameValidationMessage(validateEventName(value).code) ?? true,
 ])
 
 const hasName = computed(() => !!name.value.trim())
