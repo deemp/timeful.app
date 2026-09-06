@@ -12,7 +12,7 @@
 
 <img src="./frontend/src/assets/demo/event.webp" alt="Timeful hero" />
 
-Timeful is a scheduling platform helps you find the best time for a group to meet.
+Timeful is a scheduling platform that helps you find the best time for a group to meet.
 It is a free availability poll that is easy to use and integrates with your calendar.
 
 Original implementation: <https://github.com/schej-it/timeful.app>
