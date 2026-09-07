@@ -1,11 +1,11 @@
 ---
 id: TASK-0164
 title: Move the browser E2E suite to a self-contained root e2e package
-status: In Progress
+status: Done
 assignee:
   - opencode
 created_date: '2026-09-06 15:48'
-updated_date: '2026-09-07 10:28'
+updated_date: '2026-09-07 10:48'
 labels:
   - e2e
   - tooling
@@ -46,23 +46,23 @@ Confirmed decisions and constraints:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A self-contained e2e/ package exists at the repository root containing the Playwright config, all specs, helpers, isolated-test-stack.ts, inspect/, repro/, and their AGENTS.md guides; frontend/e2e no longer exists
-- [ ] #2 Running npm run test:e2e from e2e/ boots the isolated Compose test stack (mongo-test, postgres-test, server-test) plus the frontend Vite dev server, the full chromium-desktop project passes, and per-run artifact directories under /tmp/opencode/timeful-e2e-artifacts (with E2E_ARTIFACTS_DIR override) still work
-- [ ] #3 The firefox-desktop timed-event-postgres-plugin-firefox spec passes when run from the new e2e/ package
-- [ ] #4 The e2e package has its own package.json, lockfile, tsconfig, ESLint config preserving the locator-hygiene, settle-exception, and repro raw-page rules, and oxfmt config; it imports no frontend source modules; the Playwright webServer still starts the frontend dev server from frontend/
-- [ ] #5 frontend/config/tooling.ts retains only frontend dev-server, preview, and env helpers; e2e-only tooling (tooling mode, isolated E2E network, healthcheck URL, artifacts dir, Playwright config factory) lives in the e2e package; the e2e package loads the documented repo-root env contract through vite loadEnv (user decision 2026-09-07: keep the vite dependency rather than hand-roll a dotenv parser); vite.config.ts behavior is unchanged
-- [ ] #6 frontend/ cleanup removes the @playwright/test dependency, all test:e2e*/repro/inspect scripts, tsconfig.e2e.json and its typecheck segment, e2e lint/fmt globs, and e2e ESLint blocks; npm run lint, fmt:check, typecheck, build, and test:unit all pass in frontend/
-- [ ] #7 flake.nix provides .#e2e (renamed from .#frontend-e2e) running npm ci and the e2e suite from e2e/, and .github/workflows/backend-ci.yml references .#e2e; nix flake check passes
-- [ ] #8 The landing-hero spec determines landing sign-in expectations from the documented env contract without importing frontend source code
-- [ ] #9 Docs updated: root AGENTS.md E2E sections, frontend/AGENTS.md Browser Verification, e2e/AGENTS.md and e2e/inspect/AGENTS.md paths, and docs/environments.md commands; the E2E_* environment variable contract values are unchanged
+- [x] #1 A self-contained e2e/ package exists at the repository root containing the Playwright config, all specs, helpers, isolated-test-stack.ts, inspect/, repro/, and their AGENTS.md guides; frontend/e2e no longer exists
+- [x] #2 Running npm run test:e2e from e2e/ boots the isolated Compose test stack (mongo-test, postgres-test, server-test) plus the frontend Vite dev server, the full chromium-desktop project passes, and per-run artifact directories under /tmp/opencode/timeful-e2e-artifacts (with E2E_ARTIFACTS_DIR override) still work
+- [x] #3 The firefox-desktop timed-event-postgres-plugin-firefox spec passes when run from the new e2e/ package
+- [x] #4 The e2e package has its own package.json, lockfile, tsconfig, ESLint config preserving the locator-hygiene, settle-exception, and repro raw-page rules, and oxfmt config; it imports no frontend source modules; the Playwright webServer still starts the frontend dev server from frontend/
+- [x] #5 frontend/config/tooling.ts retains only frontend dev-server, preview, and env helpers; e2e-only tooling (tooling mode, isolated E2E network, healthcheck URL, artifacts dir, Playwright config factory) lives in the e2e package; the e2e package loads the documented repo-root env contract through vite loadEnv (user decision 2026-09-07: keep the vite dependency rather than hand-roll a dotenv parser); vite.config.ts behavior is unchanged
+- [x] #6 frontend/ cleanup removes the @playwright/test dependency, all test:e2e*/repro/inspect scripts, tsconfig.e2e.json and its typecheck segment, e2e lint/fmt globs, and e2e ESLint blocks; npm run lint, fmt:check, typecheck, build, and test:unit all pass in frontend/
+- [x] #7 flake.nix provides .#e2e (renamed from .#frontend-e2e) running npm ci and the e2e suite from e2e/, and .github/workflows/backend-ci.yml references .#e2e; nix flake check passes
+- [x] #8 The landing-hero spec determines landing sign-in expectations from the documented env contract without importing frontend source code
+- [x] #9 Docs updated: root AGENTS.md E2E sections, frontend/AGENTS.md Browser Verification, e2e/AGENTS.md and e2e/inspect/AGENTS.md paths, and docs/environments.md commands; the E2E_* environment variable contract values are unchanged
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
-- [ ] #4 Changed Markdown files are formatted with npm run format:markdown
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -122,22 +122,13 @@ Flatten the old `frontend/e2e/` contents one level up into the new root package 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-User decision 2026-09-07: the e2e package keeps loading the root env contract via vite `loadEnv` (as isolated-test-stack.ts already does) instead of a hand-rolled dotenv-based loader; AC #5 updated to drop the "no vite dependency" constraint because reusing vite is more maintainable.
-
-Review of the staged work (2026-09-07) found and fixed four problems, all verified and staged:
-1. `frontend/tsconfig.json` still referenced the deleted `tsconfig.e2e.json`, breaking `npm run build` (TS5083) and all 140 vitest suites (`TSCONFIG_ERROR` via tsconfck); removed the reference entry.
-2. The flake `e2e` script only ran `npm ci` in `e2e/`, but the Playwright webServer starts `npm run dev:test` from `../frontend`, which needs frontend dependencies (CI has no other frontend install step); the script now installs frontend deps first.
-3. The two oxlint `prefer-nullish-coalescing` errors in `e2e/config/tooling.ts` were fixed with a `nonBlankOr` helper that preserves blank-string fallthrough; converting to Temporal also revealed a previously masked eslint temporal violation there (`config/` was outside the old frontend lint scope), so `new Date().toISOString()` became `Temporal.Now.instant().toString()` in the run-id fallback.
-4. The fresh e2e lockfile resolved `@playwright/test` 1.63.0 while nixpkgs `playwright-driver` is 1.61.1 (browser-revision mismatch risk for `nix run .#e2e`); `e2e/package.json` now pins it exactly at 1.61.0 and the lockfile was regenerated.
-Also added a bootstrap bullet to `e2e/AGENTS.md` (`npm ci` in both `e2e/` and `../frontend` before the first run).
-
-Post-fix verification: e2e lint/fmt:check/typecheck green and `playwright test --list` collects 86 tests in 20 files; frontend lint/fmt:check/typecheck/build/test:unit all green (140 files, 1036 tests); `nix flake check` green; root `format:markdown:check` green; `graphify update .` run; all changes staged. Still outstanding: the Docker-backed suite runs (chromium-desktop full pass for AC #2, firefox-desktop timed-event-postgres-plugin-firefox for AC #3) before finalization.
-
-Execution facts from the relocation session (2026-09-07, recorded from the handoff so they survive beyond it):
-- `e2e/.npmrc` with `legacy-peer-deps=true` mirrors `frontend/.npmrc` and is required: `typescript-eslint` peer ranges reject the `typescript-native-bridge` alias version.
-- All e2e dependencies are declared as devDependencies; the package is private and always installed via `npm ci`.
-- `webServer.cwd: "../frontend"` is load-bearing: Playwright defaults the webServer cwd to the config directory, so the explicit value must not be dropped.
-- The assumed overlap of e2e markdown in both the e2e oxfmt scope and the root Prettier sentences-per-line pipeline was validated: root `format:markdown:check` and e2e `fmt:check` both pass.
-- Flattened-layout rationale: `testDir: "."` is safe because Playwright's test collector skips `node_modules` (verified in playwright/lib/runner/index.js:2236).
-- Session-state detail for the relocation work remains in `backlog/handoffs/handoff-2026-09-07T09-59-38Z.md`; the plan section above holds the authoritative step list.
+Final verification (2026-09-07): full chromium-desktop project from e2e/ passed (18 passed, 8 mobile-only skipped by design), artifacts written under /tmp/opencode/timeful-e2e-artifacts with per-run directories. One transient flake at event-page-days-only-layout.spec.ts:13 (forced #edit-event-btn click raced the async editor dialog mount; dialog never appeared) passed in isolation and on the full-project re-run with no code change; helper code is unchanged by the relocation. firefox-desktop timed-event-postgres-plugin-firefox.spec.ts passed with E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true. Spot checks confirmed: no frontend source imports in e2e/, landing-hero imports ./config/tooling, frontend/config/tooling.ts carries no e2e exports, frontend/package.json has no e2e wiring, root format:markdown:check green.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Moved the browser E2E suite from frontend/e2e/ to a self-contained root e2e/ package (committed as fdf928cd). The package owns the Playwright config, all specs, helpers, isolated-test-stack.ts Compose orchestration, inspect/ diagnostics, repro/ entrypoints, and their AGENTS.md guides; it has its own package.json, lockfile, tsconfig, ESLint (locator-hygiene, settle-exception, repro raw-page rules preserved), and oxfmt config, and imports no frontend source modules. frontend/ no longer carries any E2E wiring: @playwright/test, tsx, all test:e2e*/repro/inspect scripts, tsconfig.e2e.json, and the e2e ESLint/lint/fmt blocks are removed; frontend/config/tooling.ts keeps only dev-server, preview, and env helpers while e2e/config/tooling.ts holds the e2e half and loads the repo-root env contract via vite loadEnv. The Playwright webServer still starts the frontend dev server from frontend/ (cwd "../frontend" is load-bearing). flake.nix renamed frontend-e2e to e2e and backend-ci.yml references .#e2e. Docs and agent guides updated with unchanged E2E_* env contract values.
+
+Verification: full chromium-desktop project passes from e2e/ (18 passed, 8 mobile-only skipped by design) with per-run artifacts under /tmp/opencode/timeful-e2e-artifacts; firefox-desktop timed-event-postgres-plugin-firefox passes with E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true; frontend lint/fmt:check/typecheck/build/test:unit green (1036 tests); nix flake check green; root format:markdown:check green. One transient flake observed at event-page-days-only-layout.spec.ts:13 (forced edit-button click racing the async dialog mount) passed in isolation and on full re-run with no code change.
+<!-- SECTION:FINAL_SUMMARY:END -->
