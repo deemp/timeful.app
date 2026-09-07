@@ -62,7 +62,7 @@
     "jiti": "^2.7.0",
     "openapi-typescript": "^7.4.4",
     "oxfmt": "^0.66.0",
-    "oxlint": "^1.80.0",
+    "oxlint": "^1.81.0",
     "oxlint-tsgolint": "^7.0.2001",
     "postcss": "^8.5.28",
     "swagger2openapi": "^7.0.8",
