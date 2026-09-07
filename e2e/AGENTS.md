@@ -1,6 +1,7 @@
 # E2E Authoring and Debugging
 
-Rules for Playwright specs, helpers, and repro entrypoints under `./e2e`.
+Rules for the self-contained browser E2E package at the repository root `e2e/`.
+Run its npm commands from the package directory.
 
 ## Failure Diagnosis Loop
 
@@ -18,7 +19,7 @@ Rules for Playwright specs, helpers, and repro entrypoints under `./e2e`.
 ## Authoring Rules
 
 - Use user-facing locators: `getByRole`, `getByLabel`, `getByText`, and `getByTestId`; add a `data-testid` in app code when no accessible role exists.
-- ESLint forbids `page.$`, `page.$$`, `page.pause`, `page.waitForSelector`, and raw `page.waitForTimeout` under `./e2e`.
+- ESLint forbids `page.$`, `page.$$`, `page.pause`, `page.waitForSelector`, and raw `page.waitForTimeout` in this package.
 - Assert with web-first expectations such as `expect(locator).toBeVisible()`, `toHaveCount()`, and `toContainText()`; they auto-retry, so never hand-roll polling.
 - Use `expect(locator).toHaveCount()` when ambiguity is possible; strict mode fails loudly on multiple matches instead of acting on the wrong element.
 - Pass an explicit timeout only with a reason; the default action timeout is 15 seconds and the default expect timeout is 5 seconds.
@@ -28,5 +29,6 @@ Rules for Playwright specs, helpers, and repro entrypoints under `./e2e`.
 
 ## Environment
 
+- Run `npm ci` in this package and in `../frontend` before the first run; the Playwright webServer starts the frontend Vite dev server from `../frontend`, so frontend dependencies must be installed too.
 - `npm run test:e2e` owns the isolated test stack (`mongo-test`, `postgres-test`, `server-test` on 3003) and Vite on 4174; never target the development API on 3002.
-- See `../AGENTS.md` for required checks and `./inspect/AGENTS.md` for `npm run inspect` diagnostics.
+- See `../frontend/AGENTS.md` for required frontend checks and `./inspect/AGENTS.md` for `npm run inspect` diagnostics.

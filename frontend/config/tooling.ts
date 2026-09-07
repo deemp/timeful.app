@@ -1,9 +1,6 @@
-import { mkdirSync } from "node:fs"
-import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { loadEnv } from "vite"
-import { isLandingSignInEnabled } from "../src/utils/featureAvailability"
 
 const frontendRootDir = path.dirname(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -39,12 +36,6 @@ interface FrontendDevServerConfig {
       changeOrigin: true
     }
   }
-}
-
-interface FrontendPlaywrightConfig {
-  baseURL: string
-  webServerCommand: string
-  webServerPort: number
 }
 
 interface FrontendPreviewServerConfig {
@@ -130,10 +121,6 @@ function normalizeRootEnvMode(mode: ToolingMode): RootEnvMode {
   }
 }
 
-export function getActiveToolingMode(): RootEnvMode {
-  return normalizeRootEnvMode(process.env.PLAYWRIGHT_TOOLING_MODE ?? "test")
-}
-
 function readProcessEnv(): Record<string, string> {
   return Object.fromEntries(
     Object.entries(process.env).filter(
@@ -158,7 +145,7 @@ function loadRootEnv(mode: ToolingMode): LoadedRootEnv {
 
 function loadIsolatedE2ENetwork(): IsolatedE2ENetwork {
   const { env, filePath } = loadRootEnv("test")
-  const usage = `Set it in ${filePath} or export it before starting browser E2E.`
+  const usage = `Set it in ${filePath} or export it before starting the frontend tooling.`
 
   return {
     viteHost: requireNonEmpty(env.E2E_VITE_HOST, "E2E_VITE_HOST", usage),
@@ -168,24 +155,8 @@ function loadIsolatedE2ENetwork(): IsolatedE2ENetwork {
   }
 }
 
-function getIsolatedE2EViteBaseURL(network: IsolatedE2ENetwork): string {
-  return `http://${network.viteHost}:${network.vitePort}`
-}
-
 function getIsolatedE2EApiBaseURL(network: IsolatedE2ENetwork): string {
   return `http://${network.apiHost}:${network.apiPort}`
-}
-
-export function getIsolatedE2EHealthcheckURL(): string {
-  return new URL(
-    "/api/health",
-    getIsolatedE2EApiBaseURL(loadIsolatedE2ENetwork()),
-  ).toString()
-}
-
-export function resolveLandingSignInEnabled(mode: ToolingMode): boolean {
-  const { env } = loadRootEnv(mode)
-  return isLandingSignInEnabled(env)
 }
 
 export function getFrontendEnvDir(): string {
@@ -268,54 +239,6 @@ export function createFrontendDevServerConfig(
         changeOrigin: true,
       },
     },
-  }
-}
-
-export function createFrontendPlaywrightArtifactsDir(): string {
-  const artifactsRoot =
-    process.env.E2E_ARTIFACTS_DIR?.trim() ||
-    path.join(os.tmpdir(), "opencode", "timeful-e2e-artifacts")
-  const runId =
-    process.env.E2E_ARTIFACTS_RUN_ID?.trim() ||
-    `${new Date().toISOString().replaceAll(":", "-")}-p${process.pid}`
-  const artifactsDir = path.join(artifactsRoot, runId)
-  mkdirSync(artifactsDir, { recursive: true })
-  process.env.E2E_ARTIFACTS_RUN_ID ??= runId
-  return artifactsDir
-}
-
-export function createFrontendPlaywrightConfig(
-  mode: ToolingMode,
-): FrontendPlaywrightConfig {
-  if (normalizeRootEnvMode(mode) === "test") {
-    const network = loadIsolatedE2ENetwork()
-    return {
-      baseURL: getIsolatedE2EViteBaseURL(network),
-      webServerCommand: "npm run dev:test",
-      webServerPort: network.vitePort,
-    }
-  }
-
-  const env = loadFrontendToolingEnv(mode)
-  const { filePath } = loadRootEnv(mode)
-  const devHost = requireNonEmpty(
-    env.devHost,
-    "VITE_DEV_HOST",
-    `Set VITE_DEV_HOST in ${filePath} or export it before starting the frontend tooling.`,
-  )
-  const devPort = String(
-    parsePort(
-      env.devPort === undefined ? undefined : String(env.devPort),
-      "VITE_DEV_PORT",
-      `Set VITE_DEV_PORT in ${filePath} or export it before starting the frontend tooling.`,
-    ),
-  )
-  const baseURL = new URL(`http://${devHost}:${devPort}`)
-
-  return {
-    baseURL: baseURL.toString().replace(/\/$/, ""),
-    webServerCommand: `npm run dev:test -- --host ${devHost} --port ${devPort}`,
-    webServerPort: Number(devPort),
   }
 }
 

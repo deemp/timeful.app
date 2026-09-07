@@ -5,7 +5,7 @@ They produce diagnostic snapshots and route profiles; assertion-based regression
 
 ## Commands
 
-Run from `frontend/`:
+Run from `e2e/`:
 
 - `npm run inspect -- --target <scenario-name>`
 - `npm run inspect:landing`
@@ -20,4 +20,4 @@ Event scenarios accept `COMPARATOR_EVENT_PATH` and `COMPARATOR_EVENT_WAIT_UNTIL`
 
 - Start the backend before inspecting event routes.
 - Run inspection commands sequentially in Firefox.
-- Use `frontend/e2e` specs for behavior assertions and regression coverage.
+- Use `e2e/*.spec.ts` specs for behavior assertions and regression coverage.

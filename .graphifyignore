@@ -8,8 +8,8 @@
 backlog/
 handoff/
 frontend/backlog/
-frontend/e2e/repro/scenarios/
-frontend/e2e/inspect/AGENTS.md
+e2e/repro/scenarios/
+e2e/inspect/AGENTS.md
 frontend/requirements/quality-requirement.md
 frontend/index.html
 frontend/public/robots.txt

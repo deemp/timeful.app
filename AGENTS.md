@@ -50,7 +50,7 @@ Unless the user explicitly asks for server changes:
 - treat `frontend/` as the primary working directory
 - use clean layout-based fixes, not hacks
 - prefer adding regression tests before fixing frontend bugs
-- keep repo-tracked frontend browser checks under `frontend/e2e`
+- keep repo-tracked frontend browser checks under `e2e`
 - newly added regression tests may fail when they are meant to expose an existing bug
 
 ## Server Test Workflow
@@ -125,7 +125,7 @@ The canonical env-file contract lives in `docs/environments.md`.
 
 Browser E2E always uses the isolated test stack and must never target either development database:
 
-- run Playwright from `frontend/` with `npm run test:e2e -- --project=firefox-desktop`; it starts `mongo-test`, `postgres-test`, and `server-test` on `3003`, then Vite on `4174`
+- run Playwright from `e2e/` with `npm run test:e2e -- --project=firefox-desktop`; it starts `mongo-test`, `postgres-test`, and `server-test` on `3003`, then Vite on `4174`
 - `TEST_DB_PERSIST` defaults to `false`, removing the test stack and database volumes; set it to `true` to retain database state after successful or failed E2E setup
 - Playwright owns the isolated test stack and Vite process; do not use an existing server for browser E2E.
 - the test stack keeps persistent Go caches in the external `timeful-test-go-build-cache` and `timeful-test-go-mod-cache` volumes, so `go run .` inside `server-test` compiles incrementally across runs; `down -v` retains them, and `docker volume rm timeful-test-go-build-cache timeful-test-go-mod-cache` resets them

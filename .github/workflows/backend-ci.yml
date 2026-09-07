@@ -139,13 +139,13 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          key: npm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json', 'e2e/package-lock.json') }}
           restore-keys: npm-${{ runner.os }}-
 
       # Compose never creates external volumes, and the Go caches are external so
       # `down -v` retains them. Fresh CI runners have no volumes, so create them
       # (idempotent) before any service that mounts them starts, mirroring the
-      # ensureExternalVolume calls in frontend/e2e/isolated-test-stack.ts, then
+      # ensureExternalVolume calls in e2e/isolated-test-stack.ts, then
       # seed them from the restored caches so `go test` compiles incrementally
       # without re-downloading modules.
       - name: Seed external Go cache volumes
@@ -183,7 +183,7 @@ jobs:
       - name: Run PostgreSQL browser lifecycle test
         env:
           E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: "true"
-        run: nix run .#frontend-e2e -- --project=firefox-desktop timed-event-postgres-plugin-firefox.spec.ts
+        run: nix run .#e2e -- --project=firefox-desktop timed-event-postgres-plugin-firefox.spec.ts
 
       # Copy the warmed caches back out of the external volumes so the
       # actions/cache post steps save them for the next run. Runs after the E2E

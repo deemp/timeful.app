@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 import { Temporal } from "temporal-polyfill"
 import { loadEnv } from "vite"
-import { getIsolatedE2EHealthcheckURL } from "../config/tooling"
+import { getIsolatedE2EHealthcheckURL } from "./config/tooling"
 
 const execFileAsync = promisify(execFile)
-const frontendRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
-const repositoryRoot = path.dirname(frontendRoot)
+const e2eRootDir = path.dirname(fileURLToPath(import.meta.url))
+const repositoryRoot = path.dirname(e2eRootDir)
 const testEnv = loadEnv("test", repositoryRoot, "")
 const persistDatabases =
   "TEST_DB_PERSIST" in testEnv &&

@@ -1,23 +1,24 @@
 import { defineConfig, devices } from "@playwright/test"
 import {
-  createFrontendPlaywrightArtifactsDir,
-  createFrontendPlaywrightConfig,
+  createPlaywrightArtifactsDir,
+  createPlaywrightConfig,
   getActiveToolingMode,
 } from "./config/tooling"
 
-const { baseURL, webServerCommand, webServerPort } =
-  createFrontendPlaywrightConfig(getActiveToolingMode())
-const outputDir = createFrontendPlaywrightArtifactsDir()
+const { baseURL, webServerCommand, webServerPort } = createPlaywrightConfig(
+  getActiveToolingMode(),
+)
+const outputDir = createPlaywrightArtifactsDir()
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: ".",
   outputDir,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}{ext}",
-  globalSetup: "./e2e/isolated-test-stack.ts",
+  globalSetup: "./isolated-test-stack.ts",
   use: {
     baseURL,
     trace: "retain-on-failure",
@@ -27,6 +28,7 @@ export default defineConfig({
   },
   webServer: {
     command: webServerCommand,
+    cwd: "../frontend",
     port: webServerPort,
     reuseExistingServer: false,
     timeout: 120_000,
