@@ -5,7 +5,7 @@ import {
   buildUtcSpecificTimesRangeInstants,
   openEventPage,
   seedCanonicalTimedEvent,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 
 function chevronButton(page: Page, iconClass: string) {
   return page.locator(`button.v-btn:has(.mdi.${iconClass})`)

@@ -7,7 +7,7 @@ import {
   revealAdvancedOptions,
   seedCanonicalTimedEvent,
   setSpecificTimesEnabled,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 
 test.describe.configure({ mode: "serial" })
 

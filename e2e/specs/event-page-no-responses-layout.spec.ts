@@ -4,7 +4,7 @@ import {
   openEventPage,
   seedCanonicalTimedEvent,
   waitForScheduleOverlapMounted,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 import { Temporal } from "temporal-polyfill"
 
 test.describe.configure({ mode: "serial" })

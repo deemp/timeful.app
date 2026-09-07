@@ -2,7 +2,7 @@ import { expect, test, type Page, type Route } from "@playwright/test"
 import {
   getActiveToolingMode,
   resolveLandingSignInEnabled,
-} from "./config/tooling"
+} from "../config/tooling"
 
 const landingSignInEnabled = resolveLandingSignInEnabled(getActiveToolingMode())
 

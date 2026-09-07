@@ -2,6 +2,7 @@
 
 Rules for the self-contained browser E2E package at the repository root `e2e/`.
 Run its npm commands from the package directory.
+Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `config/`, `helpers/`, `repro/`, and `inspect/` stay at the package root.
 
 ## Failure Diagnosis Loop
 

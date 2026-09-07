@@ -6,7 +6,7 @@ import {
   openEventPage,
   proceedToSpecificTimesGrid,
   seedCanonicalTimedEvent,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 
 test.describe.configure({ mode: "serial" })
 

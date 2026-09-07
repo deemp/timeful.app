@@ -3,7 +3,7 @@ import {
   createSpecificTimesEventFromDialog,
   dragSelectGridRange,
   saveEditorAndWaitForPut,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 
 test("a read-only mobile grid lets a touch swipe scroll the event page", async ({
   page,

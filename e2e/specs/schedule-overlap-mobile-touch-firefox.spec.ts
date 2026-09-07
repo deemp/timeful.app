@@ -5,7 +5,7 @@ import {
   openEventPage,
   rowIndexForTime,
   seedCanonicalTimedEvent,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 import { Temporal } from "temporal-polyfill"
 
 test.beforeEach(({ hasTouch }) => {

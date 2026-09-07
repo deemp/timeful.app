@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { Temporal } from "temporal-polyfill"
-import { openEventPage } from "./helpers/timed-event-helpers"
+import { openEventPage } from "../helpers/timed-event-helpers"
 
 test.describe.configure({ mode: "serial" })
 

@@ -5,8 +5,8 @@ import {
   openEditDialog,
   openEventPage,
   seedCanonicalTimedEvent,
-} from "./helpers/timed-event-helpers"
-import { settlePage } from "./helpers/settle"
+} from "../helpers/timed-event-helpers"
+import { settlePage } from "../helpers/settle"
 
 test.describe.configure({ mode: "serial" })
 

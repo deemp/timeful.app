@@ -4,8 +4,8 @@ import {
   openEventPage,
   seedCanonicalTimedEvent,
   waitForScheduleOverlapMounted,
-} from "./helpers/timed-event-helpers"
-import { measureVisualGap } from "./helpers/visual-gap-helpers"
+} from "../helpers/timed-event-helpers"
+import { measureVisualGap } from "../helpers/visual-gap-helpers"
 import { Temporal } from "temporal-polyfill"
 
 test.describe.configure({ mode: "serial" })

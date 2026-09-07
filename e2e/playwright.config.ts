@@ -11,7 +11,7 @@ const { baseURL, webServerCommand, webServerPort } = createPlaywrightConfig(
 const outputDir = createPlaywrightArtifactsDir()
 
 export default defineConfig({
-  testDir: ".",
+  testDir: "specs",
   outputDir,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),

@@ -5,8 +5,8 @@ import {
   buildUtcSpecificTimesRangeInstants,
   openEventPage,
   seedCanonicalTimedEvent,
-} from "./helpers/timed-event-helpers"
-import { settlePage } from "./helpers/settle"
+} from "../helpers/timed-event-helpers"
+import { settlePage } from "../helpers/settle"
 
 const TIMEZONE_MENU_WIDTH = 520
 

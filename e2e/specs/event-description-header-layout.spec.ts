@@ -3,7 +3,7 @@ import {
   buildSpecificDateSeed,
   openEventPage,
   seedCanonicalTimedEvent,
-} from "./helpers/timed-event-helpers"
+} from "../helpers/timed-event-helpers"
 import { Temporal } from "temporal-polyfill"
 
 test("renders a saved multiline description without edit controls", async ({

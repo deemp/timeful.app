@@ -183,7 +183,7 @@ jobs:
       - name: Run PostgreSQL browser lifecycle test
         env:
           E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: "true"
-        run: nix run .#e2e -- --project=firefox-desktop timed-event-postgres-plugin-firefox.spec.ts
+        run: nix run .#e2e -- --project=firefox-desktop specs/timed-event-postgres-plugin-firefox.spec.ts
 
       # Copy the warmed caches back out of the external volumes so the
       # actions/cache post steps save them for the next run. Runs after the E2E
