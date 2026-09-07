@@ -770,7 +770,7 @@ describe("NewEvent", () => {
         .some((button) => /advanced options/i.exec(button.text()) !== null),
     ).toBe(false)
     expect(newEventSource).toContain(
-      'class="tw-flex tw-items-center tw-gap-x-2"',
+      'class="tw:flex tw:items-center tw:gap-x-2"',
     )
     expect(newEventSource).toContain('data-testid="timezone-label"')
     expect(newEventSource).toMatch(
@@ -792,7 +792,7 @@ describe("NewEvent", () => {
 
   it("places the timezone label to the left of the fixed-width selector", () => {
     const timezoneRowSnippet =
-      /<div class="tw-flex tw-items-center tw-gap-x-2">[\s\S]*?data-testid="timezone-label"[\s\S]*?fixed-width[\s\S]*?<\/div>/.exec(
+      /<div class="tw:flex tw:items-center tw:gap-x-2">[\s\S]*?data-testid="timezone-label"[\s\S]*?fixed-width[\s\S]*?<\/div>/.exec(
         newEventSource,
       )?.[0] ?? ""
 
@@ -972,7 +972,7 @@ describe("NewEvent", () => {
       'class="compact-switch new-event-start-on-monday-switch schedule-overlap-compact-switch"',
     )
     expect(newEventSource).toContain(
-      'class="compact-switch__label tw-text-sm tw-text-very-dark-gray"',
+      'class="compact-switch__label tw:text-sm tw:text-very-dark-gray"',
     )
     expect(newEventSource).not.toContain('<v-checkbox v-model="startOnMonday"')
     expect(newEventSource).toContain("const DEFAULT_START_ON_MONDAY = true")
@@ -1083,8 +1083,8 @@ describe("NewEvent", () => {
     })
 
     const timeRangeRow = wrapper.get(".time-range-row")
-    expect(timeRangeRow.classes()).toContain("tw-justify-between")
-    expect(timeRangeRow.classes()).toContain("tw-gap-x-2")
+    expect(timeRangeRow.classes()).toContain("tw:justify-between")
+    expect(timeRangeRow.classes()).toContain("tw:gap-x-2")
     expect(
       timeRangeRow.find("[data-testid='time-format-toggle-stub']").exists(),
     ).toBe(true)
@@ -1130,12 +1130,12 @@ describe("NewEvent", () => {
       'class="compact-switch-grid specific-times-switch-grid"',
     )
     expect(newEventSource).toContain(
-      'class="compact-switch__label specific-times-switch__label tw-text-sm"',
+      'class="compact-switch__label specific-times-switch__label tw:text-sm"',
     )
     expect(newEventSource).toContain('color="primary"')
     expect(newEventSource).toContain("inset")
     expect(newEventSource).toContain(
-      'class="compact-switch__message specific-times-switch__message tw-pointer-events-auto tw-text-xs tw-text-dark-gray"',
+      'class="compact-switch__message specific-times-switch__message tw:pointer-events-auto tw:text-xs tw:text-dark-gray"',
     )
     expect(newEventSource).toContain("hide-details")
     expect(newEventStyleBlock).toMatch(
@@ -1344,19 +1344,19 @@ describe("NewEvent", () => {
     await nextTick()
 
     const error = wrapper.get(".new-event-submit-error")
-    expect(error.classes()).toContain("tw-invisible")
+    expect(error.classes()).toContain("tw:invisible")
 
     await wrapper.get(".v-btn-stub").trigger("click")
     await nextTick()
 
     expect(formRefMethods.validate).toHaveBeenCalledTimes(1)
     expect(postMock).not.toHaveBeenCalled()
-    expect(error.classes()).toContain("tw-visible")
+    expect(error.classes()).toContain("tw:visible")
   })
 
   it("uses semantic tokens for submit error and invalid-name state styling", () => {
     expect(newEventSource).toContain(
-      'class="new-event-submit-error tw-mt-1 tw-text-xs"',
+      'class="new-event-submit-error tw:mt-1 tw:text-xs"',
     )
     expect(newEventStyleBlock).not.toMatch(/new-event-name-field/)
     expect(newEventStyleBlock).not.toMatch(/#ff0000/i)
@@ -1511,7 +1511,7 @@ describe("NewEvent", () => {
 
   it("uses the shared muted-foreground token for the advanced-options panel", () => {
     expect(newEventSource).toContain(
-      'class="advanced-options-panel tw-flex tw-flex-col tw-gap-5 tw-pt-2"',
+      'class="advanced-options-panel tw:flex tw:flex-col tw:gap-5 tw:pt-2"',
     )
     expect(newEventStyleBlock).toMatch(
       /\.advanced-options-panel\s*\{\s*color:\s*var\(--timeful-muted-foreground\);/,

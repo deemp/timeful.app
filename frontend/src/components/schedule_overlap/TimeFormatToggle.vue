@@ -1,20 +1,20 @@
 <template>
   <div
-    class="time-format-toggle tw-relative tw-flex tw-h-8 tw-shrink-0 tw-overflow-hidden tw-rounded-md tw-border tw-border-solid tw-border-outline-neutral tw-bg-white"
+    class="time-format-toggle tw:relative tw:flex tw:h-8 tw:shrink-0 tw:overflow-hidden tw:rounded-md tw:border tw:border-solid tw:border-outline-neutral tw:bg-white"
     :style="{ width: `${trackWidth}px` }"
   >
     <div
-      class="time-format-toggle__indicator tw-absolute tw-z-0 tw-rounded-[5px] tw-border tw-border-solid tw-border-outline-neutral tw-transition-all"
+      class="time-format-toggle__indicator tw:absolute tw:z-0 tw:rounded-[5px] tw:border tw:border-solid tw:border-outline-neutral tw:transition-all"
       :style="indicatorStyle"
     ></div>
     <button
       v-for="option in options"
       :key="option.value"
-      class="time-format-toggle__option tw-relative tw-z-10 tw-flex tw-min-w-8 tw-flex-1 tw-items-center tw-justify-center tw-whitespace-nowrap tw-px-1.5 tw-text-sm tw-font-medium tw-transition-all"
+      class="time-format-toggle__option tw:relative tw:z-10 tw:flex tw:min-w-8 tw:flex-1 tw:items-center tw:justify-center tw:whitespace-nowrap tw:px-1.5 tw:text-sm tw:font-medium tw:transition-all"
       :class="
         option.value === modelValue
-          ? 'tw-text-black'
-          : 'tw-text-dark-gray hover:tw-text-black'
+          ? 'tw:text-black'
+          : 'tw:text-dark-gray tw:hover:text-black'
       "
       type="button"
       @click="emit('update:modelValue', option.value)"

@@ -2,7 +2,7 @@
   <img
     :alt="alt"
     :class="widthClass"
-    class="tw-flex tw-max-w-full tw-shrink-0 tw-cursor-pointer"
+    class="tw:flex tw:max-w-full tw:shrink-0 tw:cursor-pointer"
     :src="src"
   />
 </template>
@@ -37,9 +37,9 @@ const src = computed(() => {
 
 const widthClass = computed(() => {
   if (props.type === "timeful") {
-    return isPhone.value ? "tw-w-[90px]" : "tw-w-[110px]"
+    return isPhone.value ? "tw:w-[90px]" : "tw:w-[110px]"
   }
 
-  return isPhone.value ? "tw-w-[200px]" : "tw-w-[300px]"
+  return isPhone.value ? "tw:w-[200px]" : "tw:w-[300px]"
 })
 </script>

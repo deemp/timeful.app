@@ -1,15 +1,15 @@
 <template>
   <transition :name="transitionName" appear>
     <div
-      class="tw-absolute tw-w-full tw-select-none tw-p-px"
+      class="tw:absolute tw:w-full tw:select-none tw:p-px"
       :style="blockStyle"
       style="pointer-events: none"
     >
       <div
-        class="tw-h-full tw-w-full tw-overflow-hidden tw-text-ellipsis tw-rounded tw-border tw-border-solid tw-p-1 tw-text-xs"
+        class="tw:h-full tw:w-full tw:overflow-hidden tw:text-ellipsis tw:rounded tw:border tw:border-solid tw:p-1 tw:text-xs"
         :class="containerClass"
       >
-        <div :class="textColor" class="ph-no-capture tw-font-medium">
+        <div :class="textColor" class="ph-no-capture tw:font-medium">
           {{ noEventNames ? "BUSY" : calendarEvent.summary }}
         </div>
       </div>
@@ -36,12 +36,12 @@ const props = withDefaults(
 const containerClass = computed(() => {
   if (props.calendarEvent.free) {
     return props.isGroup && !props.isEditingAvailability
-      ? "tw-border-white tw-bg-light-blue tw-opacity-50"
-      : "tw-border-dashed tw-border-blue"
+      ? "tw:border-white tw:bg-light-blue tw:opacity-50"
+      : "tw:border-dashed tw:border-blue"
   } else {
     return props.isGroup && !props.isEditingAvailability
-      ? "tw-border-white tw-bg-light-blue"
-      : "tw-border-blue"
+      ? "tw:border-white tw:bg-light-blue"
+      : "tw:border-blue"
   }
 })
 

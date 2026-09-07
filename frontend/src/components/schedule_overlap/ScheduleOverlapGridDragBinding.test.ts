@@ -438,13 +438,13 @@ describe("ScheduleOverlap grid drag bindings", () => {
     expect(navButtons).toHaveLength(2)
     const nextButton = navButtons[1]
     const nextButtonClasses = nextButton.classes()
-    expect(nextButtonClasses).toContain("tw-h-8")
-    expect(nextButtonClasses).toContain("tw-w-8")
-    expect(nextButtonClasses).toContain("tw-min-w-8")
+    expect(nextButtonClasses).toContain("tw:h-8")
+    expect(nextButtonClasses).toContain("tw:w-8")
+    expect(nextButtonClasses).toContain("tw:min-w-8")
     expect(
       nextButton.element.parentElement?.parentElement?.classList,
-    ).toContain("tw-w-10")
-    expect(nextButton.classes()).not.toContain("sm:tw-h-[36px]")
+    ).toContain("tw:w-10")
+    expect(nextButton.classes()).not.toContain("tw:sm:h-[36px]")
   })
 
   it("renders owned overlay availability frame classes for available and if-needed blocks", () => {
@@ -491,17 +491,17 @@ describe("ScheduleOverlap grid drag bindings", () => {
 
     const scheduledEvent = wrapper.get(".scheduled-event-block")
 
-    expect(scheduledEvent.classes()).toContain("tw-border-scheduled-event")
-    expect(scheduledEvent.classes()).toContain("tw-bg-scheduled-event")
+    expect(scheduledEvent.classes()).toContain("tw:border-scheduled-event")
+    expect(scheduledEvent.classes()).toContain("tw:bg-scheduled-event")
     expect(scheduledEvent.classes()).toContain(
-      "tw-shadow-[0_0_8px_rgba(0,0,0,0.35)]",
+      "tw:shadow-[0_0_8px_rgba(0,0,0,0.35)]",
     )
     expect(scheduledEvent.text()).toBe("")
     expect(scheduledEvent.element.parentElement?.classList).toContain(
-      "tw-left-[15%]",
+      "tw:left-[15%]",
     )
     expect(scheduledEvent.element.parentElement?.classList).toContain(
-      "tw-w-[70%]",
+      "tw:w-[70%]",
     )
   })
 
@@ -799,7 +799,7 @@ describe("ScheduleOverlap grid drag bindings", () => {
     const row = wrapper.get("#time-row-4")
     const labelText = row.get("span")
 
-    expect(labelText.classes()).toContain("tw-font-mono")
+    expect(labelText.classes()).toContain("tw:font-mono")
   })
 
   it("applies the mono font class directly to the end-of-axis label text", () => {
@@ -816,7 +816,7 @@ describe("ScheduleOverlap grid drag bindings", () => {
       .find((span) => span.text() === "17:00")
 
     expect(endLabelText).toBeDefined()
-    expect(endLabelText?.classes()).toContain("tw-font-mono")
+    expect(endLabelText?.classes()).toContain("tw:font-mono")
   })
 
   it("applies the mono font class directly to the collapsed-row label text", () => {
@@ -842,7 +842,7 @@ describe("ScheduleOverlap grid drag bindings", () => {
       ".schedule-overlap-collapsed-row span",
     )
 
-    expect(collapsedRowLabel.classes()).toContain("tw-font-mono")
+    expect(collapsedRowLabel.classes()).toContain("tw:font-mono")
   })
 
   it("emits stable row and column dataset coordinates on timed-grid timeslot cells", () => {

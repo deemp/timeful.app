@@ -13,10 +13,10 @@ describe("TimeFormatToggle", () => {
       props: { modelValue: timeTypes.HOUR12 },
     })
 
-    expect(wrapper.classes()).toContain("tw-h-8")
-    expect(wrapper.classes()).toContain("tw-bg-white")
+    expect(wrapper.classes()).toContain("tw:h-8")
+    expect(wrapper.classes()).toContain("tw:bg-white")
     expect(wrapper.get(".time-format-toggle__indicator").classes()).toContain(
-      "tw-z-0",
+      "tw:z-0",
     )
     const indicatorStyle = wrapper
       .get(".time-format-toggle__indicator")
@@ -28,12 +28,12 @@ describe("TimeFormatToggle", () => {
     expect(indicatorStyle).toContain("transform: translateX(0px)")
     expect(indicatorStyle).not.toContain("calc(")
     expect(wrapper.get(".time-format-toggle__indicator").classes()).toContain(
-      "tw-border-outline-neutral",
+      "tw:border-outline-neutral",
     )
     expect(indicatorStyle).toContain("background-color: transparent")
     expect(
       wrapper.findAll(".time-format-toggle__option")[0].classes(),
-    ).toContain("tw-z-10")
+    ).toContain("tw:z-10")
   })
 
   it("sizes the track from the indicator width and gap", () => {
@@ -61,7 +61,7 @@ describe("TimeFormatToggle", () => {
 
     expect(wrapper.attributes("style")).toContain("width: 188px")
     for (const option of wrapper.findAll(".time-format-toggle__option")) {
-      expect(option.classes()).toContain("tw-flex-1")
+      expect(option.classes()).toContain("tw:flex-1")
     }
   })
 
@@ -84,13 +84,13 @@ describe("TimeFormatToggle", () => {
 
     expect(
       wrapper.findAll(".time-format-toggle__option")[0].classes(),
-    ).toContain("tw-min-w-8")
+    ).toContain("tw:min-w-8")
     expect(
       wrapper.findAll(".time-format-toggle__option")[0].classes(),
-    ).toContain("tw-px-1.5")
+    ).toContain("tw:px-1.5")
     expect(
       wrapper.findAll(".time-format-toggle__option")[0].classes(),
-    ).toContain("tw-whitespace-nowrap")
+    ).toContain("tw:whitespace-nowrap")
   })
 
   it("respects custom indicator width and gap props", () => {
@@ -136,10 +136,10 @@ describe("TimeFormatToggle", () => {
     })
 
     const options = wrapper.findAll(".time-format-toggle__option")
-    expect(options[0].classes()).toContain("tw-text-black")
-    expect(options[0].classes()).not.toContain("hover:tw-text-black")
-    expect(options[1].classes()).toContain("tw-text-dark-gray")
-    expect(options[1].classes()).toContain("hover:tw-text-black")
+    expect(options[0].classes()).toContain("tw:text-black")
+    expect(options[0].classes()).not.toContain("tw:hover:text-black")
+    expect(options[1].classes()).toContain("tw:text-dark-gray")
+    expect(options[1].classes()).toContain("tw:hover:text-black")
   })
 
   it("shows only the 12h and 24h labels on narrow options", () => {
@@ -152,8 +152,8 @@ describe("TimeFormatToggle", () => {
     expect(options[0].text()).toBe("12h")
     expect(options[1].text()).toBe("24h")
     for (const option of options) {
-      expect(option.classes()).toContain("tw-min-w-8")
-      expect(option.classes()).toContain("tw-px-1.5")
+      expect(option.classes()).toContain("tw:min-w-8")
+      expect(option.classes()).toContain("tw:px-1.5")
     }
   })
 

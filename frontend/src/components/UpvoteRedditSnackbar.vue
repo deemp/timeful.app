@@ -5,10 +5,10 @@
     min-width="unset"
     location="bottom"
     :timeout="-1"
-    class="tw-bottom-0 tw-z-50"
+    class="tw:bottom-0 tw:z-50"
     rounded="lg"
     color="#333"
-    content-class="tw-flex tw-items-center tw-gap-x-2"
+    content-class="tw:flex tw:items-center tw:gap-x-2"
   >
     Enjoying Timeful? Help us reach more people by upvoting our Reddit post and
     leaving a comment with your thoughts :)
@@ -20,10 +20,10 @@
       @click="trackRedditClick"
     >
       Upvote
-      <v-icon small class="-tw-mr-px -tw-mt-px">mdi-arrow-up-bold</v-icon>
+      <v-icon small class="tw:-mr-px tw:-mt-px">mdi-arrow-up-bold</v-icon>
     </v-btn>
     <template #actions>
-      <v-btn icon class="-tw-ml-2 tw-mr-2" @click="dismiss">
+      <v-btn icon class="tw:-ml-2 tw:mr-2" @click="dismiss">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </template>

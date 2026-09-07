@@ -170,11 +170,11 @@ describe("RespondentsList", () => {
     expect(timezone.text()).toMatch(
       /^Timezone: \(GMT[-+]\d+:\d{2}\) Eastern Time$/,
     )
-    expect(timezone.classes()).toContain("tw-mb-3")
-    expect(timezone.classes()).not.toContain("tw-mb-2")
+    expect(timezone.classes()).toContain("tw:mb-3")
+    expect(timezone.classes()).not.toContain("tw:mb-2")
     expect(
       timezone.element.compareDocumentPosition(
-        wrapper.get(".tw-text-lg").element,
+        wrapper.get(".tw:text-lg").element,
       ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
   })
@@ -203,13 +203,13 @@ describe("RespondentsList", () => {
     })
 
     const daysOnlyEmptyState = daysOnlyWrapper.get(
-      "span.tw-text-very-dark-gray",
+      "span.tw:text-very-dark-gray",
     ).element.parentElement
-    const timedEmptyState = timedWrapper.get("span.tw-text-very-dark-gray")
+    const timedEmptyState = timedWrapper.get("span.tw:text-very-dark-gray")
       .element.parentElement
 
-    expect(daysOnlyEmptyState?.classList.contains("tw-mb-2")).toBe(true)
-    expect(timedEmptyState?.classList.contains("tw-mb-6")).toBe(true)
+    expect(daysOnlyEmptyState?.classList.contains("tw:mb-2")).toBe(true)
+    expect(timedEmptyState?.classList.contains("tw:mb-6")).toBe(true)
   })
 
   it("keeps dates-only populated responses as close to the Legend as the empty state", () => {
@@ -223,8 +223,8 @@ describe("RespondentsList", () => {
       setEntry: baseDate,
     })
 
-    expect(daysOnlyWrapper.find(".tw-h-1").exists()).toBe(true)
-    expect(timedWrapper.find(".tw-h-2").exists()).toBe(true)
+    expect(daysOnlyWrapper.find(".tw:h-1").exists()).toBe(true)
+    expect(timedWrapper.find(".tw:h-2").exists()).toBe(true)
   })
 
   it("uses a fixed respondent control slot with hover-visible checkbox shell", () => {
@@ -234,16 +234,16 @@ describe("RespondentsList", () => {
     })
 
     const respondentRow = wrapper.find(".respondent-row")
-    const labelColumn = wrapper.find(".tw-flex.tw-flex-col.tw-justify-center")
+    const labelColumn = wrapper.find(".tw-flex.tw-flex-col.tw:justify-center")
     const nameLabel = wrapper.find(
-      ".tw-mr-1.tw-text-sm.tw-leading-5.tw-transition-all",
+      ".tw-mr-1.tw-text-sm.tw-leading-5.tw:transition-all",
     )
     const controlSlot = wrapper.find(
-      ".tw-ml-1.tw-mr-3.tw-flex.tw-h-5.tw-w-5.tw-shrink-0.tw-items-center.tw-justify-center",
+      ".tw-ml-1.tw-mr-3.tw-flex.tw-h-5.tw-w-5.tw-shrink-0.tw-items-center.tw:justify-center",
     )
 
-    expect(respondentRow.classes()).toContain("tw-text-sm")
-    expect(respondentRow.classes()).toContain("tw-leading-5")
+    expect(respondentRow.classes()).toContain("tw:text-sm")
+    expect(respondentRow.classes()).toContain("tw:leading-5")
     expect(labelColumn.exists()).toBe(true)
     expect(nameLabel.exists()).toBe(true)
     expect(controlSlot.exists()).toBe(true)
@@ -255,18 +255,18 @@ describe("RespondentsList", () => {
     const avatar = selectionButton.find(".respondent-control__avatar")
 
     expect(selectionButton.exists()).toBe(true)
-    expect(selectionButton.classes()).toContain("tw-appearance-none")
-    expect(selectionButton.classes()).toContain("tw-h-5")
-    expect(selectionButton.classes()).toContain("tw-w-5")
+    expect(selectionButton.classes()).toContain("tw:appearance-none")
+    expect(selectionButton.classes()).toContain("tw:h-5")
+    expect(selectionButton.classes()).toContain("tw:w-5")
     expect(selectionButton.classes()).toContain("respondent-control")
     expect(avatar.exists()).toBe(true)
-    expect(avatar.classes()).toContain("tw-flex")
+    expect(avatar.classes()).toContain("tw:flex")
     expect(checkboxShell.exists()).toBe(true)
-    expect(checkboxShell.classes()).toContain("tw-flex")
-    expect(checkboxShell.classes()).toContain("tw-h-4")
-    expect(checkboxShell.classes()).toContain("tw-w-4")
-    expect(checkboxShell.classes()).toContain("tw-border-2")
-    expect(checkboxShell.classes()).toContain("tw-border-solid")
+    expect(checkboxShell.classes()).toContain("tw:flex")
+    expect(checkboxShell.classes()).toContain("tw:h-4")
+    expect(checkboxShell.classes()).toContain("tw:w-4")
+    expect(checkboxShell.classes()).toContain("tw:border-2")
+    expect(checkboxShell.classes()).toContain("tw:border-solid")
     expect(checkboxShell.classes()).not.toContain("tw-border-primary")
     expect(checkboxShell.attributes("style")).toContain(
       "border-color: var(--timeful-primary-action-bg);",
@@ -280,7 +280,7 @@ describe("RespondentsList", () => {
     })
 
     const avatar = wrapper.find(".respondent-control__avatar")
-    expect(avatar.find("div.tw-h-4.tw-w-4").exists()).toBe(false)
+    expect(avatar.find("div.tw-h-4.tw:w-4").exists()).toBe(false)
     expect(wrapper.findComponent({ name: "UserAvatarContent" }).exists()).toBe(
       true,
     )
@@ -294,11 +294,11 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw-w-4",
+      ".respondent-control__avatar div.tw-h-4.tw:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
-    expect(statusSquare.classes()).toContain("tw-bg-[#00994C77]")
-    expect(statusSquare.classes()).toContain("tw-border-outline-neutral")
+    expect(statusSquare.classes()).toContain("tw:bg-[#00994C77]")
+    expect(statusSquare.classes()).toContain("tw:border-outline-neutral")
     expect(wrapper.findComponent({ name: "UserAvatarContent" }).exists()).toBe(
       false,
     )
@@ -311,10 +311,10 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw-w-4",
+      ".respondent-control__avatar div.tw-h-4.tw:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
-    expect(statusSquare.classes()).toContain("tw-bg-yellow")
+    expect(statusSquare.classes()).toContain("tw:bg-yellow")
   })
 
   it("renders a pink status square for an unavailable respondent on an active slot", () => {
@@ -328,10 +328,10 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw-w-4",
+      ".respondent-control__avatar div.tw-h-4.tw:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
-    expect(statusSquare.classes()).toContain("tw-bg-[#F9CCCC]")
+    expect(statusSquare.classes()).toContain("tw:bg-[#F9CCCC]")
   })
 
   it("renders a light-gray-stroke status square when hovering an enabled-inactive cell", () => {
@@ -343,10 +343,10 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw-w-4",
+      ".respondent-control__avatar div.tw-h-4.tw:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
-    expect(statusSquare.classes()).toContain("tw-bg-light-gray-stroke")
+    expect(statusSquare.classes()).toContain("tw:bg-light-gray-stroke")
     expect(wrapper.findComponent({ name: "UserAvatarContent" }).exists()).toBe(
       false,
     )
@@ -362,11 +362,11 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw-w-4",
+      ".respondent-control__avatar div.tw-h-4.tw:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain(
-      "tw-bg-[var(--timeful-collapsed-hours-bg)]",
+      "tw:bg-(--timeful-collapsed-hours-bg)",
     )
     expect(statusSquare.classes()).toContain("respondent-status--collapsed")
     expect(wrapper.findComponent({ name: "UserAvatarContent" }).exists()).toBe(
@@ -383,10 +383,10 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw-w-4",
+      ".respondent-control__avatar div.tw-h-4.tw:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
-    expect(statusSquare.classes()).toContain("tw-bg-gray")
+    expect(statusSquare.classes()).toContain("tw:bg-gray")
     expect(wrapper.findComponent({ name: "UserAvatarContent" }).exists()).toBe(
       false,
     )
@@ -415,7 +415,7 @@ describe("RespondentsList", () => {
     })
 
     const nameActionRow = wrapper.find(
-      ".tw-flex.tw-items-center.tw-justify-between.tw-gap-2",
+      ".tw-flex.tw-items-center.tw-justify-between.tw:gap-2",
     )
     expect(nameActionRow.exists()).toBe(true)
     expect(nameActionRow.find(".respondent-name-line").exists()).toBe(true)
@@ -424,10 +424,10 @@ describe("RespondentsList", () => {
 
   it("does not add extra top padding inside the respondents scroller", () => {
     expect(respondentsListSource).toContain(
-      'class="-tw-ml-2 tw-pl-2 tw-text-sm"',
+      'class="tw:-ml-2 tw:pl-2 tw:text-sm"',
     )
     expect(respondentsListSource).not.toContain(
-      'class="-tw-ml-2 tw-pl-2 tw-pt-2 tw-text-sm"',
+      'class="tw:-ml-2 tw:pl-2 tw:pt-2 tw:text-sm"',
     )
   })
 
@@ -495,11 +495,11 @@ describe("RespondentsList", () => {
     expect(scrollView.attributes("style")).toContain(
       "max-height: 240px !important;",
     )
-    expect(scrollView.classes()).toContain("tw-overflow-y-auto")
-    expect(scrollView.classes()).toContain("tw-overflow-x-hidden")
+    expect(scrollView.classes()).toContain("tw:overflow-y-auto")
+    expect(scrollView.classes()).toContain("tw:overflow-x-hidden")
     expect(scrollableSection.attributes("style")).toBeUndefined()
 
-    const responsesHeading = wrapper.get(".tw-text-lg")
+    const responsesHeading = wrapper.get(".tw:text-lg")
     expect(responsesHeading.element.tagName).toBe("DIV")
     expect(scrollView.element.contains(responsesHeading.element)).toBe(false)
     expect(scrollableSection.element.contains(responsesHeading.element)).toBe(
@@ -524,11 +524,11 @@ describe("RespondentsList", () => {
       expect(scrollView.attributes("style")).toContain(
         "max-height: 300px !important;",
       )
-      expect(scrollView.classes()).toContain("tw-overflow-y-auto")
-      expect(scrollView.classes()).toContain("tw-overflow-x-hidden")
+      expect(scrollView.classes()).toContain("tw:overflow-y-auto")
+      expect(scrollView.classes()).toContain("tw:overflow-x-hidden")
       expect(scrollableSection.attributes("style")).toBeUndefined()
 
-      const responsesHeading = wrapper.get(".tw-text-lg")
+      const responsesHeading = wrapper.get(".tw:text-lg")
       expect(responsesHeading.element.tagName).toBe("DIV")
       expect(scrollView.element.contains(responsesHeading.element)).toBe(false)
     } finally {
@@ -549,11 +549,11 @@ describe("RespondentsList", () => {
     expect(wrapper.text()).not.toContain("Ada Lovelace*")
     expect(wrapper.text()).not.toContain("* if needed")
     expect(wrapper.find(".respondent-name-line").classes()).not.toContain(
-      "tw-bg-yellow",
+      "tw:bg-yellow",
     )
     expect(
-      wrapper.find(".respondent-control__avatar div.tw-h-4.tw-w-4").classes(),
-    ).toContain("tw-bg-yellow")
+      wrapper.find(".respondent-control__avatar div.tw-h-4.tw:w-4").classes(),
+    ).toContain("tw:bg-yellow")
   })
 
   it("matches stored UTC if-needed slots against rendered local-time slots without asterisk or legend", () => {
@@ -583,10 +583,10 @@ describe("RespondentsList", () => {
 
     expect(wrapper.text()).toContain("(0/1)")
     expect(wrapper.find(".respondent-name-line").classes()).toContain(
-      "tw-line-through",
+      "tw:line-through",
     )
     expect(wrapper.find(".respondent-name-line").classes()).toContain(
-      "tw-text-gray",
+      "tw:text-gray",
     )
   })
 
@@ -802,14 +802,14 @@ describe("RespondentsList", () => {
 
   it("uses explicit Vuetify 3 select and list props for export actions", () => {
     expect(respondentsListSource).toContain(
-      '<v-list class="tw-py-1" density="compact">',
+      '<v-list class="tw:py-1" density="compact">',
     )
     expect(respondentsListSource).toContain('class="timeful-solo-field"')
     expect(respondentsListSource).toContain('variant="solo"')
     expect(respondentsListSource).toContain('item-title="text"')
     expect(respondentsListSource).toContain('item-value="value"')
     expect(respondentsListSource).not.toContain(
-      '<v-list class="tw-py-1" dense>',
+      '<v-list class="tw:py-1" dense>',
     )
     expect(respondentsListSource).not.toContain(
       "\n                      solo\n",
@@ -996,9 +996,9 @@ describe("RespondentsList", () => {
     const lockStatus = wrapper.get(".respondent-edit-status")
     expect(lockStatus.attributes("aria-disabled")).toBe("true")
     expect(lockStatus.attributes("aria-label")).toContain("cannot be edited")
-    expect(lockStatus.classes()).toContain("tw-h-5")
-    expect(lockStatus.classes()).toContain("tw-w-5")
-    expect(lockStatus.classes()).toContain("tw-text-sm")
+    expect(lockStatus.classes()).toContain("tw:h-5")
+    expect(lockStatus.classes()).toContain("tw:w-5")
+    expect(lockStatus.classes()).toContain("tw:text-sm")
     expect(lockStatus.text()).toContain("mdi-lock")
     isPhoneValue.value = true
   })
@@ -1242,9 +1242,9 @@ describe("RespondentsList", () => {
     expect(pencilStatus.element.tagName).toBe("BUTTON")
     expect(pencilStatus.attributes("aria-disabled")).toBe("false")
     expect(pencilStatus.attributes("aria-label")).toContain("Edit guest")
-    expect(pencilStatus.classes()).toContain("tw-h-5")
-    expect(pencilStatus.classes()).toContain("tw-w-5")
-    expect(pencilStatus.classes()).toContain("tw-text-sm")
+    expect(pencilStatus.classes()).toContain("tw:h-5")
+    expect(pencilStatus.classes()).toContain("tw:w-5")
+    expect(pencilStatus.classes()).toContain("tw:text-sm")
     expect(pencilStatus.text()).toContain("mdi-pencil")
     expect(wrapper.text()).not.toContain("mdi-dots-vertical")
   })
@@ -1322,9 +1322,9 @@ describe("RespondentsList", () => {
     expect(lockStatus.element.tagName).toBe("DIV")
     expect(lockStatus.attributes("aria-disabled")).toBe("true")
     expect(lockStatus.attributes("aria-label")).toContain("cannot be edited")
-    expect(lockStatus.classes()).toContain("tw-h-5")
-    expect(lockStatus.classes()).toContain("tw-w-5")
-    expect(lockStatus.classes()).toContain("tw-text-sm")
+    expect(lockStatus.classes()).toContain("tw:h-5")
+    expect(lockStatus.classes()).toContain("tw:w-5")
+    expect(lockStatus.classes()).toContain("tw:text-sm")
     expect(lockStatus.text()).toContain("mdi-lock")
     expect(wrapper.text()).not.toContain("mdi-dots-vertical")
   })

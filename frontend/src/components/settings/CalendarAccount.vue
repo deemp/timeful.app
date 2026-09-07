@@ -1,13 +1,13 @@
 <template>
-  <div v-if="showAccount" class="tw-flex tw-flex-col">
+  <div v-if="showAccount" class="tw:flex tw:flex-col">
     <div
-      class="tw-group tw-flex tw-h-10 tw-flex-row tw-items-center tw-justify-between tw-text-black"
+      class="tw:group tw:flex tw:h-10 tw:flex-row tw:items-center tw:justify-between tw:text-black"
     >
       <div
         :class="`tw-gap-${toggleState ? '0' : '2'}`"
-        class="tw-flex tw-w-full tw-flex-row tw-items-center"
+        class="tw:flex tw:w-full tw:flex-row tw:items-center"
       >
-        <div v-if="toggleState" class="tw-flex tw-items-center">
+        <div v-if="toggleState" class="tw:flex tw:items-center">
           <!-- eslint-disable vue/no-mutating-props -->
           <v-checkbox
             v-model="account.enabled"
@@ -19,22 +19,22 @@
           <!-- eslint-enable vue/no-mutating-props -->
           <div
             v-if="hasSubCalendars"
-            class="-tw-ml-2 tw-h-fit tw-w-fit tw-cursor-pointer"
+            class="tw:-ml-2 tw:h-fit tw:w-fit tw:cursor-pointer"
             @click="showSubCalendars = !showSubCalendars"
           >
-            <div class="tw-rotate-0 tw-rotate-90"></div>
+            <div class="tw:rotate-0 tw:rotate-90"></div>
 
             <v-icon
               :class="`tw-rotate-${showSubCalendars ? 90 : 0}`"
-              class="tw-text-dark-gray tw-transition-all"
+              class="tw:text-dark-gray tw:transition-all"
               >mdi-chevron-right</v-icon
             >
           </div>
         </div>
         <UserAvatarContent v-else :size="24" :user="account" />
         <div
-          :class="toggleState && !fillSpace ? 'tw-w-[180px]' : ''"
-          class="tw-align-text-middle tw-inline-block tw-break-words tw-text-sm"
+          :class="toggleState && !fillSpace ? 'tw:w-[180px]' : ''"
+          class="tw-align-text-middle tw:inline-block tw:wrap-break-word tw:text-sm"
         >
           {{ account.email }}
         </div>
@@ -51,14 +51,14 @@
           <span>{{ reauthenticateBtnText }}</span>
         </v-tooltip>
       </div>
-      <span class="tw-hidden tw-opacity-0 tw-opacity-100"></span>
+      <span class="tw:hidden tw:opacity-0 tw:opacity-100"></span>
 
       <v-btn
         icon
         :class="`tw-opacity-${
           account.email == selectedRemoveEmail && removeDialog ? '100' : '0'
-        } ${!allowDelete ? 'tw-hidden' : ''}`"
-        class="group-hover:tw-opacity-100"
+        } ${!allowDelete ? 'tw:hidden' : ''}`"
+        class="tw:group-hover:opacity-100"
         @click="openRemoveDialog"
         ><v-icon color="#4F4F4F">mdi-close</v-icon></v-btn
       >
@@ -67,24 +67,24 @@
     <v-expand-transition>
       <div
         v-if="hasSubCalendars && showSubCalendars"
-        class="tw-space-y-2 tw-bg-[#EBF7EF] tw-py-2"
+        class="tw:space-y-2 tw:bg-[#EBF7EF] tw:py-2"
       >
         <div
           v-for="(subCalendar, id) in account.subCalendars"
           :key="id"
-          class="tw-flex tw-flex-row tw-items-start"
+          class="tw:flex tw:flex-row tw:items-start"
         >
           <v-checkbox
             v-model="subCalendar.enabled"
-            class="-tw-mt-px"
+            class="tw:-mt-px"
             hide-details
             @update:model-value="
               (enabled: any) => toggleSubCalendarAccount(!!enabled, id)
             "
           />
           <div
-            :class="!fillSpace ? 'tw-w-40' : ''"
-            class="tw-align-text-middle tw-ml-8 tw-inline-block tw-break-words tw-text-sm"
+            :class="!fillSpace ? 'tw:w-40' : ''"
+            class="tw-align-text-middle tw:ml-8 tw:inline-block tw:wrap-break-word tw:text-sm"
           >
             {{ subCalendar.name }}
           </div>

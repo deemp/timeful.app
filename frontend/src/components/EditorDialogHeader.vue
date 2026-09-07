@@ -1,13 +1,13 @@
 <template>
   <v-card-title
-    :class="showHelpCopy ? 'tw-items-start' : 'tw-items-center'"
-    class="tw-mb-2 tw-flex tw-gap-2 tw-px-4 sm:tw-px-8"
+    :class="showHelpCopy ? 'tw:items-start' : 'tw:items-center'"
+    class="tw:mb-2 tw:flex tw:gap-2 tw:px-4 tw:sm:px-8"
   >
     <div>
-      <div class="tw-mb-1">{{ title }}</div>
+      <div class="tw:mb-1">{{ title }}</div>
       <div
         v-if="showHelpCopy"
-        class="tw-text-xs tw-font-normal tw-italic tw-text-dark-gray"
+        class="tw:text-xs tw:font-normal tw:italic tw:text-dark-gray"
       >
         {{ subtitle }}
       </div>
@@ -18,7 +18,7 @@
         v-if="showHelp"
         icon
         variant="text"
-        class="tw-text-dark-gray"
+        class="tw:text-dark-gray"
         @click="helpDialog = true"
       >
         <v-icon color="#4F4F4F">mdi-information-outline</v-icon>
@@ -27,7 +27,7 @@
         v-else
         icon
         variant="text"
-        class="tw-text-dark-gray"
+        class="tw:text-dark-gray"
         @click="emit('close')"
       >
         <v-icon color="#4F4F4F">mdi-close</v-icon>

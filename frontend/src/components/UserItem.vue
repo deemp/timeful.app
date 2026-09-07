@@ -1,10 +1,10 @@
 <template>
   <v-container
-    class="tw-flex tw-justify-between tw-rounded-md tw-bg-light-gray tw-py-2 tw-align-middle tw-text-black"
+    class="tw:flex tw:justify-between tw:rounded-md tw:bg-light-gray tw:py-2 tw:align-middle tw:text-black"
     @click="$emit('click')"
   >
-    <div class="tw-mt-2 tw-flex">
-      <div class="tw-mr-3">
+    <div class="tw:mt-2 tw:flex">
+      <div class="tw:mr-3">
         <v-avatar>
           <img
             v-if="!user.picture"
@@ -14,14 +14,14 @@
         </v-avatar>
       </div>
       <div>
-        <div class="tw-font-medium">{{ user.name }}</div>
-        <div class="tw-text-sm">
+        <div class="tw:font-medium">{{ user.name }}</div>
+        <div class="tw:text-sm">
           Currently
-          <span v-if="user.status == 'free'" class="tw-font-bold tw-text-green"
+          <span v-if="user.status == 'free'" class="tw:font-bold tw:text-green"
             >free</span
           ><span v-else>
             in
-            <span class="tw-font-bold tw-text-light-blue">
+            <span class="tw:font-bold tw:text-light-blue">
               {{ user.status }}
             </span>
           </span>

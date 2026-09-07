@@ -1,23 +1,23 @@
 <template>
   <div>
-    <div class="tw-text-md tw-mb-4 tw-font-medium">
+    <div class="tw-text-md tw:mb-4 tw:font-medium">
       We need the following permissions to access your Google Calendar events
     </div>
 
-    <div class="tw-mb-8 tw-ml-4 tw-flex tw-flex-col tw-gap-4">
-      <div class="tw-flex tw-gap-2 tw-text-sm">
+    <div class="tw:mb-8 tw:ml-4 tw:flex tw:flex-col tw:gap-4">
+      <div class="tw:flex tw:gap-2 tw:text-sm">
         <v-img
           src="@/assets/gcal_logo.png"
-          class="tw-flex-none"
+          class="tw:flex-none"
           height="20"
           width="20"
         />
         <div>View events on all your calendars.</div>
       </div>
-      <div class="tw-flex tw-gap-2 tw-text-sm">
+      <div class="tw:flex tw:gap-2 tw:text-sm">
         <v-img
           src="@/assets/gcal_logo.png"
-          class="tw-flex-none"
+          class="tw:flex-none"
           height="20"
           width="20"
         />
@@ -25,9 +25,9 @@
       </div>
     </div>
 
-    <div class="tw-text-md tw-mb-4 tw-font-medium">These permissions will</div>
+    <div class="tw-text-md tw:mb-4 tw:font-medium">These permissions will</div>
     <div
-      class="tw-mb-8 tw-flex tw-flex-col tw-gap-4 tw-text-sm tw-text-very-dark-gray"
+      class="tw:mb-8 tw:flex tw:flex-col tw:gap-4 tw:text-sm tw:text-very-dark-gray"
     >
       <div>Allow us to display the names/times of your calendar events</div>
       <div>
@@ -36,17 +36,17 @@
       </div>
     </div>
 
-    <div class="tw-flex">
+    <div class="tw:flex">
       <v-btn
         v-if="cancelLabel != ''"
         variant="text"
-        class="tw-mr-2 tw-flex-1"
+        class="tw:mr-2 tw:flex-1"
         @click="emit('cancel')"
       >
         {{ cancelLabel }}
       </v-btn>
       <v-btn
-        class="timeful-elevated-button tw-flex-1 tw-bg-green tw-text-white"
+        class="timeful-elevated-button tw:flex-1 tw:bg-green tw:text-white"
         @click="emit('allow')"
       >
         {{ allowLabel }}

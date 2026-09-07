@@ -121,10 +121,10 @@ const SignInDialogStub = {
 describe("App auth restore state", () => {
   it("keeps the fixed app header aligned to the event-page content width", () => {
     expect(appSource).toContain(
-      'class="tw-relative tw-m-auto tw-flex tw-h-full tw-max-w-5xl tw-items-center tw-justify-center tw-px-4"',
+      'class="tw:relative tw:m-auto tw:flex tw:h-full tw:max-w-5xl tw:items-center tw:justify-center tw:px-4"',
     )
     expect(appSource).not.toContain(
-      'class="tw-relative tw-m-auto tw-flex tw-h-full tw-max-w-6xl tw-items-center tw-justify-center tw-px-4"',
+      'class="tw:relative tw:m-auto tw:flex tw:h-full tw:max-w-6xl tw:items-center tw:justify-center tw:px-4"',
     )
   })
 
@@ -163,7 +163,7 @@ describe("App auth restore state", () => {
       },
     })
 
-    expect(wrapper.find("div.tw-fixed").exists()).toBe(true)
+    expect(wrapper.find("div.tw:fixed").exists()).toBe(true)
   })
 
   it("places sign in first and limits it to signed-out visitors when enabled", () => {

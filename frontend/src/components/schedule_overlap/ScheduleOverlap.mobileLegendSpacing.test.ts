@@ -35,7 +35,7 @@ describe("ScheduleOverlapSidebar grid-to-Legend spacing", () => {
       isPhone: true,
     })
 
-    expect(sidebarBody(wrapper).classes()).not.toContain("tw-pt-5")
+    expect(sidebarBody(wrapper).classes()).not.toContain("tw:pt-5")
 
     wrapper.unmount()
   })
@@ -54,7 +54,7 @@ describe("ScheduleOverlapSidebar grid-to-Legend spacing", () => {
   it("keeps the availability toggle while editing on desktop", () => {
     const wrapper = mountSidebar({ state: states.EDIT_AVAILABILITY })
 
-    expect(sidebarBody(wrapper).classes()).toContain("tw-pt-5")
+    expect(sidebarBody(wrapper).classes()).toContain("tw:pt-5")
     expect(availabilityToggle(wrapper).exists()).toBe(true)
 
     wrapper.unmount()
@@ -63,7 +63,7 @@ describe("ScheduleOverlapSidebar grid-to-Legend spacing", () => {
   it("keeps the shared mobile top padding in non-editing states", () => {
     const wrapper = mountSidebar({ state: states.HEATMAP, isPhone: true })
 
-    expect(sidebarBody(wrapper).classes()).toContain("tw-pt-2")
+    expect(sidebarBody(wrapper).classes()).toContain("tw:pt-2")
 
     wrapper.unmount()
   })
@@ -71,7 +71,7 @@ describe("ScheduleOverlapSidebar grid-to-Legend spacing", () => {
   it("keeps the shared desktop top padding in non-editing states", () => {
     const wrapper = mountSidebar({ state: states.HEATMAP })
 
-    expect(sidebarBody(wrapper).classes()).toContain("tw-pt-2")
+    expect(sidebarBody(wrapper).classes()).toContain("tw:pt-2")
 
     wrapper.unmount()
   })
@@ -82,7 +82,7 @@ describe("ScheduleOverlapSidebar grid-to-Legend spacing", () => {
       event: { ...buildScheduleOverlapProps().event, daysOnly: true },
     })
 
-    expect(sidebarBody(wrapper).classes()).toContain("tw-pt-16")
+    expect(sidebarBody(wrapper).classes()).toContain("tw:pt-16")
 
     wrapper.unmount()
   })

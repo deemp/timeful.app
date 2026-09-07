@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="tw-mb-1 tw-text-sm tw-text-black">Working hours</div>
-    <div class="tw-mb-2 tw-text-xs tw-text-dark-gray">
+    <div class="tw:mb-1 tw:text-sm tw:text-black">Working hours</div>
+    <div class="tw:mb-2 tw:text-xs tw:text-dark-gray">
       Only autofill availability between working hours
     </div>
     <v-switch
@@ -16,15 +16,15 @@
       "
     >
       <template #label>
-        <div class="tw-text-sm tw-text-black">
-          <div class="tw-flex tw-items-center tw-gap-2">
+        <div class="tw:text-sm tw:text-black">
+          <div class="tw:flex tw:items-center tw:gap-2">
             <v-select
               density="compact"
               hide-details
               item-title="title"
               item-value="time"
               return-object
-              class="timeful-solo-field -tw-mt-0.5 tw-w-20 tw-text-xs"
+              class="timeful-solo-field tw:-mt-0.5 tw:w-20 tw:text-xs"
               :items="times"
               :model-value="startTimeOption"
               @update:model-value="
@@ -44,7 +44,7 @@
               item-title="title"
               item-value="time"
               return-object
-              class="timeful-solo-field -tw-mt-0.5 tw-w-20 tw-text-xs"
+              class="timeful-solo-field tw:-mt-0.5 tw:w-20 tw:text-xs"
               :items="times"
               :model-value="endTimeOption"
               @update:model-value="

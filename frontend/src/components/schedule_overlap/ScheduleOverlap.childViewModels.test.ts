@@ -453,7 +453,7 @@ describe("ScheduleOverlap child view models", () => {
     expect(mobileWrapper.find(".tool-row-stub").exists()).toBe(true)
     expect(mobileWrapper.find(".overlay-stub").exists()).toBe(true)
     expect(mobileWrapper.find(".schedule-overlap-layout").classes()).toContain(
-      "tw-flex-col",
+      "tw:flex-col",
     )
     expect(getSidebarViewModel(mobileWrapper).isPhone).toBe(true)
     expect(getSidebarViewModel(mobileWrapper).rightSideWidth).toBe("100%")
@@ -467,7 +467,7 @@ describe("ScheduleOverlap child view models", () => {
     expect(desktopWrapper.find(".tool-row-stub").exists()).toBe(false)
     expect(desktopWrapper.find(".overlay-stub").exists()).toBe(false)
     expect(desktopWrapper.find(".schedule-overlap-layout").classes()).toContain(
-      "tw-flex-row",
+      "tw:flex-row",
     )
     expect(getSidebarViewModel(desktopWrapper).isPhone).toBe(false)
     expect(getSidebarViewModel(desktopWrapper).rightSideWidth).toBe("13rem")

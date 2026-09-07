@@ -3,7 +3,7 @@
     v-model="dialogOpen"
     no-click-animation
     persistent
-    content-class="tw-max-w-[28rem]"
+    content-class="tw:max-w-md"
     :fullscreen="isPhone"
     scrollable
     :transition="isPhone ? `dialog-bottom-transition` : `dialog-transition`"
@@ -11,9 +11,9 @@
   >
     <UnsavedChangesDialog v-model="unsavedChangesDialog" @leave="exitDialog">
     </UnsavedChangesDialog>
-    <v-card class="tw-pt-4">
-      <div v-if="!_noTabs" class="tw-flex tw-rounded sm:-tw-mt-4 sm:tw-px-8">
-        <div class="tw-pt-4">
+    <v-card class="tw:pt-4">
+      <div v-if="!_noTabs" class="tw:flex tw:rounded tw:sm:-mt-4 tw:sm:px-8">
+        <div class="tw:pt-4">
           <v-btn
             v-for="t in tabs"
             :key="t.type"
@@ -21,7 +21,7 @@
             variant="text"
             size="small"
             :class="`tw-text-xs tw-text-dark-gray tw-transition-all ${
-              t.type == tab ? 'tw-bg-ligher-green tw-text-green' : ''
+              t.type == tab ? 'tw:bg-ligher-green tw:text-green' : ''
             }`"
             @click="() => (tab = t.type)"
           >
@@ -33,7 +33,7 @@
           icon
           variant="text"
           size="small"
-          class="tw-mr-2 tw-self-center"
+          class="tw:mr-2 tw:self-center"
           @click="handleDialogInput"
         >
           <v-icon>mdi-close</v-icon>

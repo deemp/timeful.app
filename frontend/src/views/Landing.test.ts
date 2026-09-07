@@ -126,7 +126,7 @@ describe("Landing", () => {
     const primaryCta = landingWrapper.get(".landing-primary-cta")
 
     expect(calendarLink.text()).toBe("calendar")
-    expect(primaryCta.classes()).toContain("tw-text-white")
+    expect(primaryCta.classes()).toContain("tw:text-white")
   })
 
   it("renders the rich landing sections by default", async () => {

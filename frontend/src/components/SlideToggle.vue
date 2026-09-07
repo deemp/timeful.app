@@ -1,15 +1,15 @@
 <template>
   <div
-    class="slide-toggle tw-relative tw-flex tw-h-9 tw-w-fit tw-rounded-md tw-border tw-border-solid tw-border-outline-neutral tw-bg-white"
+    class="slide-toggle tw:relative tw:flex tw:h-9 tw:w-fit tw:rounded-md tw:border tw:border-solid tw:border-outline-neutral tw:bg-white"
   >
     <div
-      class="slide-toggle__indicator tw-pointer-events-none tw-absolute tw-rounded-[5px] tw-border tw-border-solid tw-transition-all"
+      class="slide-toggle__indicator tw:pointer-events-none tw:absolute tw:rounded-[5px] tw:border tw:border-solid tw:transition-all"
       :class="activeIndicatorClass"
       :style="activeIndicatorStyle"
     ></div>
     <template v-for="(tab, i) in options" :key="String(tab.value)">
       <div
-        class="slide-toggle__option tw-relative tw-flex tw-flex-1 tw-cursor-pointer tw-items-center tw-justify-center tw-gap-1.5 tw-overflow-hidden tw-px-4 tw-text-center tw-text-sm tw-font-medium tw-transition-all"
+        class="slide-toggle__option tw:relative tw:flex tw:flex-1 tw:cursor-pointer tw:items-center tw:justify-center tw:gap-1.5 tw:overflow-hidden tw:px-4 tw:text-center tw:text-sm tw:font-medium tw:transition-all"
         :class="getOptionClass(tab, i)"
         :style="tab.style"
         @click="emit('update:modelValue', tab.value)"
@@ -19,7 +19,7 @@
           :option="tab"
           :active="i === selectedIndex"
         >
-          <span class="tw-line-clamp-1">{{ tab.text }}</span>
+          <span class="tw:line-clamp-1">{{ tab.text }}</span>
         </slot>
       </div>
     </template>
@@ -55,11 +55,11 @@ const emit = defineEmits<{
 // inner corner curvature (6px outer radius - 1px border).
 const indicatorEdgeGap = 3
 
-const defaultActiveClass = "tw-text-green"
-const defaultIndicatorBgClass = "tw-bg-green/10"
-const defaultBorderClass = "tw-border-green"
+const defaultActiveClass = "tw:text-green"
+const defaultIndicatorBgClass = "tw:bg-green/10"
+const defaultBorderClass = "tw:border-green"
 const defaultBorderColor = "#00994C"
-const inactiveClass = "tw-text-dark-gray hover:tw-text-black"
+const inactiveClass = "tw:text-dark-gray tw:hover:text-black"
 
 const selectedIndex = computed(() => {
   const matchIndex = props.options.findIndex(

@@ -1,20 +1,20 @@
 <template>
-  <div class="tw-rounded-md tw-px-6 tw-py-4 sm:tw-mx-4 sm:tw-bg-[#f3f3f366]">
-    <div class="tw-mb-3 tw-flex tw-items-center tw-justify-between">
-      <div class="tw-flex tw-flex-col">
+  <div class="tw:rounded-md tw:px-6 tw:py-4 tw:sm:mx-4 tw:sm:bg-[#f3f3f366]">
+    <div class="tw:mb-3 tw:flex tw:items-center tw:justify-between">
+      <div class="tw:flex tw:flex-col">
         <div
-          class="tw-text-xl tw-font-medium tw-text-dark-green sm:tw-text-2xl"
+          class="tw:text-xl tw:font-medium tw:text-dark-green tw:sm:text-2xl"
         >
           Dashboard
         </div>
       </div>
       <v-btn
         variant="text"
-        class="tw-text-very-dark-gray"
+        class="tw:text-very-dark-gray"
         @click="openCreateFolderDialog"
       >
-        <v-icon class="tw-text-lg">mdi-folder-plus</v-icon>
-        <span class="tw-ml-2">New folder</span>
+        <v-icon class="tw:text-lg">mdi-folder-plus</v-icon>
+        <span class="tw:ml-2">New folder</span>
       </v-btn>
     </div>
 
@@ -22,9 +22,9 @@
       <div
         v-for="folder in allFolders"
         :key="folder.id"
-        class="tw-group tw-mb-2"
+        class="tw:group tw:mb-2"
       >
-        <div class="tw-flex tw-items-center">
+        <div class="tw:flex tw:items-center">
           <v-btn icon size="small" @click="toggleFolder(folder.id)">
             <v-icon>{{
               folderOpenState[folder.id] ? "mdi-menu-down" : "mdi-menu-right"
@@ -34,17 +34,17 @@
             v-if="folder.type === 'regular'"
             :color="folder.color || '#D3D3D3'"
             small
-            class="tw-mr-2 tw-cursor-pointer tw-rounded tw-border tw-border-outline-neutral tw-px-2 tw-text-sm tw-font-medium"
+            class="tw:mr-2 tw:cursor-pointer tw:rounded tw:border tw:border-outline-neutral tw:px-2 tw:text-sm tw:font-medium"
             @click="openEditFolderDialog(folder)"
           >
             {{ folder.name }}
           </v-chip>
-          <span v-else class="tw-mr-2 tw-text-sm tw-font-medium">{{
+          <span v-else class="tw:mr-2 tw:text-sm tw:font-medium">{{
             folder.name
           }}</span>
           <div
             v-if="folder.type === 'regular'"
-            class="tw-invisible tw-flex tw-items-center group-hover:tw-visible"
+            class="tw:invisible tw:flex tw:items-center tw:group-hover:visible"
           >
             <v-menu offset-y>
               <template #activator="{ props }">
@@ -52,12 +52,12 @@
                   <v-icon small>mdi-dots-horizontal</v-icon>
                 </v-btn>
               </template>
-              <v-list density="compact" class="tw-py-1">
+              <v-list density="compact" class="tw:py-1">
                 <v-list-item @click.stop.prevent="openEditFolderDialog(folder)">
                   <v-list-item-title>Edit</v-list-item-title>
                 </v-list-item>
                 <v-list-item @click.stop.prevent="openDeleteDialog(folder)">
-                  <v-list-item-title class="tw-text-red"
+                  <v-list-item-title class="tw:text-red"
                     >Delete</v-list-item-title
                   >
                 </v-list-item>
@@ -88,16 +88,16 @@
             :delay="200"
             :delay-on-touch-only="true"
             :class="[
-              'tw-relative tw-grid tw-min-h-[52px] tw-grid-cols-1 tw-gap-4 tw-py-4 sm:tw-grid-cols-2',
-              folder.type === 'archived' ? 'tw-opacity-75' : '',
+              'tw:relative tw:grid tw:min-h-[52px] tw:grid-cols-1 tw:gap-4 tw:py-4 tw:sm:grid-cols-2',
+              folder.type === 'archived' ? 'tw:opacity-75' : '',
             ]"
             @end="onEnd"
           >
             <template #header>
               <div
                 v-if="folderItems(folder.id).length === 0"
-                class="tw-absolute tw-left-0 tw-py-4 tw-text-sm tw-text-very-dark-gray"
-                :class="folder.type === 'regular' ? 'tw-ml-8' : 'tw-ml-7'"
+                class="tw:absolute tw:left-0 tw:py-4 tw:text-sm tw:text-very-dark-gray"
+                :class="folder.type === 'regular' ? 'tw:ml-8' : 'tw:ml-7'"
               >
                 {{ folder.emptyMessage }}
               </div>
@@ -115,7 +115,7 @@
       </div>
 
       <div v-if="allEvents.length === 0">
-        <div class="tw-py-4 tw-text-sm tw-text-very-dark-gray">
+        <div class="tw:py-4 tw:text-sm tw:text-very-dark-gray">
           No events yet! Create one to get started.
         </div>
       </div>
@@ -148,16 +148,16 @@
             hide-details
             @keydown.enter="confirmFolderDialog"
           ></v-text-field>
-          <div class="tw-mt-4">
-            <span class="tw-text-gray-500 tw-text-sm">Color</span>
-            <div class="tw-mt-2 tw-flex tw-gap-x-3">
+          <div class="tw:mt-4">
+            <span class="tw:text-gray-500 tw:text-sm">Color</span>
+            <div class="tw:mt-2 tw:flex tw:gap-x-3">
               <div
                 v-for="color in folderColors"
                 :key="color"
-                class="tw-h-6 tw-w-6 tw-cursor-pointer tw-rounded-full tw-border tw-border-outline-neutral"
+                class="tw:h-6 tw:w-6 tw:cursor-pointer tw:rounded-full tw:border tw:border-outline-neutral"
                 :style="{ backgroundColor: color }"
                 :class="{
-                  'tw-ring-2 tw-ring-gray tw-ring-offset-2':
+                  'tw:ring-2 tw:ring-gray tw:ring-offset-2':
                     newFolderColor === color,
                 }"
                 @click="newFolderColor = color"

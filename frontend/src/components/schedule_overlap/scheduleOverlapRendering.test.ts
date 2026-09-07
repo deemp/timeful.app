@@ -414,9 +414,9 @@ describe("scheduleOverlapRendering", () => {
     expect(styles[0].style.boxShadow).toBeUndefined()
     expect(styles[0].style.borderLeftStyle).toBe("solid")
     expect(styles[0].style.borderRightStyle).toBe("solid")
-    expect(styles[0].class).not.toContain("tw-border-l-gray")
-    expect(styles[0].class).not.toContain("tw-border-r-gray")
-    expect(styles[0].class).not.toContain("tw-border-b-gray")
+    expect(styles[0].class).not.toContain("tw:border-l-gray")
+    expect(styles[0].class).not.toContain("tw:border-r-gray")
+    expect(styles[0].class).not.toContain("tw:border-b-gray")
     expect(styles[0].style.borderLeftColor).toBe(
       "var(--timeful-grid-line-color)",
     )
@@ -426,7 +426,7 @@ describe("scheduleOverlapRendering", () => {
     expect(styles[0].style.borderBottomColor).toBe(
       "var(--timeful-grid-line-color)",
     )
-    expect(styles[2].class).toContain("tw-bg-gray")
+    expect(styles[2].class).toContain("tw:bg-gray")
   })
 
   it("uses light-grey for enabled inactive slots and dark-grey outside the enabled domain", () => {
@@ -475,9 +475,9 @@ describe("scheduleOverlapRendering", () => {
       lastRow: 2,
     })
 
-    expect(styles[1].class).toContain("tw-bg-light-gray-stroke")
-    expect(styles[1].class).not.toContain("tw-bg-gray")
-    expect(styles[2].class).toContain("tw-bg-gray")
+    expect(styles[1].class).toContain("tw:bg-light-gray-stroke")
+    expect(styles[1].class).not.toContain("tw:bg-gray")
+    expect(styles[2].class).toContain("tw:bg-gray")
   })
 
   it("uses the dashed separator token for half-hour timed-grid rows", () => {
@@ -531,7 +531,7 @@ describe("scheduleOverlapRendering", () => {
     expect(classStyle.style.borderTopWidth).toBe(
       "var(--timeful-grid-line-width)",
     )
-    expect(classStyle.class).not.toContain("tw-border-t-gray")
+    expect(classStyle.class).not.toContain("tw:border-t-gray")
   })
 
   it("keeps the top frame visible for disabled timed-grid rows", () => {
@@ -576,7 +576,7 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).toContain("tw-bg-gray")
+    expect(classStyle.class).toContain("tw:bg-gray")
     expect(classStyle.style.borderTopStyle).toBe("solid")
     expect(classStyle.style.borderTopWidth).toBe(
       "var(--timeful-grid-line-width)",
@@ -584,7 +584,7 @@ describe("scheduleOverlapRendering", () => {
     expect(classStyle.style.borderTopColor).toBe(
       "var(--timeful-grid-line-color)",
     )
-    expect(classStyle.class).not.toContain("tw-border-t-gray")
+    expect(classStyle.class).not.toContain("tw:border-t-gray")
   })
 
   it("keeps the half-hour separator visible for disabled timed-grid rows", () => {
@@ -1162,7 +1162,7 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).toContain("tw-bg-white")
+    expect(classStyle.class).toContain("tw:bg-white")
     expect(classStyle.style.backgroundColor).toBeUndefined()
   })
 
@@ -1209,8 +1209,8 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).toContain("tw-bg-light-gray-stroke")
-    expect(classStyle.class).not.toContain("tw-bg-gray")
+    expect(classStyle.class).toContain("tw:bg-light-gray-stroke")
+    expect(classStyle.class).not.toContain("tw:bg-gray")
   })
 
   it("marks zero-response timed-grid slots in heatmap view for a foreground selection cursor", () => {
@@ -1256,11 +1256,11 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).toContain("tw-relative")
+    expect(classStyle.class).toContain("tw:relative")
     expect(classStyle.class).toContain(
       "schedule-overlap-time-grid__selected-timeslot",
     )
-    expect(classStyle.class).not.toContain("tw-z-10")
+    expect(classStyle.class).not.toContain("tw:z-10")
     expect(classStyle.style.boxShadow).toBeUndefined()
     expect(classStyle.style.backgroundImage).toBeUndefined()
   })
@@ -1306,8 +1306,8 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).not.toContain("tw-border-dashed")
-    expect(classStyle.class).not.toContain("tw-border-black")
+    expect(classStyle.class).not.toContain("tw:border-dashed")
+    expect(classStyle.class).not.toContain("tw:border-black")
   })
 
   it("renders days outside the included domain with the timed-grid disabled gray", () => {
@@ -1342,10 +1342,10 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).toContain("tw-bg-gray")
-    expect(classStyle.class).toContain("tw-text-dark-gray")
-    expect(classStyle.class).not.toContain("tw-bg-off-white")
-    expect(classStyle.class).not.toContain("tw-text-gray")
+    expect(classStyle.class).toContain("tw:bg-gray")
+    expect(classStyle.class).toContain("tw:text-dark-gray")
+    expect(classStyle.class).not.toContain("tw:bg-off-white")
+    expect(classStyle.class).not.toContain("tw:text-gray")
   })
 
   it("frames active day-grid slots without replacing their grid borders", () => {
@@ -1382,11 +1382,11 @@ describe("scheduleOverlapRendering", () => {
       inDragRange: () => false,
     })
 
-    expect(classStyle.class).toContain("tw-relative")
+    expect(classStyle.class).toContain("tw:relative")
     expect(classStyle.class).toContain(
       "schedule-overlap-days-only-grid__selected-timeslot",
     )
-    expect(classStyle.class).not.toContain("tw-outline-2")
+    expect(classStyle.class).not.toContain("tw:outline-2")
     expect(classStyle.style.borderLeftStyle).toBe("solid")
     expect(classStyle.style.borderRightStyle).toBe("dashed")
     expect(classStyle.style.borderTopStyle).toBe("solid")
@@ -1587,10 +1587,10 @@ describe("scheduleOverlapRendering", () => {
 
     expect(classStyle.style.borderLeftStyle).toBe("solid")
     expect(classStyle.style.borderRightStyle).toBe("solid")
-    expect(classStyle.class).toContain("tw-border-l")
-    expect(classStyle.class).toContain("tw-border-r")
-    expect(classStyle.class).not.toContain("tw-border-l-gray")
-    expect(classStyle.class).not.toContain("tw-border-r-gray")
+    expect(classStyle.class).toContain("tw:border-l")
+    expect(classStyle.class).toContain("tw:border-r")
+    expect(classStyle.class).not.toContain("tw:border-l-gray")
+    expect(classStyle.class).not.toContain("tw:border-r-gray")
   })
 
   it("uses strong vertical separators at non-consecutive date boundaries in the default timed grid", () => {

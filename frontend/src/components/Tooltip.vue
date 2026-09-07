@@ -1,6 +1,6 @@
 <template>
   <div
-    class="tw-relative"
+    class="tw:relative"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
     @mousemove="handleMouseMoveWithOverride"
@@ -9,11 +9,11 @@
     <div
       v-if="(isVisible || forceVisible) && content.length > 0"
       ref="tooltipEl"
-      class="timeful-tooltip-layer tw-pointer-events-none tw-fixed tw-rounded-lg tw-bg-dark-gray tw-px-1.5 tw-py-1 tw-text-xs tw-text-white tw-shadow-lg tw-transition-opacity tw-duration-200"
+      class="timeful-tooltip-layer tw:pointer-events-none tw:fixed tw:rounded-lg tw:bg-dark-gray tw:px-1.5 tw:py-1 tw:text-xs tw:text-white tw:shadow-lg tw:transition-opacity tw:duration-200"
       :style="tooltipStyle"
     >
       <template v-for="segment in content" :key="segment.text">
-        <span v-if="segment.mono" class="tw-font-mono">{{ segment.text }}</span>
+        <span v-if="segment.mono" class="tw:font-mono">{{ segment.text }}</span>
         <template v-else>{{ segment.text }}</template>
       </template>
     </div>

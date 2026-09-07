@@ -1,68 +1,68 @@
 <template>
-  <div class="tw-flex tw-flex-col tw-gap-1">
-    <div class="tw-text-lg tw-font-medium">Legend</div>
-    <div v-if="showResponsePalette" class="tw-flex tw-items-start">
+  <div class="tw:flex tw:flex-col tw:gap-1">
+    <div class="tw:text-lg tw:font-medium">Legend</div>
+    <div v-if="showResponsePalette" class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="tw-h-4 tw-w-4 tw-rounded tw-border tw-border-outline-neutral tw-bg-[#00994C77]"
+          class="tw:h-4 tw:w-4 tw:rounded tw:border tw:border-outline-neutral tw:bg-[#00994C77]"
         ></div>
       </div>
-      <span class="tw-text-sm">Available</span>
+      <span class="tw:text-sm">Available</span>
     </div>
-    <div v-if="showResponsePalette" class="tw-flex tw-items-start">
+    <div v-if="showResponsePalette" class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="tw-h-4 tw-w-4 tw-rounded tw-border tw-border-outline-neutral tw-bg-yellow"
+          class="tw:h-4 tw:w-4 tw:rounded tw:border tw:border-outline-neutral tw:bg-yellow"
         ></div>
       </div>
-      <span class="tw-text-sm">If needed</span>
+      <span class="tw:text-sm">If needed</span>
     </div>
-    <div v-if="activeSlotsCount > 0" class="tw-flex tw-items-start">
+    <div v-if="activeSlotsCount > 0" class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="tw-h-4 tw-w-4 tw-rounded tw-border tw-border-outline-neutral tw-bg-[#F9CCCC]"
+          class="tw:h-4 tw:w-4 tw:rounded tw:border tw:border-outline-neutral tw:bg-[#F9CCCC]"
         ></div>
       </div>
-      <span class="tw-text-sm"
-        >Unavailable, change in <br class="tw-hidden md:tw-block" />Add/Edit
+      <span class="tw:text-sm"
+        >Unavailable, change in <br class="tw:hidden tw:md:block" />Add/Edit
         availability</span
       >
     </div>
-    <div class="tw-flex tw-items-start">
+    <div class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="tw-h-4 tw-w-4 tw-rounded tw-border tw-border-outline-neutral tw-bg-light-gray-stroke"
+          class="tw:h-4 tw:w-4 tw:rounded tw:border tw:border-outline-neutral tw:bg-light-gray-stroke"
         ></div>
       </div>
-      <span class="tw-text-sm"
+      <span class="tw:text-sm"
         >Disabled, inside the event dates in the event timezone</span
       >
     </div>
-    <div class="tw-flex tw-items-start">
+    <div class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="tw-h-4 tw-w-4 tw-rounded tw-border tw-border-outline-neutral tw-bg-gray"
+          class="tw:h-4 tw:w-4 tw:rounded tw:border tw:border-outline-neutral tw:bg-gray"
         ></div>
       </div>
-      <span class="tw-text-sm"
+      <span class="tw:text-sm"
         >Disabled, outside the event dates in the event timezone</span
       >
     </div>
-    <div v-if="canCollapseHours" class="tw-flex tw-items-start">
+    <div v-if="canCollapseHours" class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="color-legend-indicator--collapsed tw-h-4 tw-w-4 tw-rounded tw-bg-[var(--timeful-collapsed-hours-bg)]"
+          class="color-legend-indicator--collapsed tw:h-4 tw:w-4 tw:rounded tw:bg-(--timeful-collapsed-hours-bg)"
         ></div>
       </div>
-      <span class="tw-text-sm">Disabled, collapsed</span>
+      <span class="tw:text-sm">Disabled, collapsed</span>
     </div>
-    <div class="tw-flex tw-items-start">
+    <div class="tw:flex tw:items-start">
       <div class="color-legend__indicator-slot">
         <div
-          class="scheduled-event-legend-indicator tw-h-4 tw-w-4 tw-rounded tw-border tw-border-scheduled-event tw-bg-scheduled-event"
+          class="scheduled-event-legend-indicator tw:h-4 tw:w-4 tw:rounded tw:border tw:border-scheduled-event tw:bg-scheduled-event"
         ></div>
       </div>
-      <span class="tw-text-sm">Scheduled event</span>
+      <span class="tw:text-sm">Scheduled event</span>
     </div>
   </div>
 </template>

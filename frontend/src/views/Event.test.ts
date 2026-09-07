@@ -554,33 +554,33 @@ describe("Event primary availability button outline", () => {
 describe("Event guest edit action", () => {
   it("uses the standard sm breakpoint for the compact desktop header", () => {
     expect(eventViewSource).toContain(
-      "sm:tw-flex-row sm:tw-items-start sm:tw-gap-4",
+      "tw:sm:flex-row tw:sm:items-start tw:sm:gap-4",
     )
     expect(eventViewSource).not.toContain(
-      "md:tw-flex-row md:tw-items-start md:tw-gap-4",
+      "tw:md:flex-row tw:md:items-start tw:md:gap-4",
     )
   })
 
   it("matches the desktop title line height to availability controls", () => {
-    expect(eventViewSource).toContain("sm:tw-text-3xl sm:tw-leading-10")
+    expect(eventViewSource).toContain("tw:sm:text-3xl tw:sm:leading-10")
   })
 
   it("uses explicit desktop rows for metadata actions", () => {
     expect(eventViewSource).toContain('id="event-header-meta-row"')
     expect(eventViewSource).toContain(
-      "event-header-row tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-gap-4",
+      "event-header-row tw:flex tw:flex-col tw:gap-2 tw:sm:flex-row tw:sm:items-center tw:sm:gap-4",
     )
   })
 
   it("aligns mobile footer action edges with the elevated panel above", () => {
     expect(eventViewSource).toContain(
-      "tw-flex tw-h-[4rem] tw-w-full tw-items-center tw-px-4",
+      "tw:flex tw:h-16 tw:w-full tw:items-center tw:px-4",
     )
-    expect(eventViewSource).not.toContain("max-sm:tw-px-2")
+    expect(eventViewSource).not.toContain("tw:max-sm:px-2")
     expect(eventViewSource).toContain(
-      "tw-flex tw-min-w-0 tw-items-center tw-gap-2 max-sm:tw-gap-1",
+      "tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:max-sm:gap-1",
     )
-    expect(eventViewSource).toContain("max-sm:tw-px-1 max-sm:tw-text-xs")
+    expect(eventViewSource).toContain("tw:max-sm:px-1 tw:max-sm:text-xs")
   })
 
   beforeEach(() => {
@@ -663,7 +663,7 @@ describe("Event guest edit action", () => {
     const backToHomeBtn = backToHome
     expect(backToHomeBtn?.attributes("data-color")).toBe("primary")
     expect(backToHomeBtn?.classes()).not.toContain("timeful-elevated-button")
-    expect(backToHomeBtn?.classes()).not.toContain("tw-bg-green")
+    expect(backToHomeBtn?.classes()).not.toContain("tw:bg-green")
     expect(routerReplaceMock).not.toHaveBeenCalled()
     expect(showErrorMock).not.toHaveBeenCalled()
     expect(wrapper.findComponent(ScheduleOverlapStub).exists()).toBe(false)
@@ -1140,8 +1140,8 @@ describe("Event guest edit action", () => {
     const scheduleButton = wrapper
       .findAll("button")
       .find((button) => button.text().includes("Schedule"))
-    expect(scheduleButton?.classes()).toContain("tw-border-blue")
-    expect(scheduleButton?.classes()).toContain("tw-text-blue")
+    expect(scheduleButton?.classes()).toContain("tw:border-blue")
+    expect(scheduleButton?.classes()).toContain("tw:text-blue")
     expect(wrapper.get(".mobile-event-action-bar").classes()).toContain(
       "mobile-event-action-bar",
     )
@@ -1257,7 +1257,7 @@ describe("Event guest edit action", () => {
     expect(
       wrapper.get("#desktop-schedule-event-btn").element.parentElement
         ?.className,
-    ).toContain("sm:tw-ml-auto")
+    ).toContain("tw:sm:ml-auto")
   })
 
   it("spans both desktop action columns when responses exist", async () => {
@@ -1297,7 +1297,7 @@ describe("Event guest edit action", () => {
     await flushDeferredMount()
 
     const scheduleEventButton = wrapper.get("#desktop-schedule-event-btn")
-    expect(scheduleEventButton.classes()).toContain("tw-w-full")
+    expect(scheduleEventButton.classes()).toContain("tw:w-full")
     expect(scheduleEventButton.classes()).not.toContain(
       "desktop-event-header-single-column",
     )
@@ -2538,7 +2538,7 @@ describe("Event guest edit action", () => {
       wrapper.get("#mobile-primary-availability-btn").classes(),
     ).not.toContain("timeful-elevated-button")
     expect(wrapper.get("#mobile-primary-availability-btn").classes()).toContain(
-      "tw-bg-green",
+      "tw:bg-green",
     )
     expect(wrapper.get("#mobile-secondary-availability-btn").text()).toContain(
       "Add availability",
@@ -2546,8 +2546,8 @@ describe("Event guest edit action", () => {
     expect(wrapper.text()).not.toContain("+ Add availability")
 
     const bottomActionBar = wrapper.get(".timeful-action-bar-layer")
-    expect(bottomActionBar.classes()).toContain("tw-fixed")
-    expect(bottomActionBar.classes()).toContain("tw-bottom-0")
+    expect(bottomActionBar.classes()).toContain("tw:fixed")
+    expect(bottomActionBar.classes()).toContain("tw:bottom-0")
     expect(bottomActionBar.classes()).not.toContain(
       "timeful-bottom-overlay-layer",
     )
@@ -2639,13 +2639,13 @@ describe("Event guest edit action", () => {
     expect(cancelButton.text()).toContain("Cancel")
     expect(cancelButton.attributes("data-variant")).toBe("outlined")
     expect(cancelButton.classes()).toContain("desktop-editing-action-control")
-    expect(eventViewSource).toContain('class="tw-flex tw-w-full tw-gap-2"')
+    expect(eventViewSource).toContain('class="tw:flex tw:w-full tw:gap-2"')
     expect(saveButton.text()).toContain("Save")
     expect(saveButton.classes()).toContain("desktop-editing-save-button")
     expect(saveButton.classes()).toContain("desktop-editing-action-control")
     expect(saveButton.attributes("disabled")).toBeUndefined()
     const moreOptions = wrapper.get("#desktop-editing-more-options")
-    expect(moreOptions.classes()).toContain("tw-flex-1")
+    expect(moreOptions.classes()).toContain("tw:flex-1")
     expect(moreOptions.classes()).toContain(
       "desktop-event-header-options__menu",
     )
@@ -2656,17 +2656,17 @@ describe("Event guest edit action", () => {
       moreOptions.get("event-options-stub").attributes("menuactivatorclass"),
     ).toContain("desktop-event-header-control")
     expect(moreOptions.get("event-options-stub").classes()).toContain(
-      "tw-w-full",
+      "tw:w-full",
     )
     expect(eventViewSource).toContain(':include-hide-if-needed="false"')
     const overlayAvailability = wrapper.get("#overlay-availabilities-toggle")
     expect(overlayAvailability.classes()).toContain(
       "desktop-editing-overlay-availability-toggle",
     )
-    expect(overlayAvailability.classes()).toContain("tw-w-full")
+    expect(overlayAvailability.classes()).toContain("tw:w-full")
     expect(
       wrapper.get("#desktop-editing-overlay-availability-slot").classes(),
-    ).toContain("tw-flex-1")
+    ).toContain("tw:flex-1")
     expect(eventViewSource).toContain("Overlay availability")
     const desktopDeleteButton = wrapper.get("#desktop-delete-availability-btn")
     expect(desktopDeleteButton.attributes("data-variant")).toBe("outlined")
@@ -2679,10 +2679,10 @@ describe("Event guest edit action", () => {
     expect(desktopDeleteButton.text()).toContain("Delete")
     expect(desktopDeleteButton.text()).toContain("mdi-trash-can-outline")
     expect(wrapper.get(".desktop-editing-delete-actions").classes()).toContain(
-      "sm:tw-ml-auto",
+      "tw:sm:ml-auto",
     )
     expect(eventViewSource).toContain(
-      "desktop-editing-delete-actions desktop-event-header-actions tw-flex tw-justify-end sm:tw-ml-auto",
+      "desktop-editing-delete-actions desktop-event-header-actions tw:flex tw:justify-end tw:sm:ml-auto",
     )
     expect(eventViewSource).toContain(
       ".desktop-editing-action-control {\n  flex: 1 1 0;\n  min-inline-size: 0;",
@@ -2691,7 +2691,7 @@ describe("Event guest edit action", () => {
       ".desktop-editing-delete-button {\n  inline-size: 100%;",
     )
     expect(eventViewSource).toContain(
-      'class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw-normal-case"',
+      'class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw:normal-case"',
     )
     expect(eventViewSource).toContain(
       ".destructive-outlined-button {\n  color: var(--timeful-red-canonical) !important;\n  border: 1px solid var(--timeful-red-canonical) !important;\n  --v-hover-opacity: 0;\n}",
@@ -2765,7 +2765,7 @@ describe("Event guest edit action", () => {
     const startOnMondaySlot = wrapper.get(
       "#desktop-editing-start-calendar-on-monday",
     )
-    expect(startOnMondaySlot.classes()).toContain("tw-flex-1")
+    expect(startOnMondaySlot.classes()).toContain("tw:flex-1")
     expect(startOnMondaySlot.classes()).toContain(
       "desktop-event-header-options__start-on-monday-slot",
     )
@@ -2938,8 +2938,8 @@ describe("Event guest edit action", () => {
     expect(cancelButton.attributes("data-variant")).toBe("outlined")
     expect(saveButton.text()).toContain("Save")
     expect(saveButton.classes()).toContain("mobile-editing-save-button")
-    expect(saveButton.classes()).toContain("tw-bg-green")
-    expect(saveButton.classes()).toContain("tw-text-white")
+    expect(saveButton.classes()).toContain("tw:bg-green")
+    expect(saveButton.classes()).toContain("tw:text-white")
     expect(saveButton.classes()).not.toContain("timeful-elevated-button")
     expect(saveButton.attributes("disabled")).toBeUndefined()
     expect(wrapper.text()).not.toContain("Options")
@@ -2987,7 +2987,7 @@ describe("Event guest edit action", () => {
     expect(deleteButton.text()).toContain("Delete")
     expect(deleteButton.text()).toContain("mdi-trash-can-outline")
     expect(eventViewSource).toContain(
-      'class="destructive-outlined-button tw-text-sm tw-normal-case"',
+      'class="destructive-outlined-button tw:text-sm tw:normal-case"',
     )
   })
 
@@ -3080,9 +3080,9 @@ describe("Event guest edit action", () => {
     expect(cancelButton?.attributes("data-variant")).toBe("outlined")
     expect(scheduleButton?.classes()).toContain("mobile-schedule-button")
     expect(scheduleButton?.attributes("data-variant")).toBe("flat")
-    expect(scheduleButton?.classes()).toContain("tw-bg-white")
-    expect(scheduleButton?.classes()).toContain("tw-border-light-blue")
-    expect(scheduleButton?.classes()).toContain("tw-text-blue")
+    expect(scheduleButton?.classes()).toContain("tw:bg-white")
+    expect(scheduleButton?.classes()).toContain("tw:border-light-blue")
+    expect(scheduleButton?.classes()).toContain("tw:text-blue")
   })
 
   it("moves Clear next to Cancel while rescheduling on desktop", async () => {
@@ -3137,7 +3137,7 @@ describe("Event guest edit action", () => {
     expect(clearIndex).toBeGreaterThan(cancelIndex)
     expect(clearIndex).toBeLessThan(scheduleIndex)
     expect(buttons[clearIndex].element.parentElement?.className).toContain(
-      "tw-gap-2",
+      "tw:gap-2",
     )
     await buttons[clearIndex].trigger("click")
     expect(
@@ -3189,7 +3189,7 @@ describe("Event guest edit action", () => {
       "desktop-event-header-actions",
     )
     expect(cancelButton?.element.parentElement?.className).toContain(
-      "sm:tw-ml-auto",
+      "tw:sm:ml-auto",
     )
   })
 
@@ -3257,7 +3257,7 @@ describe("Event guest edit action", () => {
     expect(editAvailabilityButton.text()).toContain("Edit availability")
     expect(editAvailabilityButton.attributes("disabled")).toBeDefined()
     expect(editEventButton.attributes("disabled")).toBeDefined()
-    await wrapper.find(".tw-text-xl").trigger("click")
+    await wrapper.find(".tw:text-xl").trigger("click")
     expect(editEventMock).not.toHaveBeenCalled()
     expect(wrapper.find("#show-best-times-header-toggle").exists()).toBe(true)
     expect(wrapper.find("#desktop-header-more-options").exists()).toBe(true)
@@ -3318,7 +3318,7 @@ describe("Event guest edit action", () => {
 
     expect(clearIndex).toBe(cancelIndex + 1)
     expect(clearIndex).toBeLessThan(scheduleIndex)
-    expect(buttons[clearIndex].classes()).toContain("tw-ml-2")
+    expect(buttons[clearIndex].classes()).toContain("tw:ml-2")
     await buttons[clearIndex].trigger("click")
     expect(
       scheduleOverlapMethodMocks.clearScheduledEvent,
@@ -3376,9 +3376,9 @@ describe("Event guest edit action", () => {
     expect(scheduleButton?.classes()).toContain(
       "mobile-schedule-button--disabled",
     )
-    expect(scheduleButton?.classes()).toContain("tw-bg-scheduled-event")
-    expect(scheduleButton?.classes()).toContain("tw-border-scheduled-event")
-    expect(scheduleButton?.classes()).toContain("tw-text-white")
+    expect(scheduleButton?.classes()).toContain("tw:bg-scheduled-event")
+    expect(scheduleButton?.classes()).toContain("tw:border-scheduled-event")
+    expect(scheduleButton?.classes()).toContain("tw:text-white")
   })
 
   it("does not render the relocated copy link action for group events", async () => {

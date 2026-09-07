@@ -1,9 +1,9 @@
 <template>
   <div>
     <v-container class="pa-5">
-      <div class="tw-mb-3 tw-flex tw-justify-between">
+      <div class="tw:mb-3 tw:flex tw:justify-between">
         <div class="headline font-weight-bold">My friends</div>
-        <div class="headline tw-text-gray">
+        <div class="headline tw:text-gray">
           Requests
           <v-chip color="green" text-color="white">3</v-chip>
         </div>
@@ -18,7 +18,7 @@
       <FriendItem
         v-for="(f, i) in exampleFriends"
         :key="i"
-        class="tw-mb-2"
+        class="tw:mb-2"
         :friend="f"
         chevron
         @click="router.push({ name: 'friend-schedule' })"
@@ -29,7 +29,7 @@
       <v-btn
         icon
         absolute
-        class="timeful-elevated-button tw-bottom-4 tw-left-0 tw-right-0 tw-mx-auto tw-bg-blue tw-text-white"
+        class="timeful-elevated-button tw:bottom-4 tw:left-0 tw:right-0 tw:mx-auto tw:bg-blue tw:text-white"
       >
         <v-icon>mdi-account-plus</v-icon>
       </v-btn>

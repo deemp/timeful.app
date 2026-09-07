@@ -469,14 +469,14 @@ describe("GuestDialog", () => {
       },
     })
 
-    const label = wrapper.get("span.tw-text-sm")
-    expect(label.classes()).toContain("tw-text-very-dark-gray")
+    const label = wrapper.get("span.tw:text-sm")
+    expect(label.classes()).toContain("tw:text-very-dark-gray")
     expect(label.text()).toBe("Allow others to edit this availability")
 
     await wrapper.get('input[type="checkbox"]').setValue(true)
 
-    expect(label.classes()).toContain("tw-text-black")
-    expect(label.classes()).not.toContain("tw-text-very-dark-gray")
+    expect(label.classes()).toContain("tw:text-black")
+    expect(label.classes()).not.toContain("tw:text-very-dark-gray")
   })
 
   it("renders the Continue button flat without the elevated glow styling", () => {
@@ -507,8 +507,8 @@ describe("GuestDialog", () => {
     const submitButton = getSubmitButton(wrapper)
     expect(submitButton.classes()).toContain("timeful-flat-button")
     expect(submitButton.classes()).not.toContain("timeful-elevated-button")
-    expect(submitButton.classes()).toContain("tw-bg-green")
-    expect(submitButton.classes()).toContain("tw-text-white")
+    expect(submitButton.classes()).toContain("tw:bg-green")
+    expect(submitButton.classes()).toContain("tw:text-white")
     expect(appCssSource).toMatch(
       /\.timeful-flat-button\s*\{[^}]*box-shadow: none !important;/,
     )

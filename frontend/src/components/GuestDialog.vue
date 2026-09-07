@@ -2,11 +2,11 @@
   <v-dialog
     :model-value="modelValue"
     width="400"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="(e) => emit('update:modelValue', e)"
   >
     <v-card>
-      <v-card-title class="tw-flex">
+      <v-card-title class="tw:flex">
         <div>Continue as guest</div>
         <v-spacer />
         <v-btn icon @click="emit('update:modelValue', false)">
@@ -18,7 +18,7 @@
           ref="formRef"
           v-model="formValid"
           lazy-validation
-          class="tw-flex tw-flex-col tw-gap-y-4"
+          class="tw:flex tw:flex-col tw:gap-y-4"
           onsubmit="return false"
         >
           <v-text-field
@@ -48,19 +48,19 @@
           <v-checkbox v-model="allowOthersToEdit" color="primary" hide-details>
             <template #label>
               <span
-                class="tw-text-sm"
+                class="tw:text-sm"
                 :class="
-                  allowOthersToEdit ? 'tw-text-black' : 'tw-text-very-dark-gray'
+                  allowOthersToEdit ? 'tw:text-black' : 'tw:text-very-dark-gray'
                 "
               >
                 Allow others to edit this availability
               </span>
             </template>
           </v-checkbox>
-          <div class="tw-flex">
+          <div class="tw:flex">
             <v-spacer />
             <v-btn
-              class="timeful-flat-button tw-bg-green tw-text-white"
+              class="timeful-flat-button tw:bg-green tw:text-white"
               :disabled="!canSubmit"
               @click="submit"
             >

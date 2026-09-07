@@ -1,23 +1,23 @@
 <template>
   <div
-    class="editing-availability-as tw-flex tw-flex-wrap tw-items-baseline tw-gap-1 tw-text-sm tw-italic tw-text-dark-gray"
+    class="editing-availability-as tw:flex tw:flex-wrap tw:items-baseline tw:gap-1 tw:text-sm tw:italic tw:text-dark-gray"
     :class="{
-      'editing-availability-as--chip tw-not-italic': isChip,
+      'editing-availability-as--chip tw:not-italic': isChip,
     }"
   >
     <div
       v-if="isChip"
-      class="editing-availability-as__chip-row tw-flex tw-flex-wrap tw-items-baseline tw-gap-1"
+      class="editing-availability-as__chip-row tw:flex tw:flex-wrap tw:items-baseline tw:gap-1"
     >
       {{ editingAs.actionText }} availability as
       <button
         v-if="editingAs.editableGuestName !== null"
         type="button"
-        class="editing-availability-as__guest-chip tw-flex tw-min-w-0 tw-max-w-full tw-grow tw-cursor-pointer tw-appearance-none tw-items-center tw-gap-1 tw-rounded tw-border tw-border-solid tw-border-outline-neutral tw-bg-white tw-px-2.5 tw-py-0.5 tw-text-left tw-text-sm tw-not-italic tw-text-dark-gray tw-shadow-none tw-transition-colors hover:tw-bg-light-gray"
+        class="editing-availability-as__guest-chip tw:flex tw:min-w-0 tw:max-w-full tw:grow tw:cursor-pointer tw:appearance-none tw:items-center tw:gap-1 tw:rounded tw:border tw:border-solid tw:border-outline-neutral tw:bg-white tw:px-2.5 tw:py-0.5 tw:text-left tw:text-sm tw:not-italic tw:text-dark-gray tw:shadow-none tw:transition-colors tw:hover:bg-light-gray"
         @click="emit('openEditGuestNameDialog')"
       >
         <span
-          class="editing-availability-as__guest-name tw-min-w-0 tw-grow tw-break-words tw-font-medium"
+          class="editing-availability-as__guest-name tw:min-w-0 tw:grow tw:wrap-break-word tw:font-medium"
           >{{ editingAs.editableGuestName || "Respondent name" }}</span
         >
         <v-icon small>mdi-pencil</v-icon>
@@ -28,10 +28,10 @@
       {{ editingAs.actionText }} availability as
       <div
         v-if="editingAs.editableGuestName !== null"
-        class="editing-availability-as__guest tw-group tw-mt-0.5 tw-flex tw-w-fit tw-cursor-pointer tw-items-center tw-gap-1"
+        class="editing-availability-as__guest tw:group tw:mt-0.5 tw:flex tw:w-fit tw:cursor-pointer tw:items-center tw:gap-1"
         @click="emit('openEditGuestNameDialog')"
       >
-        <span class="tw-font-medium group-hover:tw-underline">{{
+        <span class="tw:font-medium tw:group-hover:underline">{{
           editingAs.editableGuestName
         }}</span>
         <v-icon small>mdi-pencil</v-icon>
@@ -41,7 +41,7 @@
     <v-dialog
       :model-value="editGuestNameDialog"
       width="400"
-      content-class="tw-m-0"
+      content-class="tw:m-0"
       @update:model-value="emit('update:editGuestNameDialog', $event)"
     >
       <v-card>

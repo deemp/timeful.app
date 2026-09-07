@@ -1,21 +1,21 @@
 <template>
   <div
-    class="schedule-overlap-sidebar tw-relative"
+    class="schedule-overlap-sidebar tw:relative"
     :class="
       sidebar.isPhone
-        ? 'tw-px-4 tw-py-4 tw-pr-4'
-        : ['tw-sticky tw-top-16 tw-flex-none tw-self-start tw-p-0 sm:tw-mr-4']
+        ? 'tw:px-4 tw:py-4 tw:pr-4'
+        : ['tw:sticky tw:top-16 tw:flex-none tw:self-start tw:p-0 tw:sm:mr-4']
     "
     :style="{ width: sidebar.rightSideWidth }"
   >
     <template v-if="sidebar.isSignUp">
-      <div class="tw-mb-2 tw-text-lg tw-text-black">Slots</div>
-      <div v-if="!sidebar.isOwner" class="tw-mb-3 tw-flex tw-flex-col">
+      <div class="tw:mb-2 tw:text-lg tw:text-black">Slots</div>
+      <div v-if="!sidebar.isOwner" class="tw:mb-3 tw:flex tw:flex-col">
         <div
-          class="tw-flex tw-flex-col tw-gap-1 tw-rounded-md tw-bg-light-gray tw-p-3 tw-text-xs tw-italic tw-text-dark-gray"
+          class="tw:flex tw:flex-col tw:gap-1 tw:rounded-md tw:bg-light-gray tw:p-3 tw:text-xs tw:italic tw:text-dark-gray"
         >
           <div v-if="!sidebar.authUser || sidebar.alreadyRespondedToSignUpForm">
-            <a class="tw-underline" :href="`mailto:${sidebar.event.ownerId}`"
+            <a class="tw:underline" :href="`mailto:${sidebar.event.ownerId}`"
               >Contact sign up creator</a
             >
             to edit your slot
@@ -56,11 +56,11 @@
     <template v-else>
       <div
         v-if="!sidebar.isPhone && !sidebar.event.daysOnly"
-        class="schedule-overlap-sidebar__pager tw-absolute tw-left-0 tw-top-0 tw-z-20"
+        class="schedule-overlap-sidebar__pager tw:absolute tw:left-0 tw:top-0 tw:z-20"
       >
         <v-btn
-          :class="sidebar.hasNextPage ? 'tw-visible' : 'tw-invisible'"
-          class="tw-h-8 tw-w-8 tw-min-w-8 tw-border-outline-neutral sm:tw-h-[36px] sm:tw-w-[36px] sm:tw-min-w-[36px]"
+          :class="sidebar.hasNextPage ? 'tw:visible' : 'tw:invisible'"
+          class="tw:h-8 tw:w-8 tw:min-w-8 tw:border-outline-neutral tw:sm:h-[36px] tw:sm:w-[36px] tw:sm:min-w-[36px]"
           variant="outlined"
           icon
           @click="sidebar.nextPage"
@@ -82,17 +82,17 @@
             sidebar.state === states.SINGLE_AVAILABILITY ||
             sidebar.state === states.SUBSET_AVAILABILITY) &&
             !sidebar.event.daysOnly &&
-            'tw-pt-2',
+            'tw:pt-2',
           sidebar.state === states.EDIT_AVAILABILITY &&
             !sidebar.isPhone &&
             !sidebar.event.daysOnly &&
-            'tw-pt-5',
-          !sidebar.isPhone && sidebar.event.daysOnly && 'tw-pt-16',
+            'tw:pt-5',
+          !sidebar.isPhone && sidebar.event.daysOnly && 'tw:pt-16',
         ]"
       >
         <div
           v-if="sidebar.state === states.EDIT_AVAILABILITY"
-          class="tw-mb-2 tw-flex tw-flex-col tw-gap-5"
+          class="tw:mb-2 tw:flex tw:flex-col tw:gap-5"
         >
           <EditingAvailabilityAs
             v-if="
@@ -114,7 +114,7 @@
           <AvailabilityTypeToggle
             v-if="!sidebar.isGroup && !sidebar.isPhone"
             :model-value="sidebar.availabilityType"
-            class="tw-w-full"
+            class="tw:w-full"
             @update:model-value="onAvailabilityTypeUpdate"
           />
 
@@ -140,7 +140,7 @@
               v-if="!sidebar.isPhone"
               variant="outlined"
               prepend-icon="mdi-calendar"
-              class="calendar-options-button tw-w-full tw-border-outline-neutral tw-text-sm"
+              class="calendar-options-button tw:w-full tw:border-outline-neutral tw:text-sm"
               @click="emit('update:calendarOptionsDialog', true)"
             >
               Calendar options
@@ -152,7 +152,7 @@
               @update:model-value="emit('update:calendarOptionsDialog', $event)"
             >
               <v-card>
-                <v-card-title class="tw-flex">
+                <v-card-title class="tw:flex">
                   <div>Calendar options</div>
                   <v-spacer />
                   <v-btn
@@ -163,9 +163,9 @@
                   </v-btn>
                 </v-card-title>
                 <v-card-text
-                  class="tw-flex tw-flex-col tw-gap-6 tw-pb-8 tw-pt-2"
+                  class="tw:flex tw:flex-col tw:gap-6 tw:pb-8 tw:pt-2"
                 >
-                  <AlertText v-if="sidebar.isGroup" class="-tw-mb-4">
+                  <AlertText v-if="sidebar.isGroup" class="tw:-mb-4">
                     Calendar options will only updated for the current group
                   </AlertText>
 

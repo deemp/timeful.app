@@ -1,30 +1,30 @@
 <template>
   <v-dialog
     :model-value="modelValue"
-    content-class="tw-max-w-xl"
+    content-class="tw:max-w-xl"
     @update:model-value="(e) => emit('update:modelValue', e)"
   >
     <v-card>
-      <v-card-title class="tw-flex">
+      <v-card-title class="tw:flex">
         <div>Confirm details</div>
         <v-spacer />
         <v-btn icon @click="emit('update:modelValue', false)">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      <v-card-text class="tw-px-0">
+      <v-card-text class="tw:px-0">
         <v-expansion-panels accordion mandatory flat>
           <v-expansion-panel>
-            <v-expansion-panel-title class="tw-font-medium">
+            <v-expansion-panel-title class="tw:font-medium">
               Attendees
             </v-expansion-panel-title>
             <v-expansion-panel-text>
-              <div class="tw-mb-4 tw-text-dark-gray">
+              <div class="tw:mb-4 tw:text-dark-gray">
                 Google Calendar invites will be sent to people at the following
                 email addresses.
                 <template v-if="signInEnabled">
                   <span v-if="!hasContactsAccess">
-                    <a class="tw-underline" @click="requestContactsAccess"
+                    <a class="tw:underline" @click="requestContactsAccess"
                       >Enable contacts access</a
                     >
                     to receive email auto-suggestions.
@@ -34,17 +34,17 @@
                   Requires sign-in, which is disabled in this build
                 </span>
               </div>
-              <div class="tw-max-h-96 tw-table-auto tw-overflow-y-auto">
-                <table class="tw-w-full tw-text-left tw-text-black">
+              <div class="tw:max-h-96 tw:table-auto tw:overflow-y-auto">
+                <table class="tw:w-full tw:text-left tw:text-black">
                   <thead>
-                    <tr class="tw-bg-white tw-font-medium">
+                    <tr class="tw:bg-white tw:font-medium">
                       <th
-                        class="tw-sticky tw-top-0 tw-z-10 tw-bg-white tw-pb-4"
+                        class="tw:sticky tw:top-0 tw:z-10 tw:bg-white tw:pb-4"
                       >
                         Name
                       </th>
                       <th
-                        class="tw-sticky tw-top-0 tw-z-10 tw-bg-white tw-pb-4"
+                        class="tw:sticky tw:top-0 tw:z-10 tw:bg-white tw:pb-4"
                       >
                         Email
                       </th>
@@ -52,22 +52,22 @@
                   </thead>
                   <tbody>
                     <tr v-for="(respondent, r) in respondents" :key="r">
-                      <td class="tw-pb-4 tw-pr-4">
-                        <div class="tw-flex tw-items-center">
+                      <td class="tw:pb-4 tw:pr-4">
+                        <div class="tw:flex tw:items-center">
                           <UserAvatarContent
                             v-if="respondent.email.length > 0"
                             :user="respondent"
-                            class="-tw-ml-3 -tw-mr-1 tw-h-4 tw-w-4"
+                            class="tw:-ml-3 tw:-mr-1 tw:h-4 tw:w-4"
                           ></UserAvatarContent>
-                          <v-icon v-else class="tw-ml-1 tw-mr-3" small>
+                          <v-icon v-else class="tw:ml-1 tw:mr-3" small>
                             mdi-account
                           </v-icon>
 
                           {{ respondent.firstName }} {{ respondent.lastName }}
                         </div>
                       </td>
-                      <td class="tw-pr-4">
-                        <div v-if="respondent.email.length > 0" class="tw-pb-4">
+                      <td class="tw:pr-4">
+                        <div v-if="respondent.email.length > 0" class="tw:pb-4">
                           {{ respondent.email }}
                         </div>
                         <v-combobox
@@ -80,7 +80,7 @@
                           hide-no-data
                           return-object
                           append-icon=""
-                          class="timeful-invalid-field tw-pt-2"
+                          class="timeful-invalid-field tw:pt-2"
                           placeholder="Email (optional)"
                           variant="outlined"
                           density="compact"
@@ -117,7 +117,7 @@
             </v-expansion-panel-text>
           </v-expansion-panel>
           <v-expansion-panel>
-            <v-expansion-panel-title class="tw-font-medium">
+            <v-expansion-panel-title class="tw:font-medium">
               Location & description (optional)
             </v-expansion-panel-title>
             <v-expansion-panel-text>

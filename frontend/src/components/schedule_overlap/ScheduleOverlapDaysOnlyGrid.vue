@@ -1,20 +1,20 @@
 <template>
-  <div class="schedule-overlap-days-only-grid tw-grow">
-    <div class="tw-flex tw-h-9 tw-items-center tw-justify-between">
+  <div class="schedule-overlap-days-only-grid tw:grow">
+    <div class="tw:flex tw:h-9 tw:items-center tw:justify-between">
       <v-btn
-        :class="daysOnlyGrid.hasPrevPage ? 'tw-visible' : 'tw-invisible'"
-        class="tw-h-8 tw-w-8 tw-min-w-8 tw-border-outline-neutral sm:tw-h-[36px] sm:tw-w-[36px] sm:tw-min-w-[36px]"
+        :class="daysOnlyGrid.hasPrevPage ? 'tw:visible' : 'tw:invisible'"
+        class="tw:h-8 tw:w-8 tw:min-w-8 tw:border-outline-neutral tw:sm:h-[36px] tw:sm:w-[36px] tw:sm:min-w-[36px]"
         variant="outlined"
         icon
         @click="daysOnlyGrid.actions.prevPage"
         ><v-icon>mdi-chevron-left</v-icon></v-btn
       >
-      <div class="tw-text-lg tw-font-medium tw-capitalize sm:tw-text-xl">
+      <div class="tw:text-lg tw:font-medium tw:capitalize tw:sm:text-xl">
         {{ daysOnlyGrid.curMonthText }}
       </div>
       <v-btn
-        :class="daysOnlyGrid.hasNextPage ? 'tw-visible' : 'tw-invisible'"
-        class="tw-h-8 tw-w-8 tw-min-w-8 tw-border-outline-neutral sm:tw-h-[36px] sm:tw-w-[36px] sm:tw-min-w-[36px]"
+        :class="daysOnlyGrid.hasNextPage ? 'tw:visible' : 'tw:invisible'"
+        class="tw:h-8 tw:w-8 tw:min-w-8 tw:border-outline-neutral tw:sm:h-[36px] tw:sm:w-[36px] tw:sm:min-w-[36px]"
         variant="outlined"
         icon
         @click="daysOnlyGrid.actions.nextPage"
@@ -22,20 +22,20 @@
       >
     </div>
     <div
-      class="schedule-overlap-days-only-grid__weekdays tw-flex tw-h-7 tw-w-full tw-items-center"
+      class="schedule-overlap-days-only-grid__weekdays tw:flex tw:h-7 tw:w-full tw:items-center"
     >
       <div
         v-for="day in daysOnlyGrid.daysOfWeek"
         :key="day"
-        class="schedule-overlap-days-only-grid__weekday tw-flex-1 tw-text-center tw-text-sm tw-capitalize tw-text-dark-gray sm:tw-text-base"
+        class="schedule-overlap-days-only-grid__weekday tw:flex-1 tw:text-center tw:text-sm tw:capitalize tw:text-dark-gray tw:sm:text-base"
       >
         {{ day }}
       </div>
     </div>
-    <div class="tw-relative">
+    <div class="tw:relative">
       <div
         id="drag-section"
-        class="schedule-overlap-days-only-grid__month tw-grid tw-grid-cols-7"
+        class="schedule-overlap-days-only-grid__month tw:grid tw:grid-cols-7"
         :style="{ touchAction: daysOnlyGrid.allowDrag ? 'none' : 'pan-y' }"
         @pointerdown="daysOnlyGrid.actions.startDrag"
         @pointermove="daysOnlyGrid.actions.moveDrag"
@@ -50,7 +50,7 @@
         <div
           v-for="(day, i) in daysOnlyGrid.monthDays"
           :key="day.time.epochMilliseconds"
-          class="timeslot tw-flex tw-aspect-[2/1] tw-items-center tw-justify-center tw-text-sm sm:tw-text-base"
+          class="timeslot tw:flex tw:aspect-2/1 tw:items-center tw:justify-center tw:text-sm tw:sm:text-base"
           :class="daysOnlyGrid.dayTimeslotClassStyle[i].class"
           :style="daysOnlyGrid.dayTimeslotClassStyle[i].style"
           v-on="daysOnlyGrid.dayTimeslotVon[i]"
@@ -61,12 +61,12 @@
       <ZigZag
         v-if="daysOnlyGrid.hasPrevPage"
         left
-        class="tw-absolute tw-left-0 tw-top-0 tw-h-full tw-w-3"
+        class="tw:absolute tw:left-0 tw:top-0 tw:h-full tw:w-3"
       />
       <ZigZag
         v-if="daysOnlyGrid.hasNextPage"
         right
-        class="tw-absolute tw-right-0 tw-top-0 tw-h-full tw-w-3"
+        class="tw:absolute tw:right-0 tw:top-0 tw:h-full tw:w-3"
       />
     </div>
 
@@ -74,12 +74,12 @@
       <div
         v-if="!daysOnlyGrid.isPhone && daysOnlyGrid.hintTextShown"
         :key="daysOnlyGrid.hintText"
-        class="tw-sticky tw-bottom-4 tw-z-10 tw-flex"
+        class="tw:sticky tw:bottom-4 tw:z-10 tw:flex"
       >
         <div
-          class="tw-mt-2 tw-flex tw-w-full tw-items-center tw-justify-between tw-gap-1 tw-rounded-md tw-bg-off-white tw-p-2 tw-px-[7px] tw-text-sm tw-text-very-dark-gray"
+          class="tw:mt-2 tw:flex tw:w-full tw:items-center tw:justify-between tw:gap-1 tw:rounded-md tw:bg-off-white tw:p-2 tw:px-[7px] tw:text-sm tw:text-very-dark-gray"
         >
-          <div class="tw-flex tw-items-center tw-gap-1">
+          <div class="tw:flex tw:items-center tw:gap-1">
             <v-icon small>mdi-information-outline</v-icon>
             {{ daysOnlyGrid.hintText }}
           </div>

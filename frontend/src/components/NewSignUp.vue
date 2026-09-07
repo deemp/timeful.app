@@ -1,8 +1,8 @@
 <template>
   <v-card
     :flat="dialog"
-    :class="{ 'tw-py-4': !dialog, 'tw-flex-1': dialog }"
-    class="tw-relative tw-flex tw-max-w-[28rem] tw-flex-col tw-overflow-hidden tw-rounded-lg tw-transition-all"
+    :class="{ 'tw:py-4': !dialog, 'tw:flex-1': dialog }"
+    class="tw:relative tw:flex tw:max-w-md tw:flex-col tw:overflow-hidden tw:rounded-lg tw:transition-all"
   >
     <EditorDialogHeader
       :title="edit ? 'Edit sign up' : 'New sign up'"
@@ -14,7 +14,7 @@
       @close="emit('update:modelValue', false)"
     >
       <template #help-content>
-        <div class="tw-mb-4">
+        <div class="tw:mb-4">
           Use events to collect people's availabilities and compare them across
           certain days.
         </div>
@@ -22,13 +22,13 @@
     </EditorDialogHeader>
     <v-card-text
       ref="cardText"
-      class="tw-relative tw-flex-1 tw-overflow-auto tw-px-4 tw-py-1 sm:tw-px-8"
+      class="tw:relative tw:flex-1 tw:overflow-auto tw:px-4 tw:py-1 tw:sm:px-8"
     >
       <v-form
         ref="formRef"
         v-model="formValid"
         lazy-validation
-        class="tw-flex tw-flex-col tw-gap-y-6"
+        class="tw:flex tw:flex-col tw:gap-y-6"
         :disabled="loading"
       >
         <v-text-field
@@ -46,11 +46,11 @@
         <div>
           <v-expand-transition>
             <div v-if="!daysOnly">
-              <div class="tw-mb-2 tw-text-lg tw-text-black">
+              <div class="tw:mb-2 tw:text-lg tw:text-black">
                 What times might work?
               </div>
               <div
-                class="time-range-row tw-mb-6 tw-flex tw-items-center tw-justify-between tw-gap-x-2"
+                class="time-range-row tw:mb-6 tw:flex tw:items-center tw:justify-between tw:gap-x-2"
               >
                 <TimeFormatToggle
                   :model-value="eventTimeType"
@@ -67,7 +67,7 @@
             </div>
           </v-expand-transition>
 
-          <div class="tw-mb-2 tw-text-lg tw-text-black">
+          <div class="tw:mb-2 tw:text-lg tw:text-black">
             What
             {{ selectedDateOption === dateOptions.SPECIFIC ? "dates" : "days" }}
             might work?
@@ -79,12 +79,12 @@
             item-color="green"
             variant="solo"
             hide-details
-            class="timeful-solo-field tw-mb-4"
+            class="timeful-solo-field tw:mb-4"
           />
 
           <v-expand-transition>
             <div v-if="selectedDateOption === dateOptions.SPECIFIC || daysOnly">
-              <div class="tw-mb-2 tw-text-xs tw-text-dark-gray">
+              <div class="tw:mb-2 tw:text-xs tw:text-dark-gray">
                 Drag to select multiple dates
               </div>
               <v-input
@@ -105,7 +105,7 @@
                 v-model="selectedDaysOfWeek"
                 hide-details="auto"
                 :rules="selectedDaysRules"
-                class="tw-w-fit"
+                class="tw:w-fit"
               >
                 <v-btn-toggle
                   v-model="selectedDaysOfWeek"
@@ -123,9 +123,9 @@
                   </v-btn>
                 </v-btn-toggle>
               </v-input>
-              <v-checkbox v-model="startOnMonday" class="tw-mt-2" hide-details>
+              <v-checkbox v-model="startOnMonday" class="tw:mt-2" hide-details>
                 <template #label>
-                  <span class="tw-text-sm tw-text-very-dark-gray">
+                  <span class="tw:text-sm tw:text-very-dark-gray">
                     Start on Monday
                   </span>
                 </template>
@@ -134,9 +134,9 @@
           </v-expand-transition>
         </div>
 
-        <v-checkbox v-model="notificationsEnabled" hide-details class="tw-mt-2">
+        <v-checkbox v-model="notificationsEnabled" hide-details class="tw:mt-2">
           <template #label>
-            <span class="tw-text-sm tw-text-very-dark-gray"
+            <span class="tw:text-sm tw:text-very-dark-gray"
               >Email me each time someone signs up</span
             >
           </template>
@@ -144,32 +144,32 @@
 
         <v-checkbox v-model="collectEmails">
           <template #label>
-            <span class="tw-text-sm tw-text-very-dark-gray">
+            <span class="tw:text-sm tw:text-very-dark-gray">
               Collect email address on sign up
             </span>
           </template>
         </v-checkbox>
 
-        <div class="tw-flex tw-flex-col tw-gap-2">
+        <div class="tw:flex tw:flex-col tw:gap-2">
           <ExpandableSection
             v-model="showAdvancedOptions"
             label="Advanced options"
             :auto-scroll="dialog"
           >
-            <div class="tw-flex tw-flex-col tw-gap-5 tw-pt-2">
+            <div class="tw:flex tw:flex-col tw:gap-5 tw:pt-2">
               <v-checkbox
                 v-if="authUser"
                 v-model="blindAvailabilityEnabled"
                 messages="Only show attendees to sign up creator"
               >
                 <template #label>
-                  <span class="tw-text-sm tw-text-black">
+                  <span class="tw:text-sm tw:text-black">
                     Hide attendees from each other
                   </span>
                 </template>
                 <template #message="{ message }">
                   <div
-                    class="-tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                    class="tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
                   >
                     {{ message }}
                   </div>
@@ -182,16 +182,16 @@
                 false-icon="mdi-checkbox-blank-off-outline"
               >
                 <template #label>
-                  <span class="tw-text-sm"
+                  <span class="tw:text-sm"
                     >Hide responses from respondents</span
                   >
                 </template>
                 <template #message="{ message }">
                   <div
-                    class="tw-pointer-events-auto -tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                    class="tw:pointer-events-auto tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
                   >
                     {{ message }}
-                    <span class="tw-font-medium tw-text-very-dark-gray"
+                    <span class="tw:font-medium tw:text-very-dark-gray"
                       ><template v-if="signInEnabled">
                         <a @click="emit('signIn')">Sign in</a>
                         to use this feature
@@ -204,9 +204,9 @@
                   </div>
                 </template>
               </v-checkbox>
-              <div class="tw-flex tw-items-center tw-gap-x-2">
+              <div class="tw:flex tw:items-center tw:gap-x-2">
                 <div
-                  class="tw-text-sm tw-text-black"
+                  class="tw:text-sm tw:text-black"
                   data-testid="timezone-label"
                 >
                   Timezone
@@ -227,21 +227,21 @@
         </div>
       </v-form>
     </v-card-text>
-    <v-card-actions class="tw-relative tw-px-4 sm:tw-px-8">
-      <div class="tw-relative tw-w-full">
+    <v-card-actions class="tw:relative tw:px-4 tw:sm:px-8">
+      <div class="tw:relative tw:w-full">
         <v-btn
           :disabled="!formValid"
           block
           :loading="loading"
           color="primary"
-          class="timeful-elevated-button tw-mt-4 tw-bg-green"
+          class="timeful-elevated-button tw:mt-4 tw:bg-green"
           @click="submit"
         >
           {{ edit ? "Save edits" : "Create event" }}
         </v-btn>
         <div
-          :class="formValid ? 'tw-invisible' : 'tw-visible'"
-          class="tw-mt-1 tw-text-xs tw-text-red"
+          :class="formValid ? 'tw:invisible' : 'tw:visible'"
+          class="tw:mt-1 tw:text-xs tw:text-red"
         >
           Please fix form errors before continuing
         </div>
@@ -251,7 +251,7 @@
     <OverflowGradient
       v-if="hasMounted && cardTextElement"
       :scroll-container="cardTextElement"
-      class="tw-bottom-[90px]"
+      class="tw:bottom-[90px]"
     />
   </v-card>
 </template>

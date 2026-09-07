@@ -2,23 +2,23 @@
   <v-dialog
     :model-value="modelValue"
     :width="400"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="onDialogInput"
   >
     <v-card>
       <!-- Main sign-in screen -->
       <template v-if="step === 'select'">
         <v-card-title>Sign in</v-card-title>
-        <v-card-text class="tw-flex tw-flex-col tw-items-center">
-          <div class="tw-mb-4 tw-flex tw-w-full tw-flex-col tw-gap-y-2">
+        <v-card-text class="tw:flex tw:flex-col tw:items-center">
+          <div class="tw:mb-4 tw:flex tw:w-full tw:flex-col tw:gap-y-2">
             <v-btn
               block
-              class="timeful-elevated-button tw-bg-white"
+              class="timeful-elevated-button tw:bg-white"
               @click="signIn(calendarTypes.GOOGLE)"
             >
-              <div class="tw-flex tw-w-full tw-items-center tw-gap-2">
+              <div class="tw:flex tw:w-full tw:items-center tw:gap-2">
                 <v-img
-                  class="tw-flex-initial"
+                  class="tw:flex-initial"
                   width="20"
                   height="20"
                   src="@/assets/google_logo.svg"
@@ -30,12 +30,12 @@
             </v-btn>
             <v-btn
               block
-              class="timeful-elevated-button tw-bg-white"
+              class="timeful-elevated-button tw:bg-white"
               @click="signIn(calendarTypes.OUTLOOK)"
             >
-              <div class="tw-flex tw-w-full tw-items-center tw-gap-2">
+              <div class="tw:flex tw:w-full tw:items-center tw:gap-2">
                 <v-img
-                  class="tw-flex-initial"
+                  class="tw:flex-initial"
                   width="20"
                   height="20"
                   src="@/assets/outlook_logo.svg"
@@ -46,17 +46,17 @@
               </div>
             </v-btn>
 
-            <div class="tw-my-2 tw-flex tw-items-center tw-gap-3">
+            <div class="tw:my-2 tw:flex tw:items-center tw:gap-3">
               <v-divider />
-              <span class="tw-text-gray-500 tw-text-xs">or</span>
+              <span class="tw:text-gray-500 tw:text-xs">or</span>
               <v-divider />
             </div>
 
             <div>
-              <div class="tw-mb-1 tw-text-sm tw-font-medium">Email address</div>
+              <div class="tw:mb-1 tw:text-sm tw:font-medium">Email address</div>
               <v-text-field
                 v-model="email"
-                class="timeful-solo-field timeful-invalid-field tw-mb-2"
+                class="timeful-solo-field timeful-invalid-field tw:mb-2"
                 placeholder="Enter your email..."
                 type="email"
                 variant="solo"
@@ -68,12 +68,12 @@
               />
               <p
                 v-if="accountNotFound"
-                class="tw-text-error tw-mb-2 tw-flex tw-items-center tw-gap-2 tw-text-sm"
+                class="tw-text-error tw:mb-2 tw:flex tw:items-center tw:gap-2 tw:text-sm"
               >
                 <v-icon color="error" size="16">mdi-alert-circle</v-icon>
                 Couldn’t find this account.
                 <router-link
-                  class="tw-font-medium tw-underline"
+                  class="tw:font-medium tw:underline"
                   :to="{ name: 'sign-up', query: { email: email.trim() } }"
                 >
                   Sign up
@@ -91,9 +91,9 @@
               </v-btn>
             </div>
           </div>
-          <div v-if="privacyPolicyEnabled" class="tw-text-center tw-text-xs">
+          <div v-if="privacyPolicyEnabled" class="tw:text-center tw:text-xs">
             By continuing, you agree to our
-            <router-link class="tw-text-blue" :to="{ name: 'privacy-policy' }"
+            <router-link class="tw:text-blue" :to="{ name: 'privacy-policy' }"
               >privacy policy</router-link
             >
           </div>
@@ -102,11 +102,11 @@
 
       <!-- Account creation: name entry for new users -->
       <template v-else-if="step === 'onboarding'">
-        <v-card-title class="tw-flex tw-items-center">
+        <v-card-title class="tw:flex tw:items-center">
           <v-btn
             icon
             size="small"
-            class="tw-mr-1"
+            class="tw:mr-1"
             @click="returnToProviderSelection"
           >
             <v-icon>mdi-arrow-left</v-icon>
@@ -114,30 +114,30 @@
           Create your account
         </v-card-title>
         <v-card-text>
-          <p class="tw-text-gray-600 tw-mb-4 tw-text-sm">
+          <p class="tw:text-gray-600 tw:mb-4 tw:text-sm">
             Enter your name to create your Timeful account.
           </p>
-          <div class="tw-mb-1 tw-text-sm tw-font-medium">First name</div>
+          <div class="tw:mb-1 tw:text-sm tw:font-medium">First name</div>
           <v-text-field
             v-model="firstName"
             placeholder="First name"
             variant="solo"
             hide-details="auto"
             autofocus
-            class="timeful-solo-field tw-mb-3"
+            class="timeful-solo-field tw:mb-3"
             @keydown.enter="lastNameField?.focus()"
           />
-          <div class="tw-mb-1 tw-text-sm tw-font-medium">Last name</div>
+          <div class="tw:mb-1 tw:text-sm tw:font-medium">Last name</div>
           <v-text-field
             ref="lastNameField"
             v-model="lastName"
             placeholder="Last name (optional)"
             variant="solo"
             hide-details="auto"
-            class="timeful-solo-field tw-mb-3"
+            class="timeful-solo-field tw:mb-3"
             @keydown.enter="submitOnboarding"
           />
-          <div class="tw-mb-1 tw-text-sm tw-font-medium">Email</div>
+          <div class="tw:mb-1 tw:text-sm tw:font-medium">Email</div>
           <v-text-field
             :model-value="email"
             placeholder="Email..."
@@ -145,7 +145,7 @@
             hide-details="auto"
             disabled
             background-color="#f5f5f5"
-            class="timeful-solo-field tw-mb-3"
+            class="timeful-solo-field tw:mb-3"
           />
           <v-btn
             block
@@ -159,11 +159,11 @@
           </v-btn>
           <div
             v-if="sendOtpError"
-            class="tw-mt-3 tw-flex tw-flex-col tw-items-center tw-gap-1 tw-text-sm"
+            class="tw:mt-3 tw:flex tw:flex-col tw:items-center tw:gap-1 tw:text-sm"
           >
             <p class="tw-text-error">{{ sendOtpError }}</p>
             <a
-              class="tw-font-medium tw-text-blue tw-underline"
+              class="tw:font-medium tw:text-blue tw:underline"
               :href="feedbackUrl"
               target="_blank"
               rel="noopener noreferrer"
@@ -176,18 +176,18 @@
 
       <!-- OTP code input -->
       <template v-else-if="step === 'otp'">
-        <v-card-title class="tw-flex tw-items-center">
-          <v-btn icon size="small" class="tw-mr-1" @click="returnFromOtp">
+        <v-card-title class="tw:flex tw:items-center">
+          <v-btn icon size="small" class="tw:mr-1" @click="returnFromOtp">
             <v-icon>mdi-arrow-left</v-icon>
           </v-btn>
           Enter verification code
         </v-card-title>
         <v-card-text>
-          <p class="tw-text-gray-600 tw-mb-4 tw-text-sm">
+          <p class="tw:text-gray-600 tw:mb-4 tw:text-sm">
             Enter the 6-digit code sent to
             <strong>{{ email }}</strong>
           </p>
-          <div class="tw-mb-1 tw-text-sm tw-font-medium">Verification code</div>
+          <div class="tw:mb-1 tw:text-sm tw:font-medium">Verification code</div>
           <v-text-field
             v-model="otpCode"
             placeholder="Enter 6-digit code..."
@@ -196,7 +196,7 @@
             maxlength="6"
             :error-messages="otpError"
             autofocus
-            class="timeful-solo-field timeful-invalid-field tw-mb-2"
+            class="timeful-solo-field timeful-invalid-field tw:mb-2"
             @keydown.enter="verifyOtp"
           />
           <v-btn
@@ -209,7 +209,7 @@
           >
             Verify
           </v-btn>
-          <div class="tw-mt-3 tw-text-center">
+          <div class="tw:mt-3 tw:text-center">
             <v-btn
               variant="text"
               size="x-small"
@@ -225,11 +225,11 @@
           </div>
           <div
             v-if="sendOtpError"
-            class="tw-mt-3 tw-flex tw-flex-col tw-items-center tw-gap-1 tw-text-sm"
+            class="tw:mt-3 tw:flex tw:flex-col tw:items-center tw:gap-1 tw:text-sm"
           >
             <p class="tw-text-error">{{ sendOtpError }}</p>
             <a
-              class="tw-font-medium tw-text-blue tw-underline"
+              class="tw:font-medium tw:text-blue tw:underline"
               :href="feedbackUrl"
               target="_blank"
               rel="noopener noreferrer"

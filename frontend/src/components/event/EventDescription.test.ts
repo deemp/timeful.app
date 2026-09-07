@@ -20,7 +20,7 @@ describe("EventDescription", () => {
 
     expect(wrapper.get(".event-description-copy").text()).toBe(description)
     expect(wrapper.get(".event-description-copy").classes()).toContain(
-      "tw-whitespace-pre-wrap",
+      "tw:whitespace-pre-wrap",
     )
     expect(wrapper.find("button").exists()).toBe(false)
     expect(wrapper.find('[contenteditable="true"]').exists()).toBe(false)

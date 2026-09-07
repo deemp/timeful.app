@@ -1,22 +1,22 @@
 <template>
   <div
-    class="tw-h-full tw-w-full tw-cursor-pointer tw-overflow-hidden tw-rounded-md tw-border-2 tw-border-solid tw-bg-white"
-    :class="unsaved ? 'tw-border-light-green' : 'tw-border-outline-neutral'"
+    class="tw:h-full tw:w-full tw:cursor-pointer tw:overflow-hidden tw:rounded-md tw:border-2 tw:border-solid tw:bg-white"
+    :class="unsaved ? 'tw:border-light-green' : 'tw:border-outline-neutral'"
   >
     <div
-      class="tw-h-full tw-w-full tw-overflow-hidden tw-text-ellipsis tw-p-1 tw-text-xs"
+      class="tw:h-full tw:w-full tw:overflow-hidden tw:text-ellipsis tw:p-1 tw:text-xs"
       :style="{ backgroundColor: backgroundColor }"
     >
       <div v-if="!titleOnly">
-        <div class="ph-no-capture tw-font-medium" :class="fontColor">
+        <div class="ph-no-capture tw:font-medium" :class="fontColor">
           {{ signUpBlock?.name }}
         </div>
-        <div class="ph-no-capture tw-font-medium" :class="fontColor">
+        <div class="ph-no-capture tw:font-medium" :class="fontColor">
           ({{ numberResponses }}/{{ signUpBlock?.capacity }})
         </div>
       </div>
       <div v-else>
-        <div class="tw-text-xs tw-italic" :class="fontColor">
+        <div class="tw:text-xs tw:italic" :class="fontColor">
           {{ title }}
         </div>
       </div>
@@ -60,7 +60,7 @@ const backgroundColor = computed(() => {
 
 const fontColor = computed(() =>
   numberResponses.value == props.signUpBlock?.capacity && !props.unsaved
-    ? "tw-text-white"
-    : "tw-text-dark-gray",
+    ? "tw:text-white"
+    : "tw:text-dark-gray",
 )
 </script>

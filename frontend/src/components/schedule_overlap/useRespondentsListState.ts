@@ -22,13 +22,13 @@ export const respondentSlotStatusClassMap: Record<
   Exclude<RespondentSlotStatus, null>,
   string
 > = {
-  available: "tw-bg-[#00994C77]",
-  "if-needed": "tw-bg-yellow",
-  unavailable: "tw-bg-[#F9CCCC]",
-  "disabled-inactive": "tw-bg-light-gray-stroke",
+  available: "tw:bg-[#00994C77]",
+  "if-needed": "tw:bg-yellow",
+  unavailable: "tw:bg-[#F9CCCC]",
+  "disabled-inactive": "tw:bg-light-gray-stroke",
   "disabled-collapsed":
-    "tw-bg-[var(--timeful-collapsed-hours-bg)] respondent-status--collapsed",
-  "disabled-out-of-range": "tw-bg-gray",
+    "tw:bg-(--timeful-collapsed-hours-bg) respondent-status--collapsed",
+  "disabled-out-of-range": "tw:bg-gray",
 }
 
 export function respondentStatusClass(status: RespondentSlotStatus): string {
@@ -188,12 +188,12 @@ export function useRespondentsListState(opts: UseRespondentsListStateOptions) {
       !curRespondentsSet.value.has(id) &&
       opts.curRespondents.value.length > 0
     ) {
-      classes.push("tw-text-gray")
+      classes.push("tw:text-gray")
     }
 
     if (!opts.curTimeslotAvailability.value[id]) {
-      classes.push("tw-line-through")
-      classes.push("tw-text-gray")
+      classes.push("tw:line-through")
+      classes.push("tw:text-gray")
     }
 
     return classes

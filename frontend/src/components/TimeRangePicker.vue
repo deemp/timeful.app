@@ -1,5 +1,5 @@
 <template>
-  <div class="time-range-picker tw-flex tw-items-center tw-gap-2">
+  <div class="time-range-picker tw:flex tw:items-center tw:gap-2">
     <v-select
       :model-value="start"
       :items="items"

@@ -7,16 +7,16 @@
   >
     <v-container
       v-ripple
-      class="tw-flex tw-min-h-16 tw-items-center tw-justify-between tw-rounded-lg tw-bg-white tw-px-4 tw-py-2.5 tw-text-black tw-drop-shadow tw-transition-all hover:tw-drop-shadow-md sm:tw-py-3"
+      class="tw:flex tw:min-h-16 tw:items-center tw:justify-between tw:rounded-lg tw:bg-white tw:px-4 tw:py-2.5 tw:text-black tw:drop-shadow tw:transition-all tw:hover:drop-shadow-md tw:sm:py-3"
       :data-ph-capture-attribute-event-id="event._id"
       :data-ph-capture-attribute-event-name="event.name"
     >
-      <div class="tw-flex tw-items-center">
+      <div class="tw:flex tw:items-center">
         <div
-          class="tw-flex tw-size-10 tw-shrink-0 tw-items-center tw-justify-center tw-rounded"
+          class="tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded"
           :class="{
-            'tw-bg-pale-green': isOwner,
-            'tw-bg-off-white': !isOwner,
+            'tw:bg-pale-green': isOwner,
+            'tw:bg-off-white': !isOwner,
           }"
         >
           <v-icon :color="isOwner ? 'green' : 'grey'">{{
@@ -29,24 +29,24 @@
                   : "mdi-calendar"
           }}</v-icon>
         </div>
-        <div class="tw-ml-3">
+        <div class="tw:ml-3">
           <div>{{ event.name }}</div>
-          <div class="tw-text-sm tw-font-light tw-text-very-dark-gray">
+          <div class="tw:text-sm tw:font-light tw:text-very-dark-gray">
             {{ dateString }}
           </div>
         </div>
       </div>
-      <div class="tw-min-w-max">
+      <div class="tw:min-w-max">
         <div
           v-if="isGroup && !userHasResponded"
-          class="tw-inline-block tw-text-sm tw-italic tw-text-gray"
+          class="tw:inline-block tw:text-sm tw:italic tw:text-gray"
         >
           Invited
         </div>
         <v-chip
           v-else
           small
-          class="tw-m-0.5 tw-bg-off-white tw-text-very-dark-gray"
+          class="tw:m-0.5 tw:bg-off-white tw:text-very-dark-gray"
         >
           <v-icon left small> mdi-account-multiple </v-icon>
           {{ event.numResponses }}
@@ -65,7 +65,7 @@
             </v-btn>
           </template>
 
-          <v-list class="tw-py-1" density="compact">
+          <v-list class="tw:py-1" density="compact">
             <v-list-item @click="copyLink">
               <v-list-item-title>Copy link</v-list-item-title>
             </v-list-item>
@@ -98,7 +98,7 @@
                     label="Copy responses"
                     :disabled="duplicateDialogOptions.loading"
                     hide-details
-                    class="tw-mt-2"
+                    class="tw:mt-2"
                   />
                 </v-card-text>
                 <v-card-actions>
@@ -129,7 +129,7 @@
               <template #activator="{ props: moveToMenuProps }">
                 <v-list-item
                   v-bind="moveToMenuProps"
-                  class="tw-cursor-pointer tw-pr-1 hover:tw-bg-light-gray"
+                  class="tw:cursor-pointer tw:pr-1 tw:hover:bg-light-gray"
                 >
                   <v-list-item-title>Move to</v-list-item-title>
                   <template #append>
@@ -137,8 +137,8 @@
                   </template>
                 </v-list-item>
               </template>
-              <v-list density="compact" class="tw-py-1">
-                <v-list-item class="tw-pr-1" @click="moveEventToFolder(null)">
+              <v-list density="compact" class="tw:py-1">
+                <v-list-item class="tw:pr-1" @click="moveEventToFolder(null)">
                   <v-list-item-title>No folder</v-list-item-title>
                   <template v-if="folderId === null" #append>
                     <v-icon small>mdi-check</v-icon>
@@ -147,7 +147,7 @@
                 <v-list-item
                   v-for="folder in folders"
                   :key="folder._id"
-                  class="tw-pr-1"
+                  class="tw:pr-1"
                   @click="moveEventToFolder(folder._id ?? null)"
                 >
                   <v-list-item-title>{{ folder.name }}</v-list-item-title>
@@ -192,7 +192,7 @@
             </v-dialog>
           </v-list>
         </v-menu>
-        <v-icon v-else class="tw-ml-2 tw-mr-1 tw-opacity-75"
+        <v-icon v-else class="tw:ml-2 tw:mr-1 tw:opacity-75"
           >mdi-chevron-right</v-icon
         >
       </div>

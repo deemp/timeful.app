@@ -1,21 +1,21 @@
 <template>
   <div>
-    <div class="tw-mb-1 tw-text-sm tw-text-black">Buffer time</div>
-    <div class="tw-mb-2 tw-text-xs tw-text-dark-gray">
+    <div class="tw:mb-1 tw:text-sm tw:text-black">Buffer time</div>
+    <div class="tw:mb-2 tw:text-xs tw:text-dark-gray">
       Add time around calendar events
     </div>
     <v-switch
       id="buffer-time-switch"
       :model-value="bufferTime.enabled"
       inset
-      class="timeful-switch tw-flex tw-items-center"
+      class="timeful-switch tw:flex tw:items-center"
       color="primary"
       hide-details
       @update:model-value="handleBufferTimeToggle"
     >
       <template #label>
         <div
-          class="tw-flex tw-items-center tw-justify-center tw-gap-2 tw-text-sm tw-text-black"
+          class="tw:flex tw:items-center tw:justify-center tw:gap-2 tw:text-sm tw:text-black"
         >
           <v-select
             density="compact"
@@ -23,7 +23,7 @@
             item-title="title"
             item-value="value"
             :items="bufferTimes"
-            class="timeful-solo-field -tw-mt-0.5 tw-w-20 tw-text-xs"
+            class="timeful-solo-field tw:-mt-0.5 tw:w-20 tw:text-xs"
             :model-value="bufferTime.time"
             @update:model-value="(val: number) => updateBufferTime('time', val)"
             @click="

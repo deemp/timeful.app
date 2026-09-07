@@ -2,11 +2,11 @@
   <v-dialog
     :model-value="modelValue"
     width="400"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="(e) => emit('update:modelValue', e)"
   >
     <v-card>
-      <v-card-title class="tw-flex">
+      <v-card-title class="tw:flex">
         <div>Join slot <span v-if="!authUser">as</span></div>
         <v-spacer />
         <v-btn icon @click="emit('update:modelValue', false)">
@@ -22,10 +22,10 @@
           ref="formRef"
           v-model="formValid"
           lazy-validation
-          class="tw-flex tw-flex-col tw-gap-y-4"
+          class="tw:flex tw:flex-col tw:gap-y-4"
           onsubmit="return false"
         >
-          <div v-if="!authUser" class="tw-flex tw-flex-col tw-gap-y-4">
+          <div v-if="!authUser" class="tw:flex tw:flex-col tw:gap-y-4">
             <v-text-field
               v-model="name"
               :rules="nameRules"
@@ -52,7 +52,7 @@
 
           <div>
             NOTE: After joining a slot,
-            <span class="tw-font-bold"
+            <span class="tw:font-bold"
               >you will need to contact the sign up creator in order to edit
               your slot.</span
             >
@@ -60,15 +60,15 @@
 
           <div v-if="event.blindAvailabilityEnabled">
             The sign up creator has hidden attendees from each other.
-            <span class="tw-font-bold"
+            <span class="tw:font-bold"
               >Your name will only be visible to you.</span
             >
           </div>
 
-          <div class="tw-flex">
+          <div class="tw:flex">
             <v-spacer />
             <v-btn
-              class="timeful-elevated-button tw-bg-green tw-text-white"
+              class="timeful-elevated-button tw:bg-green tw:text-white"
               :disabled="!canSubmit"
               @click="submit"
             >

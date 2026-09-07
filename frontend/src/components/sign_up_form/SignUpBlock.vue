@@ -1,19 +1,19 @@
 <template>
   <div
     :data-id="signUpBlock._id"
-    class="tw-flex tw-flex-col tw-rounded-md tw-border-[1px] tw-p-4"
-    :class="unsaved ? 'tw-border-light-green' : 'tw-border-outline-neutral'"
+    class="tw:flex tw:flex-col tw:rounded-md tw:border tw:p-4"
+    :class="unsaved ? 'tw:border-light-green' : 'tw:border-outline-neutral'"
   >
-    <div class="mb-1 tw-flex tw-items-start tw-justify-between">
+    <div class="mb-1 tw:flex tw:items-start tw:justify-between">
       <div
         v-if="!isEditingName"
-        class="tw-flex tw-items-center tw-gap-2 tw-font-medium"
+        class="tw:flex tw:items-center tw:gap-2 tw:font-medium"
       >
         <div>
           {{ isEditing ? newName : signUpBlock.name }}
         </div>
         <div>
-          (<span :class="!hasCapacity && 'tw-text-green'"
+          (<span :class="!hasCapacity && 'tw:text-green'"
             >{{ numberResponses }}/{{ signUpBlock.capacity }}</span
           >)
         </div>
@@ -28,7 +28,7 @@
       </div>
       <div
         v-else
-        class="-tw-mt-[6px] tw-flex tw-w-full tw-items-center tw-gap-2"
+        class="tw:mt-[-6px] tw:flex tw:w-full tw:items-center tw:gap-2"
       >
         <v-text-field
           v-model="newName"
@@ -45,16 +45,16 @@
         </v-btn>
       </div>
     </div>
-    <div class="tw-text-xs tw-italic tw-text-dark-gray">
+    <div class="tw:text-xs tw:italic tw:text-dark-gray">
       {{ timeRangeString }}
     </div>
-    <div v-if="isOwner" class="tw-mt-4 tw-flex tw-items-center tw-gap-4">
-      <div class="tw-text-xs">People per slot</div>
-      <div class="tw-flex tw-h-4 tw-items-center">
-        <div v-if="isEditing" class="-tw-mt-2 tw-w-20">
+    <div v-if="isOwner" class="tw:mt-4 tw:flex tw:items-center tw:gap-4">
+      <div class="tw:text-xs">People per slot</div>
+      <div class="tw:flex tw:h-4 tw:items-center">
+        <div v-if="isEditing" class="tw:-mt-2 tw:w-20">
           <v-select
             :model-value="signUpBlock.capacity"
-            class="tw-text-xs"
+            class="tw:text-xs"
             :items="capacityOptions"
             hide-details
             density="compact"
@@ -67,17 +67,17 @@
             "
           ></v-select>
         </div>
-        <div v-else class="tw-text-xs">{{ signUpBlock.capacity }}</div>
+        <div v-else class="tw:text-xs">{{ signUpBlock.capacity }}</div>
       </div>
     </div>
 
-    <div v-if="signUpBlock.responses" class="tw-mt-2">
+    <div v-if="signUpBlock.responses" class="tw:mt-2">
       <div
         v-for="(response, i) in signUpBlock.responses"
         :key="i"
-        class="tw-relative tw-flex tw-items-center"
+        class="tw:relative tw:flex tw:items-center"
       >
-        <div class="tw-ml-1 tw-mr-2">
+        <div class="tw:ml-1 tw:mr-2">
           <v-avatar
             v-if="
               response.user?.picture != '' &&
@@ -97,26 +97,26 @@
         </div>
         <div
           v-if="!anonymize || response.user?._id == authUser?._id"
-          class="tw-text-sm tw-transition-all"
+          class="tw:text-sm tw:transition-all"
         >
           {{ formatResponseName(response) }}
         </div>
-        <div v-else class="tw-text-sm tw-italic tw-transition-all">
+        <div v-else class="tw:text-sm tw:italic tw:transition-all">
           Attendee
         </div>
       </div>
     </div>
 
-    <div v-if="isEditing" class="tw-mt-2">
+    <div v-if="isEditing" class="tw:mt-2">
       <a
-        class="tw-text-xs tw-text-red"
+        class="tw:text-xs tw:text-red"
         @click="emit('delete:signUpBlock', signUpBlock._id ?? '')"
         >Delete slot</a
       >
     </div>
 
-    <div v-if="!isOwner && hasCapacity && !infoOnly" class="tw-mt-2">
-      <a class="tw-text-xs tw-text-green" @click="joinSlot">+ Join this slot</a>
+    <div v-if="!isOwner && hasCapacity && !infoOnly" class="tw:mt-2">
+      <a class="tw:text-xs tw:text-green" @click="joinSlot">+ Join this slot</a>
     </div>
   </div>
 </template>

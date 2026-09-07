@@ -15,7 +15,7 @@ describe("AvailabilityTypeToggle", () => {
     const wrapper = mountToggle()
 
     const texts = wrapper
-      .findAll(".tw-cursor-pointer")
+      .findAll(".tw:cursor-pointer")
       .map((cell) => cell.text())
     expect(texts).toEqual(["Available", "If needed"])
   })
@@ -23,29 +23,29 @@ describe("AvailabilityTypeToggle", () => {
   it("styles the selected Available option green without a glow", () => {
     const wrapper = mountToggle(availabilityTypes.AVAILABLE)
 
-    const cells = wrapper.findAll(".tw-cursor-pointer")
-    expect(cells[0].classes()).toContain("tw-text-green")
-    expect(cells[1].classes()).toContain("tw-text-dark-gray")
+    const cells = wrapper.findAll(".tw:cursor-pointer")
+    expect(cells[0].classes()).toContain("tw:text-green")
+    expect(cells[1].classes()).toContain("tw:text-dark-gray")
 
     const indicator = wrapper.get(".slide-toggle__indicator")
-    expect(indicator.classes()).toContain("tw-bg-green/10")
-    expect(indicator.classes()).toContain("tw-border-green")
+    expect(indicator.classes()).toContain("tw:bg-green/10")
+    expect(indicator.classes()).toContain("tw:border-green")
     expect(indicator.element.getAttribute("style") ?? "").not.toContain(
       "box-shadow",
     )
-    expect(indicator.classes()).toContain("tw-pointer-events-none")
+    expect(indicator.classes()).toContain("tw:pointer-events-none")
   })
 
   it("styles the selected If needed option dark-yellow without a glow", () => {
     const wrapper = mountToggle(availabilityTypes.IF_NEEDED)
 
-    const cells = wrapper.findAll(".tw-cursor-pointer")
-    expect(cells[1].classes()).toContain("tw-text-dark-yellow")
-    expect(cells[0].classes()).toContain("tw-text-dark-gray")
+    const cells = wrapper.findAll(".tw:cursor-pointer")
+    expect(cells[1].classes()).toContain("tw:text-dark-yellow")
+    expect(cells[0].classes()).toContain("tw:text-dark-gray")
 
     const indicator = wrapper.get(".slide-toggle__indicator")
-    expect(indicator.classes()).toContain("tw-bg-yellow/10")
-    expect(indicator.classes()).toContain("tw-border-dark-yellow")
+    expect(indicator.classes()).toContain("tw:bg-yellow/10")
+    expect(indicator.classes()).toContain("tw:border-dark-yellow")
     expect(indicator.element.getAttribute("style") ?? "").not.toContain(
       "box-shadow",
     )
@@ -54,7 +54,7 @@ describe("AvailabilityTypeToggle", () => {
   it("emits the clicked availability type", async () => {
     const wrapper = mountToggle(availabilityTypes.AVAILABLE)
 
-    await wrapper.findAll(".tw-cursor-pointer")[1].trigger("click")
+    await wrapper.findAll(".tw:cursor-pointer")[1].trigger("click")
 
     expect(wrapper.emitted("update:modelValue")).toEqual([
       [availabilityTypes.IF_NEEDED],

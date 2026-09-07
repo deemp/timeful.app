@@ -99,7 +99,7 @@ describe("ScheduleOverlapSidebar", () => {
     expect(calendarOptionsButton.attributes("prepend-icon")).toBe(
       "mdi-calendar",
     )
-    expect(calendarOptionsButton.classes()).toContain("tw-w-full")
+    expect(calendarOptionsButton.classes()).toContain("tw:w-full")
     expect(wrapper.find("expandable-section-stub").exists()).toBe(false)
 
     await calendarOptionsButton.trigger("click")
@@ -219,8 +219,8 @@ describe("ScheduleOverlapSidebar", () => {
     expect(indicatorComponent.props("variant")).toBe("chip")
 
     const indicator = wrapper.get(".editing-availability-as--chip")
-    expect(indicator.classes()).toContain("tw-not-italic")
-    expect(indicator.classes()).not.toContain("tw-justify-end")
+    expect(indicator.classes()).toContain("tw:not-italic")
+    expect(indicator.classes()).not.toContain("tw:justify-end")
     expect(indicator.text()).toContain("Editing availability as")
 
     const chip = wrapper.get(".editing-availability-as__guest-chip")
@@ -293,7 +293,7 @@ describe("ScheduleOverlapSidebar", () => {
     expect(wrapper.text()).toContain(
       "Disabled, inside the event dates in the event timezone",
     )
-    expect(wrapper.html()).toContain("tw-bg-light-gray-stroke")
+    expect(wrapper.html()).toContain("tw:bg-light-gray-stroke")
     expect(wrapper.text()).toContain(
       "Disabled, outside the event dates in the event timezone",
     )
@@ -386,7 +386,7 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.classes()).toContain("tw-sticky")
+    expect(wrapper.classes()).toContain("tw:sticky")
   })
 
   it("places the desktop control block above the respondents panel", () => {
@@ -405,13 +405,13 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.classes()).toContain("tw-sticky")
-    expect(wrapper.classes()).not.toContain("tw-pt-11")
+    expect(wrapper.classes()).toContain("tw:sticky")
+    expect(wrapper.classes()).not.toContain("tw:pt-11")
     expect(wrapper.find(".schedule-overlap-sidebar__pager").exists()).toBe(true)
     expect(wrapper.find(".schedule-overlap-sidebar__tool-row").exists()).toBe(
       true,
     )
-    expect(wrapper.html()).toContain("tw-pt-2")
+    expect(wrapper.html()).toContain("tw:pt-2")
   })
 
   it("places compact timezone and format controls before desktop responses", () => {
@@ -512,8 +512,8 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.classes()).toContain("tw-p-0")
-    expect(wrapper.classes()).not.toContain("tw-py-4")
+    expect(wrapper.classes()).toContain("tw:p-0")
+    expect(wrapper.classes()).not.toContain("tw:py-4")
   })
 
   it("keeps the hovered respondents state aligned with the grid body", () => {
@@ -532,9 +532,9 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.classes()).toContain("tw-sticky")
-    expect(wrapper.classes()).not.toContain("tw-pt-11")
-    expect(wrapper.classes()).not.toContain("tw-pt-14")
+    expect(wrapper.classes()).toContain("tw:sticky")
+    expect(wrapper.classes()).not.toContain("tw:pt-11")
+    expect(wrapper.classes()).not.toContain("tw:pt-14")
   })
 
   it("keeps the desktop top offset while rendering edit availability controls", () => {
@@ -553,13 +553,13 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.classes()).toContain("tw-sticky")
-    expect(wrapper.classes()).not.toContain("tw-pt-14")
+    expect(wrapper.classes()).toContain("tw:sticky")
+    expect(wrapper.classes()).not.toContain("tw:pt-14")
     expect(wrapper.get(".schedule-overlap-sidebar__body").classes()).toContain(
-      "tw-pt-5",
+      "tw:pt-5",
     )
-    expect(wrapper.find(".tw-flex.tw-flex-col.tw-gap-5").classes()).toContain(
-      "tw-mb-2",
+    expect(wrapper.find(".tw-flex.tw-flex-col.tw:gap-5").classes()).toContain(
+      "tw:mb-2",
     )
   })
 
@@ -583,11 +583,11 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.html()).toContain("tw-pt-16")
-    expect(wrapper.html()).not.toContain("tw-mt-3")
-    expect(wrapper.html()).not.toContain("tw-pt-2")
-    expect(wrapper.html()).not.toContain("tw-pt-4")
-    expect(wrapper.html()).not.toContain("tw-pt-14")
+    expect(wrapper.html()).toContain("tw:pt-16")
+    expect(wrapper.html()).not.toContain("tw:mt-3")
+    expect(wrapper.html()).not.toContain("tw:pt-2")
+    expect(wrapper.html()).not.toContain("tw:pt-4")
+    expect(wrapper.html()).not.toContain("tw:pt-14")
     expect(wrapper.find(".schedule-overlap-sidebar__tool-row").exists()).toBe(
       false,
     )
@@ -613,13 +613,13 @@ describe("ScheduleOverlapSidebar", () => {
       },
     })
 
-    expect(wrapper.html()).toContain("tw-pt-16")
-    expect(wrapper.html()).not.toContain("tw-mt-3")
-    expect(wrapper.html()).not.toContain("tw-pt-2")
-    expect(wrapper.html()).not.toContain("tw-pt-4")
-    expect(wrapper.html()).not.toContain("tw-pt-14")
-    expect(wrapper.find(".tw-flex.tw-flex-col.tw-gap-5").classes()).toContain(
-      "tw-mb-2",
+    expect(wrapper.html()).toContain("tw:pt-16")
+    expect(wrapper.html()).not.toContain("tw:mt-3")
+    expect(wrapper.html()).not.toContain("tw:pt-2")
+    expect(wrapper.html()).not.toContain("tw:pt-4")
+    expect(wrapper.html()).not.toContain("tw:pt-14")
+    expect(wrapper.find(".tw-flex.tw-flex-col.tw:gap-5").classes()).toContain(
+      "tw:mb-2",
     )
   })
 })

@@ -85,21 +85,21 @@ describe("DatePicker native-Date boundary", () => {
     expect(boundaryDates[1]?.getDate()).toBe(6)
     expect(wrapper.getComponent(VDatePickerStub).props("hideHeader")).toBe(true)
     expect(wrapper.classes()).toContain("timeful-date-picker")
-    expect(wrapper.classes()).toContain("tw-w-full")
+    expect(wrapper.classes()).toContain("tw:w-full")
     expect(wrapper.getComponent(VDatePickerStub).classes()).toContain(
-      "tw-w-full",
+      "tw:w-full",
     )
     expect(wrapper.getComponent(VDatePickerStub).classes()).not.toContain(
-      "tw-drop-shadow",
+      "tw:drop-shadow",
     )
     expect(wrapper.getComponent(VDatePickerStub).classes()).toContain(
-      "tw-border",
+      "tw:border",
     )
     expect(wrapper.getComponent(VDatePickerStub).classes()).toContain(
-      "tw-border-outline-neutral",
+      "tw:border-outline-neutral",
     )
     expect(wrapper.getComponent(VDatePickerStub).classes()).not.toContain(
-      "tw-border-0",
+      "tw:border-0",
     )
   })
 

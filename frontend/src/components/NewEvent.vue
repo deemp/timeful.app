@@ -1,8 +1,8 @@
 <template>
   <v-card
     :flat="dialog"
-    :class="{ 'tw-py-4': !dialog, 'tw-flex-1': dialog }"
-    class="tw-relative tw-flex tw-max-w-[28rem] tw-flex-col tw-overflow-hidden tw-rounded-lg tw-transition-all"
+    :class="{ 'tw:py-4': !dialog, 'tw:flex-1': dialog }"
+    class="tw:relative tw:flex tw:max-w-md tw:flex-col tw:overflow-hidden tw:rounded-lg tw:transition-all"
   >
     <EditorDialogHeader
       :title="edit ? 'Edit event' : 'New event'"
@@ -14,25 +14,25 @@
       @close="emit('update:modelValue', false)"
     >
       <template #help-content>
-        <div class="tw-mb-4">
+        <div class="tw:mb-4">
           Use events to collect people's availabilities and compare them across
           certain days.
         </div>
       </template>
     </EditorDialogHeader>
-    <div class="tw-relative tw-flex tw-min-h-0 tw-flex-1 tw-flex-col">
+    <div class="tw:relative tw:flex tw:min-h-0 tw:flex-1 tw:flex-col">
       <v-card-text
         ref="cardText"
-        class="tw-relative tw-flex-1 tw-overflow-auto tw-px-4 tw-py-1 sm:tw-px-8"
+        class="tw:relative tw:flex-1 tw:overflow-auto tw:px-4 tw:py-1 tw:sm:px-8"
       >
-        <AlertText v-if="edit && guestEvent" class="tw-mb-4">
+        <AlertText v-if="edit && guestEvent" class="tw:mb-4">
           Anybody can edit this event because it was created while not signed in
         </AlertText>
         <v-form
           ref="formRef"
           v-model="formValid"
           lazy-validation
-          class="new-event-form tw-flex tw-flex-col tw-gap-y-6"
+          class="new-event-form tw:flex tw:flex-col tw:gap-y-6"
           :disabled="loading"
         >
           <v-text-field
@@ -65,17 +65,17 @@
           <SlideToggle
             v-if="daysOnlyEnabled && !edit"
             v-model="daysOnly"
-            class="tw-w-full"
+            class="tw:w-full"
             :options="[...daysOnlyOptions]"
           />
 
           <div>
             <v-expand-transition>
               <div v-if="!daysOnly">
-                <div class="tw-mb-2 tw-text-lg tw-text-black">
+                <div class="tw:mb-2 tw:text-lg tw:text-black">
                   What times might work?
                 </div>
-                <div class="tw-mb-2" data-testid="specific-times-toggle">
+                <div class="tw:mb-2" data-testid="specific-times-toggle">
                   <div class="compact-switch-grid specific-times-switch-grid">
                     <v-switch
                       v-model="specificTimesEnabled"
@@ -85,11 +85,11 @@
                       hide-details
                     />
                     <span
-                      class="compact-switch__label specific-times-switch__label tw-text-sm"
+                      class="compact-switch__label specific-times-switch__label tw:text-sm"
                       :class="
                         specificTimesEnabled
-                          ? 'tw-text-black'
-                          : 'tw-text-very-dark-gray'
+                          ? 'tw:text-black'
+                          : 'tw:text-very-dark-gray'
                       "
                     >
                       Set specific times per day
@@ -97,7 +97,7 @@
                     <v-expand-transition>
                       <div
                         v-if="specificTimesEnabled"
-                        class="compact-switch__message specific-times-switch__message tw-pointer-events-auto tw-text-xs tw-text-dark-gray"
+                        class="compact-switch__message specific-times-switch__message tw:pointer-events-auto tw:text-xs tw:text-dark-gray"
                       >
                         Click the Next button below
                       </div>
@@ -107,7 +107,7 @@
                 <v-expand-transition>
                   <div
                     v-if="!specificTimesEnabled"
-                    class="time-range-row tw-mb-6 tw-flex tw-items-center tw-justify-between tw-gap-x-2"
+                    class="time-range-row tw:mb-6 tw:flex tw:items-center tw:justify-between tw:gap-x-2"
                   >
                     <TimeFormatToggle
                       :model-value="eventTimeType"
@@ -125,7 +125,7 @@
               </div>
             </v-expand-transition>
 
-            <div class="tw-mb-2 tw-text-lg tw-text-black">
+            <div class="tw:mb-2 tw:text-lg tw:text-black">
               What
               {{
                 selectedDateOption === dateOptions.SPECIFIC ? "dates" : "days"
@@ -138,7 +138,7 @@
               :items="Object.values(dateOptions)"
               variant="solo"
               hide-details
-              class="timeful-solo-field tw-mb-4"
+              class="timeful-solo-field tw:mb-4"
             >
               <template #item="{ item, props: itemProps }">
                 <div
@@ -158,7 +158,7 @@
               <div
                 v-if="selectedDateOption === dateOptions.SPECIFIC || daysOnly"
               >
-                <div class="tw-mb-2 tw-text-xs tw-text-dark-gray">
+                <div class="tw:mb-2 tw:text-xs tw:text-dark-gray">
                   Drag to select multiple dates
                 </div>
                 <v-input
@@ -180,7 +180,7 @@
                   v-model="selectedDaysOfWeek"
                   hide-details="auto"
                   :rules="selectedDaysRules"
-                  class="tw-w-full"
+                  class="tw:w-full"
                 >
                   <v-btn-toggle
                     v-model="selectedDaysOfWeek"
@@ -199,7 +199,7 @@
                   </v-btn-toggle>
                 </v-input>
                 <div
-                  class="compact-switch-grid new-event-start-on-monday-switch-grid tw-mt-2"
+                  class="compact-switch-grid new-event-start-on-monday-switch-grid tw:mt-2"
                 >
                   <v-switch
                     v-model="startOnMonday"
@@ -209,7 +209,7 @@
                     hide-details
                   />
                   <span
-                    class="compact-switch__label tw-text-sm tw-text-very-dark-gray"
+                    class="compact-switch__label tw:text-sm tw:text-very-dark-gray"
                   >
                     Start on Monday
                   </span>
@@ -222,32 +222,32 @@
             v-if="!guestEvent && authUser"
             v-model="notificationsEnabled"
             hide-details
-            class="tw-mt-2"
+            class="tw:mt-2"
           >
             <template #label>
-              <span class="tw-text-sm tw-text-very-dark-gray"
+              <span class="tw:text-sm tw:text-very-dark-gray"
                 >Email me each time someone joins my event</span
               >
             </template>
           </v-checkbox>
           <v-checkbox
             v-else-if="!guestEvent"
-            class="gated-feature-checkbox tw-mt-2"
+            class="gated-feature-checkbox tw:mt-2"
             disabled
             messages="test"
             false-icon="mdi-checkbox-blank-off-outline"
           >
             <template #label>
-              <span class="advanced-options-disabled-label tw-text-sm"
+              <span class="advanced-options-disabled-label tw:text-sm"
                 >Email me each time someone joins my event</span
               >
             </template>
             <template #message>
               <div
-                class="advanced-options-disabled-message tw-pointer-events-auto -tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                class="advanced-options-disabled-message tw:pointer-events-auto tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
               >
                 <span
-                  class="advanced-options-disabled-copy tw-font-medium tw-text-very-dark-gray"
+                  class="advanced-options-disabled-copy tw:font-medium tw:text-very-dark-gray"
                   ><template v-if="signInEnabled">
                     <a
                       class="advanced-options-sign-in-link"
@@ -264,14 +264,14 @@
             </template>
           </v-checkbox>
 
-          <div class="tw-flex tw-flex-col tw-gap-2">
+          <div class="tw:flex tw:flex-col tw:gap-2">
             <ExpandableSection
               v-if="authUser && !guestEvent"
               v-model="showEmailReminders"
               label="Email reminders"
               :auto-scroll="dialog"
             >
-              <div class="tw-flex tw-flex-col tw-gap-5 tw-pt-2">
+              <div class="tw:flex tw:flex-col tw:gap-5 tw:pt-2">
                 <EmailInput
                   v-show="authUser"
                   :key="emailInputKey"
@@ -285,14 +285,14 @@
                   "
                 >
                   <template #header>
-                    <div class="tw-flex tw-gap-1">
-                      <div class="tw-text-very-dark-gray">
+                    <div class="tw:flex tw:gap-1">
+                      <div class="tw:text-very-dark-gray">
                         Remind people to fill out the event
                       </div>
 
                       <v-tooltip
                         top
-                        content-class="tw-bg-very-dark-gray tw-shadow-lg tw-opacity-100 tw-py-4"
+                        content-class="tw:bg-very-dark-gray tw:shadow-lg tw:opacity-100 tw:py-4"
                       >
                         <template #activator="{ props: tooltipProps }">
                           <v-icon small v-bind="tooltipProps"
@@ -312,12 +312,12 @@
               </div>
             </ExpandableSection>
 
-            <div class="tw-mb-2 tw-text-lg tw-text-black">Advanced options</div>
+            <div class="tw:mb-2 tw:text-lg tw:text-black">Advanced options</div>
             <div
-              class="advanced-options-panel tw-flex tw-flex-col tw-gap-5 tw-pt-2"
+              class="advanced-options-panel tw:flex tw:flex-col tw:gap-5 tw:pt-2"
             >
-              <div v-if="!daysOnly" class="tw-flex tw-items-center tw-gap-x-2">
-                <div class="tw-text-sm tw-text-black">Time increment</div>
+              <div v-if="!daysOnly" class="tw:flex tw:items-center tw:gap-x-2">
+                <div class="tw:text-sm tw:text-black">Time increment</div>
                 <TimeFormatToggle
                   :model-value="timeIncrement"
                   :options="timeIncrementToggleOptions"
@@ -332,13 +332,13 @@
                 hide-details
               >
                 <template #label>
-                  <span class="tw-text-sm tw-text-black">
+                  <span class="tw:text-sm tw:text-black">
                     Collect respondents' email addresses
                   </span>
                 </template>
                 <template #message="{ message }">
                   <div
-                    class="-tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                    class="tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
                   >
                     {{ message }}
                   </div>
@@ -353,16 +353,16 @@
                 false-icon="mdi-checkbox-blank-off-outline"
               >
                 <template #label>
-                  <span class="advanced-options-disabled-label tw-text-sm"
+                  <span class="advanced-options-disabled-label tw:text-sm"
                     >Collect respondents' email addresses</span
                   >
                 </template>
                 <template #message>
                   <div
-                    class="advanced-options-disabled-message tw-pointer-events-auto -tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                    class="advanced-options-disabled-message tw:pointer-events-auto tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
                   >
                     <span
-                      class="advanced-options-disabled-copy tw-font-medium tw-text-very-dark-gray"
+                      class="advanced-options-disabled-copy tw:font-medium tw:text-very-dark-gray"
                       ><template v-if="signInEnabled">
                         <a
                           class="advanced-options-sign-in-link"
@@ -386,13 +386,13 @@
                 messages="Only show responses to event creator"
               >
                 <template #label>
-                  <span class="tw-text-sm tw-text-black">
+                  <span class="tw:text-sm tw:text-black">
                     Hide responses from respondents
                   </span>
                 </template>
                 <template #message="{ message }">
                   <div
-                    class="-tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                    class="tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
                   >
                     {{ message }}
                   </div>
@@ -407,17 +407,17 @@
                 false-icon="mdi-checkbox-blank-off-outline"
               >
                 <template #label>
-                  <span class="advanced-options-disabled-label tw-text-sm"
+                  <span class="advanced-options-disabled-label tw:text-sm"
                     >Hide responses from respondents</span
                   >
                 </template>
                 <template #message="{ message }">
                   <div
-                    class="advanced-options-disabled-message tw-pointer-events-auto -tw-mt-1 tw-ml-[32px] tw-text-xs tw-text-dark-gray"
+                    class="advanced-options-disabled-message tw:pointer-events-auto tw:-mt-1 tw:ml-[32px] tw:text-xs tw:text-dark-gray"
                   >
                     {{ message }}
                     <span
-                      class="advanced-options-disabled-copy tw-font-medium tw-text-very-dark-gray"
+                      class="advanced-options-disabled-copy tw:font-medium tw:text-very-dark-gray"
                       ><template v-if="signInEnabled">
                         <a
                           class="advanced-options-sign-in-link"
@@ -442,15 +442,15 @@
               >
                 <template #label>
                   <div
-                    :class="!sendEmailAfterXResponsesEnabled && 'tw-opacity-50'"
-                    class="tw-flex tw-items-center tw-gap-x-2 tw-text-sm tw-text-very-dark-gray"
+                    :class="!sendEmailAfterXResponsesEnabled && 'tw:opacity-50'"
+                    class="tw:flex tw:items-center tw:gap-x-2 tw:text-sm tw:text-very-dark-gray"
                   >
                     <div>Email me after</div>
                     <v-text-field
                       v-model="sendEmailAfterXResponses"
                       :disabled="!sendEmailAfterXResponsesEnabled"
                       density="compact"
-                      class="email-me-after-text-field -tw-mt-[2px] tw-w-10"
+                      class="email-me-after-text-field tw:mt-[-2px] tw:w-10"
                       hide-details
                       type="number"
                       min="1"
@@ -459,9 +459,9 @@
                   </div>
                 </template>
               </v-checkbox>
-              <div class="tw-flex tw-items-center tw-gap-x-2">
+              <div class="tw:flex tw:items-center tw:gap-x-2">
                 <div
-                  class="tw-text-sm tw-text-black"
+                  class="tw:text-sm tw:text-black"
                   data-testid="timezone-label"
                 >
                   Timezone
@@ -493,8 +493,8 @@
         :show-arrow="false"
       />
     </div>
-    <v-card-actions class="tw-relative tw-px-4 sm:tw-px-8">
-      <div class="tw-relative tw-w-full">
+    <v-card-actions class="tw:relative tw:px-4 tw:sm:px-8">
+      <div class="tw:relative tw:w-full">
         <v-btn
           :disabled="loading"
           :aria-disabled="submitBlocked"
@@ -504,8 +504,8 @@
           class="timeful-elevated-button"
           :class="
             submitBlocked
-              ? 'new-event-submit-button new-event-submit-button--disabled tw-pointer-events-none tw-mt-4 tw-cursor-default'
-              : 'new-event-submit-button new-event-submit-button--enabled tw-mt-4'
+              ? 'new-event-submit-button new-event-submit-button--disabled tw:pointer-events-none tw:mt-4 tw:cursor-default'
+              : 'new-event-submit-button new-event-submit-button--enabled tw:mt-4'
           "
           :ripple="!submitBlocked"
           :tabindex="submitBlocked ? -1 : undefined"
@@ -516,8 +516,8 @@
           }}
         </v-btn>
         <div
-          :class="showSubmitError ? 'tw-visible' : 'tw-invisible'"
-          class="new-event-submit-error tw-mt-1 tw-text-xs"
+          :class="showSubmitError ? 'tw:visible' : 'tw:invisible'"
+          class="new-event-submit-error tw:mt-1 tw:text-xs"
         >
           Please fix form errors before continuing
         </div>
@@ -527,7 +527,7 @@
     <OverflowGradient
       v-if="hasMounted && cardTextElement"
       :scroll-container="cardTextElement"
-      class="tw-bottom-[90px]"
+      class="tw:bottom-[90px]"
     />
   </v-card>
 </template>

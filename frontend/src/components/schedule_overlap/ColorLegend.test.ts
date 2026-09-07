@@ -24,16 +24,16 @@ describe("ColorLegend", () => {
     expect(wrapper.text()).toContain(
       "Disabled, inside the event dates in the event timezone",
     )
-    expect(wrapper.html()).toContain("tw-bg-light-gray-stroke")
+    expect(wrapper.html()).toContain("tw:bg-light-gray-stroke")
     expect(wrapper.text()).toContain(
       "Disabled, outside the event dates in the event timezone",
     )
-    expect(wrapper.html()).toContain("tw-bg-gray")
+    expect(wrapper.html()).toContain("tw:bg-gray")
     expect(wrapper.text()).toContain("Scheduled event")
     expect(wrapper.find(".scheduled-event-legend-indicator").classes()).toEqual(
       expect.arrayContaining([
-        "tw-border-scheduled-event",
-        "tw-bg-scheduled-event",
+        "tw:border-scheduled-event",
+        "tw:bg-scheduled-event",
       ]),
     )
   }
@@ -50,7 +50,7 @@ describe("ColorLegend", () => {
       "Disabled, outside the event dates in the event timezone",
       "Scheduled event",
     ])
-    expect(wrapper.html()).not.toContain("tw-bg-[#F9CCCC]")
+    expect(wrapper.html()).not.toContain("tw:bg-[#F9CCCC]")
   })
 
   it("adds unavailable when the event has active slots", () => {
@@ -63,7 +63,7 @@ describe("ColorLegend", () => {
       "Disabled, outside the event dates in the event timezone",
       "Scheduled event",
     ])
-    expect(wrapper.html()).toContain("tw-bg-[#F9CCCC]")
+    expect(wrapper.html()).toContain("tw:bg-[#F9CCCC]")
   })
 
   it("shows the response palette and active-slot guidance after a response is received", () => {
@@ -71,13 +71,13 @@ describe("ColorLegend", () => {
 
     expectStructuralColors(wrapper)
     expect(wrapper.text()).toContain("Available")
-    expect(wrapper.html()).toContain("tw-bg-[#00994C77]")
+    expect(wrapper.html()).toContain("tw:bg-[#00994C77]")
     expect(wrapper.text()).toContain("If needed")
-    expect(wrapper.html()).toContain("tw-bg-yellow")
+    expect(wrapper.html()).toContain("tw:bg-yellow")
     expect(wrapper.text()).toContain(
       "Unavailable, change in Add/Edit availability",
     )
-    expect(wrapper.html()).toContain("tw-bg-[#F9CCCC]")
+    expect(wrapper.html()).toContain("tw:bg-[#F9CCCC]")
     expect(labels(wrapper)).toHaveLength(6)
   })
 
@@ -102,7 +102,7 @@ describe("ColorLegend", () => {
     expect(indicatorSlots).toHaveLength(6)
 
     for (const indicatorSlot of indicatorSlots) {
-      expect(indicatorSlot.find(".tw-h-4.tw-w-4").exists()).toBe(true)
+      expect(indicatorSlot.find(".tw-h-4.tw:w-4").exists()).toBe(true)
     }
   })
 
@@ -117,7 +117,7 @@ describe("ColorLegend", () => {
     )
     expect(wrapper.text()).not.toContain("Disabled, change in Edit event")
     expect(wrapper.text()).not.toContain("Disabled, collapsed")
-    expect(wrapper.html()).not.toContain("tw-bg-yellow")
+    expect(wrapper.html()).not.toContain("tw:bg-yellow")
   })
 
   it("shows the collapsed-hours item only when hours can collapse", () => {
@@ -126,7 +126,7 @@ describe("ColorLegend", () => {
     expect(wrapper.text()).toContain("Disabled, collapsed")
     expect(
       wrapper.find(".color-legend-indicator--collapsed").classes(),
-    ).toContain("tw-bg-[var(--timeful-collapsed-hours-bg)]")
+    ).toContain("tw:bg-(--timeful-collapsed-hours-bg)")
   })
 
   it("outlines the collapsed-hours indicator with a dashed grid-line border", () => {

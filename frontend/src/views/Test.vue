@@ -1,12 +1,12 @@
 <template>
-  <div class="tw-space-y-8 tw-p-6">
-    <section id="event-description-preview-fixture" class="tw-max-w-xl">
-      <h1 class="tw-text-xl tw-font-semibold">Event description preview</h1>
+  <div class="tw:space-y-8 tw:p-6">
+    <section id="event-description-preview-fixture" class="tw:max-w-xl">
+      <h1 class="tw:text-xl tw:font-semibold">Event description preview</h1>
       <EventDescription :event="previewEvent" />
     </section>
 
-    <section id="event-description-empty-fixture" class="tw-max-w-xl">
-      <h2 class="tw-text-xl tw-font-semibold">Empty event description</h2>
+    <section id="event-description-empty-fixture" class="tw:max-w-xl">
+      <h2 class="tw:text-xl tw:font-semibold">Empty event description</h2>
       <EventDescription :event="emptyEvent" />
     </section>
   </div>

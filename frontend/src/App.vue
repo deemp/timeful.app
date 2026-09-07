@@ -19,11 +19,11 @@
     <UpvoteRedditSnackbar />
     <div
       v-if="showHeader"
-      class="tw-fixed tw-z-[60] tw-h-14 tw-w-screen tw-bg-white sm:tw-h-16"
+      class="tw:fixed tw:z-60 tw:h-14 tw:w-screen tw:bg-white tw:sm:h-16"
       dark
     >
       <div
-        class="tw-relative tw-m-auto tw-flex tw-h-full tw-max-w-5xl tw-items-center tw-justify-center tw-px-4"
+        class="tw:relative tw:m-auto tw:flex tw:h-full tw:max-w-5xl tw:items-center tw:justify-center tw:px-4"
       >
         <router-link :to="{ name: 'home' }">
           <Logo type="timeful" />
@@ -89,13 +89,13 @@
         <v-tooltip
           v-if="showGitHubBtn"
           bottom
-          content-class="tw-bg-very-dark-gray tw-shadow-lg tw-opacity-100"
+          content-class="tw:bg-very-dark-gray tw:shadow-lg tw:opacity-100"
         >
           <template #activator="{ props }">
             <v-btn
               variant="plain"
               icon
-              class="tw-ml-1"
+              class="tw:ml-1"
               v-bind="props"
               :href="gitHubRepoUrl"
               target="_blank"
@@ -117,7 +117,7 @@
         <v-btn
           v-if="$route.name === 'home' && !isPhone"
           color="primary"
-          class="tw-mx-2 tw-rounded-md"
+          class="tw:mx-2 tw:rounded-md"
           :style="{
             boxShadow: '0px 2px 8px 0px #00994C80 !important',
           }"
@@ -125,16 +125,16 @@
         >
           + Create new
         </v-btn>
-        <div v-if="authUser" class="sm:tw-ml-4">
+        <div v-if="authUser" class="tw:sm:ml-4">
           <AuthUserMenu />
         </div>
       </div>
     </div>
 
     <v-main>
-      <div class="tw-flex tw-h-screen tw-flex-col">
+      <div class="tw:flex tw:h-screen tw:flex-col">
         <div
-          class="tw-relative tw-flex-1 tw-overscroll-auto"
+          class="tw:relative tw:flex-1 tw:overscroll-auto"
           :class="routerViewClass"
         >
           <router-view v-if="loaded" :key="$route.fullPath" />
@@ -207,7 +207,7 @@ const gitHubRepoDisplay = computed(() => {
 
 const routerViewClass = computed(() => {
   if (!showHeader.value) return ""
-  return isPhone.value ? "tw-pt-12 " : "tw-pt-14 "
+  return isPhone.value ? "tw:pt-12 " : "tw:pt-14 "
 })
 
 function handleScroll() {

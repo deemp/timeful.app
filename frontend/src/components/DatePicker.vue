@@ -1,7 +1,7 @@
 <template>
   <div
     ref="datePickerEl"
-    class="timeful-date-picker tw-w-full"
+    class="timeful-date-picker tw:w-full"
     @pointerdown.capture="onPointerDown"
     @mousedown.capture="onMouseDownCapture"
     @pointerover.capture="onPointerOver"
@@ -19,7 +19,7 @@
       multiple
       color="primary"
       :show-current="false"
-      class="tw-w-full tw-min-w-full tw-rounded-md tw-border tw-border-solid tw-border-outline-neutral sm:tw-min-w-0"
+      class="tw:w-full tw:min-w-full tw:rounded-md tw:border tw:border-solid tw:border-outline-neutral tw:sm:min-w-0"
       :min="minCalendarDate"
       :scrollable="false"
       :first-day-of-week="startCalendarOnMonday ? 1 : 0"

@@ -21,6 +21,6 @@ describe("Logo", () => {
     const image = wrapper.get("img")
 
     expect(image.attributes("alt")).toBe("Timeful Logo")
-    expect(image.classes()).toContain("tw-w-[110px]")
+    expect(image.classes()).toContain("tw:w-[110px]")
   })
 })

@@ -47,7 +47,7 @@ describe("ScheduleOverlapMobileOverlay", () => {
     ).toBe(true)
     expect(
       wrapper.find(".schedule-overlap-mobile-overlay").classes(),
-    ).toContain("tw-inset-x-0")
+    ).toContain("tw:inset-x-0")
   })
 
   it("hides sticky respondents while editing availability", () => {
@@ -100,9 +100,9 @@ describe("ScheduleOverlapMobileOverlay", () => {
 
     const respondentsSection = wrapper.find(".timeful-mobile-elevated-panel")
     expect(respondentsSection.exists()).toBe(true)
-    expect(respondentsSection.classes()).toContain("tw-px-4")
-    expect(respondentsSection.classes()).toContain("tw-pt-4")
-    expect(respondentsSection.classes()).not.toContain("tw-p-4")
+    expect(respondentsSection.classes()).toContain("tw:px-4")
+    expect(respondentsSection.classes()).toContain("tw:pt-4")
+    expect(respondentsSection.classes()).not.toContain("tw:p-4")
     expect(
       respondentsSection
         .findComponent({ name: "ScheduleOverlapRespondentsPanel" })
@@ -193,15 +193,15 @@ describe("ScheduleOverlapMobileOverlay", () => {
     })
 
     const toggle = wrapper.findComponent({ name: "AvailabilityTypeToggle" })
-    expect(toggle.classes()).toContain("tw-flex-1")
-    expect(toggle.classes()).not.toContain("tw-w-full")
+    expect(toggle.classes()).toContain("tw:flex-1")
+    expect(toggle.classes()).not.toContain("tw:w-full")
 
     const calendarOptionsButton = wrapper.get(".calendar-options-button")
     expect(calendarOptionsButton.text()).toBe("Calendar options")
     expect(calendarOptionsButton.attributes("prepend-icon")).toBe(
       "mdi-calendar",
     )
-    expect(calendarOptionsButton.classes()).not.toContain("tw-w-full")
+    expect(calendarOptionsButton.classes()).not.toContain("tw:w-full")
     const toggleEl = toggle.element as Element
     const rowChildren = Array.from(toggleEl.parentElement?.children ?? [])
     expect(rowChildren.indexOf(calendarOptionsButton.element)).toBeLessThan(
@@ -242,13 +242,13 @@ describe("ScheduleOverlapMobileOverlay", () => {
     expect(indicatorComponent.props("variant")).toBe("chip")
 
     const indicator = wrapper.get(".editing-availability-as--chip")
-    expect(indicator.classes()).toContain("tw-justify-end")
-    expect(indicator.classes()).toContain("tw-not-italic")
+    expect(indicator.classes()).toContain("tw:justify-end")
+    expect(indicator.classes()).toContain("tw:not-italic")
     expect(indicator.text()).toContain("Editing availability as")
     expect(indicator.text()).toContain("Dana Guest")
 
     const chipRow = indicator.get(".editing-availability-as__chip-row")
-    expect(chipRow.classes()).not.toContain("tw-justify-end")
+    expect(chipRow.classes()).not.toContain("tw:justify-end")
 
     const toggle = wrapper.getComponent({ name: "AvailabilityTypeToggle" })
     const toggleEl = toggle.element as Element

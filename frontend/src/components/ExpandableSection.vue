@@ -1,14 +1,14 @@
-<!--class="tw-flex tw-items-end tw-justify-start tw-p-1"-->
+<!--class="tw:flex tw:items-end tw:justify-start tw:p-1"-->
 <template>
   <div>
     <v-btn
-      class="expandable-section-toggle -tw-ml-2 tw-w-[calc(100%+1rem)] tw-justify-between tw-whitespace-nowrap tw-px-2 tw-py-0 tw-normal-case"
+      class="expandable-section-toggle tw:-ml-2 tw:w-[calc(100%+1rem)] tw:justify-between tw:whitespace-nowrap tw:px-2 tw:py-0 tw:normal-case"
       block
       density="compact"
       variant="text"
       @click="toggle"
     >
-      <span class="-tw-ml-px tw-mr-1" :class="labelClass">
+      <span class="tw:-ml-px tw:mr-1" :class="labelClass">
         {{ label }}
       </span>
       <v-spacer />
@@ -40,7 +40,7 @@ const props = withDefaults(
   }>(),
   {
     label: "",
-    labelClass: "tw-text-base",
+    labelClass: "tw:text-base",
     iconClass: "",
     autoScroll: false,
   },

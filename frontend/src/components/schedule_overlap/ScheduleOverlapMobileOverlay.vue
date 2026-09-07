@@ -1,7 +1,7 @@
 <template>
   <div
     ref="overlayRootRef"
-    class="schedule-overlap-mobile-overlay timeful-bottom-overlay-layer tw-pointer-events-auto tw-fixed tw-inset-x-0 tw-isolate"
+    class="schedule-overlap-mobile-overlay timeful-bottom-overlay-layer tw:pointer-events-auto tw:fixed tw:inset-x-0 tw:isolate"
     :style="{ bottom: overlay.bottomOffset }"
     @pointerdown.stop
     @pointerup.stop
@@ -15,10 +15,10 @@
       <template v-if="overlay.hintTextShown">
         <div :key="overlay.hintText">
           <div
-            class="tw-flex tw-w-full tw-items-center tw-justify-between tw-gap-1 tw-bg-light-gray tw-px-2 tw-py-2 tw-text-sm tw-text-very-dark-gray"
+            class="tw:flex tw:w-full tw:items-center tw:justify-between tw:gap-1 tw:bg-light-gray tw:px-2 tw:py-2 tw:text-sm tw:text-very-dark-gray"
           >
             <div
-              :class="`tw-flex tw-gap-${overlay.hintText.length > 60 ? 2 : 1}`"
+              :class="`tw:flex tw-gap-${overlay.hintText.length > 60 ? 2 : 1}`"
             >
               <v-icon small>mdi-information-outline</v-icon>
               <div>
@@ -34,13 +34,13 @@
     <v-expand-transition>
       <div
         v-if="!overlay.isGroup && overlay.editing && !overlay.isSignUp"
-        class="timeful-mobile-elevated-panel tw-p-4"
+        class="timeful-mobile-elevated-panel tw:p-4"
       >
-        <div class="tw-flex tw-flex-col tw-gap-3">
+        <div class="tw:flex tw:flex-col tw:gap-3">
           <EditingAvailabilityAs
             v-if="overlay.editingAvailabilityAs.visible"
             variant="chip"
-            class="tw-justify-end"
+            class="tw:justify-end"
             :editing-as="overlay.editingAvailabilityAs"
             :edit-guest-name-dialog="overlay.editGuestNameDialog"
             :new-guest-name="overlay.newGuestName"
@@ -51,19 +51,19 @@
               emit('update:editGuestNameDialog', $event)
             "
           />
-          <div class="tw-flex tw-items-center tw-gap-3">
+          <div class="tw:flex tw:items-center tw:gap-3">
             <v-btn
               v-if="!overlay.event.daysOnly && overlay.showCalendarOptions"
               variant="outlined"
               prepend-icon="mdi-calendar"
-              class="calendar-options-button tw-shrink-0 tw-border-outline-neutral tw-px-3 tw-text-sm"
+              class="calendar-options-button tw:shrink-0 tw:border-outline-neutral tw:px-3 tw:text-sm"
               @click="emit('update:calendarOptionsDialog', true)"
             >
               Calendar options
             </v-btn>
             <AvailabilityTypeToggle
               :model-value="overlay.availabilityType"
-              class="tw-min-w-0 tw-flex-1"
+              class="tw:min-w-0 tw:flex-1"
               @update:model-value="
                 emit('update:availabilityType', $event as AvailabilityType)
               "
@@ -81,7 +81,7 @@
           overlay.calendarPermissionGranted
         "
       >
-        <div class="tw-h-16 tw-text-sm">
+        <div class="tw:h-16 tw:text-sm">
           <GCalWeekSelector
             :week-offset="overlay.weekOffset"
             :event="overlay.event"
@@ -95,7 +95,7 @@
     <v-expand-transition>
       <div
         v-if="overlay.showStickyRespondents && !overlay.editing"
-        class="timeful-mobile-elevated-panel tw-px-4 tw-pt-4"
+        class="timeful-mobile-elevated-panel tw:px-4 tw:pt-4"
       >
         <ScheduleOverlapRespondentsPanel
           :max-height="240"
@@ -108,7 +108,7 @@
     <v-expand-transition>
       <div
         v-if="overlay.state === states.SET_SPECIFIC_TIMES"
-        class="-tw-mb-16 tw-bg-white tw-p-4"
+        class="tw:-mb-16 tw:bg-white tw:p-4"
       >
         <SpecificTimesInstructions
           :num-temp-times="overlay.numTempTimes"

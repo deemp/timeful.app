@@ -1,16 +1,16 @@
 <template>
-  <div class="tw-mx-auto tw-mb-12 tw-mt-5 tw-max-w-6xl">
-    <div class="tw-flex tw-flex-col tw-gap-16 tw-p-4">
+  <div class="tw:mx-auto tw:mb-12 tw:mt-5 tw:max-w-6xl">
+    <div class="tw:flex tw:flex-col tw:gap-16 tw:p-4">
       <!-- Name change section -->
-      <div class="tw-flex tw-flex-col tw-gap-5">
+      <div class="tw:flex tw:flex-col tw:gap-5">
         <div
-          class="tw-text-xl tw-font-medium tw-text-dark-green sm:tw-text-2xl"
+          class="tw:text-xl tw:font-medium tw:text-dark-green tw:sm:text-2xl"
         >
           Profile
         </div>
         <div>
-          <div class="tw-mb-1 tw-font-medium">Name</div>
-          <div class="tw-flex tw-max-w-lg tw-items-center tw-gap-2">
+          <div class="tw:mb-1 tw:font-medium">Name</div>
+          <div class="tw:flex tw:max-w-lg tw:items-center tw:gap-2">
             <v-text-field
               v-model="firstName"
               hide-details
@@ -28,11 +28,11 @@
           </div>
           <v-expand-transition>
             <div v-if="profileUnsavedChanges">
-              <div class="tw-mt-4">
+              <div class="tw:mt-4">
                 <v-btn
                   color="primary"
                   variant="outlined"
-                  class="tw-mr-2"
+                  class="tw:mr-2"
                   @click="resetProfileChanges"
                   >Cancel</v-btn
                 >
@@ -44,14 +44,14 @@
       </div>
 
       <!-- Calendar Access Section -->
-      <div class="tw-flex tw-flex-col tw-gap-5">
+      <div class="tw:flex tw:flex-col tw:gap-5">
         <div
-          class="tw-text-xl tw-font-medium tw-text-dark-green sm:tw-text-2xl"
+          class="tw:text-xl tw:font-medium tw:text-dark-green tw:sm:text-2xl"
         >
           Calendar access
         </div>
-        <div class="tw-flex tw-flex-col tw-gap-5 sm:tw-flex-row sm:tw-gap-28">
-          <div class="tw-text-black">
+        <div class="tw:flex tw:flex-col tw:gap-5 tw:sm:flex-row tw:sm:gap-28">
+          <div class="tw:text-black">
             We do not store your calendar data anywhere on our servers, and we
             only fetch your calendar events for the time frame you specify in
             order to display your calendar events while you fill out your
@@ -59,7 +59,7 @@
           </div>
           <v-btn
             variant="outlined"
-            class="tw-text-red"
+            class="tw:text-red"
             href="https://myaccount.google.com/connections?filters=3,4&hl=en"
             target="_blank"
             >Revoke calendar access</v-btn
@@ -69,23 +69,23 @@
       </div>
 
       <!-- Permissions Section -->
-      <div class="tw-flex tw-flex-col tw-gap-5">
+      <div class="tw:flex tw:flex-col tw:gap-5">
         <div
-          class="tw-text-xl tw-font-medium tw-text-dark-green sm:tw-text-2xl"
+          class="tw:text-xl tw:font-medium tw:text-dark-green tw:sm:text-2xl"
         >
           Permissions
         </div>
         <div
-          class="tw-flex tw-flex-col tw-rounded-md tw-border-[1px] tw-border-outline-neutral"
+          class="tw:flex tw:flex-col tw:rounded-md tw:border tw:border-outline-neutral"
         >
           <div
-            class="tw-flex tw-w-full tw-flex-row tw-border-b-[1px] tw-border-outline-neutral"
+            class="tw:flex tw:w-full tw:flex-row tw:border-b tw:border-outline-neutral"
           >
             <div
               v-for="(h, i) in heading"
               :key="i"
               :class="`tw-border-r-[${i == heading.length - 1 ? '0' : '1'}px]`"
-              class="tw-w-1/3 tw-border-outline-neutral tw-p-4 tw-font-bold"
+              class="tw:w-1/3 tw:border-outline-neutral tw:p-4 tw:font-bold"
             >
               {{ h }}
             </div>
@@ -95,13 +95,13 @@
             v-for="(c, j) in content"
             :key="j"
             :class="`tw-border-b-[${j == content.length - 1 ? '0' : '1'}px]`"
-            class="tw-flex tw-w-full tw-flex-row tw-border-outline-neutral"
+            class="tw:flex tw:w-full tw:flex-row tw:border-outline-neutral"
           >
             <div
               v-for="(text, k) in c"
               :key="k"
               :class="`tw-border-r-[${k == c.length - 1 ? '0' : '1'}px]`"
-              class="tw-w-1/3 tw-border-outline-neutral tw-p-4"
+              class="tw:w-1/3 tw:border-outline-neutral tw:p-4"
             >
               {{ text }}
             </div>
@@ -110,18 +110,18 @@
       </div>
 
       <!-- Question Section -->
-      <div v-if="supportEmail" class="tw-flex tw-flex-col tw-gap-5">
+      <div v-if="supportEmail" class="tw:flex tw:flex-col tw:gap-5">
         <div
-          class="tw-text-xl tw-font-medium tw-text-dark-green sm:tw-text-2xl"
+          class="tw:text-xl tw:font-medium tw:text-dark-green tw:sm:text-2xl"
         >
           Have a question?
         </div>
-        <div class="tw-flex tw-flex-col tw-gap-5 sm:tw-flex-row sm:tw-gap-28">
-          <div class="tw-text-black">
+        <div class="tw:flex tw:flex-col tw:gap-5 tw:sm:flex-row tw:sm:gap-28">
+          <div class="tw:text-black">
             Email us at
             <a
               :href="`mailto:${supportEmail}`"
-              class="tw-text-black tw-underline"
+              class="tw:text-black tw:underline"
               >{{ supportEmail }}</a
             >
             with any questions!
@@ -130,13 +130,13 @@
       </div>
 
       <!-- Delete Account Section -->
-      <div class="tw-mt-28 tw-flex tw-flex-row tw-justify-center">
-        <div class="tw-w-64">
+      <div class="tw:mt-28 tw:flex tw:flex-row tw:justify-center">
+        <div class="tw:w-64">
           <v-dialog v-model="deleteDialog" width="400" persistent>
             <template #activator="{ props: activatorProps }">
               <v-btn
                 variant="outlined"
-                class="tw-text-red"
+                class="tw:text-red"
                 block
                 v-bind="activatorProps"
                 >Delete account</v-btn
@@ -144,18 +144,18 @@
             </template>
             <v-card>
               <v-card-title>Are you sure?</v-card-title>
-              <v-card-text class="tw-text-sm tw-text-dark-gray"
+              <v-card-text class="tw:text-sm tw:text-dark-gray"
                 >Are you sure you want to delete your account? All your account
                 data will be lost.</v-card-text
               >
-              <div class="tw-mx-6">
-                <div class="tw-text-sm tw-text-dark-gray">
+              <div class="tw:mx-6">
+                <div class="tw:text-sm tw:text-dark-gray">
                   Type your email in the box below to confirm:
                 </div>
                 <v-text-field
                   v-model="deleteValidateEmail"
                   autofocus
-                  class="tw-flex-initial tw-text-white"
+                  class="tw:flex-initial tw:text-white"
                   :placeholder="authUser?.email ?? ''"
                 />
               </div>

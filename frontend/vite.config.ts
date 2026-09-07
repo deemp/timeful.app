@@ -8,12 +8,13 @@ import {
   createFrontendPreviewServerConfig,
   getFrontendEnvDir,
 } from "./config/tooling"
+import tailwindcss from "@tailwindcss/vite";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig(({ command, mode, isPreview }) => {
   return {
-    plugins: [vue(), vuetify({ autoImport: true })],
+    plugins: [vue(), vuetify({ autoImport: true }), tailwindcss()],
     envDir: process.env.VITEST ? undefined : getFrontendEnvDir(),
     resolve: {
       alias: {

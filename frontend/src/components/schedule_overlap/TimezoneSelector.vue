@@ -2,16 +2,16 @@
   <div
     id="timezone-select-container"
     :class="[
-      'tw-flex tw-min-w-0 tw-items-center tw-text-[rgba(0,0,0,0.6)]',
-      compact && !fitContent && 'tw-w-full',
-      fixedWidth && 'tw-w-28',
-      fitContent && 'tw-max-w-full',
+      'tw:flex tw:min-w-0 tw:items-center tw:text-[rgba(0,0,0,0.6)]',
+      compact && !fitContent && 'tw:w-full',
+      fixedWidth && 'tw:w-28',
+      fitContent && 'tw:max-w-full',
     ]"
   >
     <div
       :class="[
-        'timezone-select__field-row tw-flex tw-min-w-0 tw-items-center',
-        (compact && !fitContent) || fixedWidth ? 'tw-flex-1' : '',
+        'timezone-select__field-row tw:flex tw:min-w-0 tw:items-center',
+        (compact && !fitContent) || fixedWidth ? 'tw:flex-1' : '',
       ]"
     >
       <v-btn
@@ -34,15 +34,15 @@
         :class="[
           fieldVariant === 'solo'
             ? 'timeful-solo-field'
-            : 'compact-inline-select tw-z-20 -tw-mt-px tw-min-w-0 tw-text-sm tw-text-black',
+            : 'compact-inline-select tw:z-20 tw:-mt-px tw:min-w-0 tw:text-sm tw:text-black',
           fieldVariant === 'solo' &&
             compactButton &&
             'timezone-select--compact-button',
           (compact && !fitContent) || fixedWidth
-            ? 'tw-w-full tw-flex-1'
+            ? 'tw:w-full tw:flex-1'
             : fitContent
-              ? 'tw-w-auto tw-flex-initial'
-              : 'tw-w-40 sm:tw-w-44 md:tw-w-64',
+              ? 'tw:w-auto tw:flex-initial'
+              : 'tw:w-40 tw:sm:w-44 tw:md:w-64',
           compact && !fixedWidth && 'timezone-select--compact',
         ]"
         :menu-props="{ width: 520 }"

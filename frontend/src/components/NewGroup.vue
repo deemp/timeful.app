@@ -1,8 +1,8 @@
 <template>
   <v-card
     :flat="dialog"
-    :class="{ 'tw-py-4': !dialog, 'tw-flex-1': dialog }"
-    class="tw-relative tw-flex tw-max-w-[28rem] tw-flex-col tw-overflow-hidden tw-rounded-lg tw-transition-all"
+    :class="{ 'tw:py-4': !dialog, 'tw:flex-1': dialog }"
+    class="tw:relative tw:flex tw:max-w-md tw:flex-col tw:overflow-hidden tw:rounded-lg tw:transition-all"
   >
     <EditorDialogHeader
       :title="edit ? 'Edit group' : 'New group'"
@@ -21,11 +21,11 @@
         </div>
       </template>
     </EditorDialogHeader>
-    <v-card-text class="tw-flex-1 tw-overflow-auto tw-px-4 tw-py-1 sm:tw-px-8">
+    <v-card-text class="tw:flex-1 tw:overflow-auto tw:px-4 tw:py-1 tw:sm:px-8">
       <v-form
         ref="formRef"
         v-model="formValid"
-        class="tw-flex tw-flex-col tw-space-y-6"
+        class="tw:flex tw:flex-col tw:space-y-6"
         lazy-validation
         :disabled="loading"
       >
@@ -42,14 +42,14 @@
         />
 
         <div>
-          <div class="tw-mb-2 tw-text-lg tw-text-black">Time range</div>
-          <div class="tw-mb-2 tw-flex tw-items-center">
+          <div class="tw:mb-2 tw:text-lg tw:text-black">Time range</div>
+          <div class="tw:mb-2 tw:flex tw:items-center">
             <TimeFormatToggle
               :model-value="eventTimeType"
               @update:model-value="updateEventTimeType"
             />
           </div>
-          <div class="tw-flex tw-items-baseline tw-justify-center tw-space-x-2">
+          <div class="tw:flex tw:items-baseline tw:justify-center tw:space-x-2">
             <v-select
               v-model="startTime"
               class="timeful-solo-field"
@@ -69,7 +69,7 @@
         </div>
 
         <div>
-          <div class="tw-mb-2 tw-text-lg tw-text-black">Day range</div>
+          <div class="tw:mb-2 tw:text-lg tw:text-black">Day range</div>
           <v-input
             v-model="selectedDaysOfWeek"
             hide-details="auto"
@@ -91,9 +91,9 @@
               </v-btn>
             </v-btn-toggle>
           </v-input>
-          <v-checkbox v-model="startOnMonday" class="tw-mt-2" hide-details>
+          <v-checkbox v-model="startOnMonday" class="tw:mt-2" hide-details>
             <template #label>
-              <span class="tw-text-sm tw-text-very-dark-gray">
+              <span class="tw:text-sm tw:text-very-dark-gray">
                 Start on Monday
               </span>
             </template>
@@ -111,27 +111,27 @@
           @request-contacts-access="requestContactsAccess"
         >
           <template #header>
-            <div class="tw-mb-2 tw-text-lg tw-text-black">Members</div>
+            <div class="tw:mb-2 tw:text-lg tw:text-black">Members</div>
           </template>
         </EmailInput>
 
         <div>
           <v-btn
-            class="tw-justify-start tw-pl-0"
+            class="tw:justify-start tw:pl-0"
             block
             variant="text"
             @click="showAdvancedOptions = !showAdvancedOptions"
-            ><span class="tw-mr-1">Advanced options</span>
+            ><span class="tw:mr-1">Advanced options</span>
             <v-icon :class="`tw-rotate-${showAdvancedOptions ? '180' : '0'}`"
               >mdi-chevron-down</v-icon
             ></v-btn
           >
           <v-expand-transition>
             <div v-show="showAdvancedOptions">
-              <div class="tw-my-2">
-                <div class="tw-flex tw-items-center tw-gap-x-2">
+              <div class="tw:my-2">
+                <div class="tw:flex tw:items-center tw:gap-x-2">
                   <div
-                    class="tw-text-sm tw-text-black"
+                    class="tw:text-sm tw:text-black"
                     data-testid="timezone-label"
                   >
                     Timezone
@@ -153,21 +153,21 @@
         </div>
       </v-form>
     </v-card-text>
-    <v-card-actions class="tw-relative tw-px-4 sm:tw-px-8">
-      <div class="tw-relative tw-w-full">
+    <v-card-actions class="tw:relative tw:px-4 tw:sm:px-8">
+      <div class="tw:relative tw:w-full">
         <v-btn
           :disabled="!formValid"
           block
           :loading="loading"
           color="primary"
-          class="timeful-elevated-button tw-mt-4 tw-bg-green"
+          class="timeful-elevated-button tw:mt-4 tw:bg-green"
           @click="submit"
         >
           {{ edit ? "Save edits" : "Create group" }}
         </v-btn>
         <div
-          :class="formValid ? 'tw-invisible' : 'tw-visible'"
-          class="tw-mt-1 tw-text-xs tw-text-red"
+          :class="formValid ? 'tw:invisible' : 'tw:visible'"
+          class="tw:mt-1 tw:text-xs tw:text-red"
         >
           Please fix form errors before continuing
         </div>

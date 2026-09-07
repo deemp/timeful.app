@@ -186,8 +186,8 @@ describe("OverflowGradient", () => {
     await nextTick()
 
     const gradient = wrapper.get("div")
-    expect(gradient.classes()).toContain("tw-bottom-0")
-    expect(gradient.classes()).not.toContain("tw-top-0")
+    expect(gradient.classes()).toContain("tw:bottom-0")
+    expect(gradient.classes()).not.toContain("tw:top-0")
     expect(gradient.attributes("style")).toContain(
       "rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%",
     )
@@ -273,9 +273,9 @@ describe("OverflowGradient", () => {
     await nextTick()
 
     const gradient = wrapper.get("div")
-    expect(gradient.classes()).toContain("tw-top-0")
-    expect(gradient.classes()).toContain("tw-items-start")
-    expect(gradient.classes()).not.toContain("tw-bottom-0")
+    expect(gradient.classes()).toContain("tw:top-0")
+    expect(gradient.classes()).toContain("tw:items-start")
+    expect(gradient.classes()).not.toContain("tw:bottom-0")
     expect(gradient.attributes("style")).toContain(
       "rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%",
     )

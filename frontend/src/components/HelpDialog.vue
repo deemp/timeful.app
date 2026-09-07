@@ -2,7 +2,7 @@
   <v-dialog
     :model-value="modelValue"
     width="425"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="(v: boolean) => emit('update:modelValue', v)"
   >
     <v-card>

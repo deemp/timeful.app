@@ -21,8 +21,8 @@ describe("AlertText", () => {
       },
     })
 
-    expect(wrapper.classes()).toContain("tw-items-baseline")
-    expect(wrapper.get(".v-icon").classes()).toContain("tw-text-base")
-    expect(alertTextSource).not.toContain("-tw-mt-px")
+    expect(wrapper.classes()).toContain("tw:items-baseline")
+    expect(wrapper.get(".v-icon").classes()).toContain("tw:text-base")
+    expect(alertTextSource).not.toContain("tw:-mt-px")
   })
 })

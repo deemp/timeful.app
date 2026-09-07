@@ -49,7 +49,7 @@ describe("ScheduleOverlap mobile tooltip", () => {
     }
 
     vm.getTimeslotVon(1, 0).mouseover()
-    await wrapper.get(".tw-relative").trigger("mouseenter")
+    await wrapper.get(".tw:relative").trigger("mouseenter")
     await nextTick()
 
     expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(true)
@@ -179,7 +179,7 @@ describe("ScheduleOverlap mobile tooltip", () => {
     }
 
     vm.getTimeslotVon(1, 0).mouseover()
-    await wrapper.get(".tw-relative").trigger("mouseenter")
+    await wrapper.get(".tw:relative").trigger("mouseenter")
     await nextTick()
 
     const tooltip = wrapper.get(".tw-fixed.timeful-tooltip-layer")
@@ -187,7 +187,7 @@ describe("ScheduleOverlap mobile tooltip", () => {
 
     const overlayRoot = wrapper.get(".schedule-overlap-mobile-overlay")
     expect(overlayRoot.classes()).toContain("timeful-bottom-overlay-layer")
-    expect(overlayRoot.classes()).toContain("tw-isolate")
+    expect(overlayRoot.classes()).toContain("tw:isolate")
 
     wrapper.unmount()
   })

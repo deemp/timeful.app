@@ -23,8 +23,8 @@ describe("SignInGoogleBtn", () => {
     expect(wrapper.get(".gsi-material-button-contents").text()).toBe(
       "Continue with Google",
     )
-    expect(wrapper.get(".tw-hidden").text()).toBe("Continue with Google")
-    expect(wrapper.get("svg").classes()).toContain("tw-block")
+    expect(wrapper.get(".tw:hidden").text()).toBe("Continue with Google")
+    expect(wrapper.get("svg").classes()).toContain("tw:block")
 
     await wrapper.get("button").trigger("click")
 

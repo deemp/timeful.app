@@ -8,7 +8,7 @@
       :items="searchedContacts"
       item-title="queryString"
       item-value="queryString"
-      class="timeful-solo-field timeful-invalid-field tw-mt-2 tw-text-sm"
+      class="timeful-solo-field timeful-invalid-field tw:mt-2 tw:text-sm"
       placeholder="Type an email address and press enter..."
       multiple
       append-icon=""
@@ -41,19 +41,19 @@
     </v-combobox>
 
     <div
-      class="tw-relative tw-transition-all"
-      :class="emailsAreValid ? '-tw-mt-5' : ''"
+      class="tw:relative tw:transition-all"
+      :class="emailsAreValid ? 'tw:-mt-5' : ''"
     >
       <v-expand-transition>
         <template v-if="signInEnabled">
-          <div v-if="!hasContactsAccess" class="tw-text-xs tw-text-dark-gray">
-            <a class="tw-underline" @click="requestContactsAccess"
+          <div v-if="!hasContactsAccess" class="tw:text-xs tw:text-dark-gray">
+            <a class="tw:underline" @click="requestContactsAccess"
               >Enable contacts access</a
             >
             for email auto-suggestions.
           </div>
         </template>
-        <div v-else class="tw-text-xs tw-text-dark-gray">
+        <div v-else class="tw:text-xs tw:text-dark-gray">
           Requires sign-in, which is disabled in this build
         </div>
       </v-expand-transition>

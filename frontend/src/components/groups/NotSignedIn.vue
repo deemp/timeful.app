@@ -1,43 +1,43 @@
 <template>
   <v-fade-transition>
     <div
-      class="tw-flex tw-h-full tw-flex-col tw-items-center tw-justify-center tw-p-2"
+      class="tw:flex tw:h-full tw:flex-col tw:items-center tw:justify-center tw:p-2"
     >
-      <div class="tw-mb-8 tw-flex tw-max-w-[26rem] tw-flex-col tw-items-center">
+      <div class="tw:mb-8 tw:flex tw:max-w-104 tw:flex-col tw:items-center">
         <UserAvatarContent
           :user="props.owner"
           :size="90"
-          class="tw-mb-4 tw-text-center"
+          class="tw:mb-4 tw:text-center"
         />
-        <h1 class="tw-mb-2 tw-text-center tw-text-xl tw-font-medium">
+        <h1 class="tw:mb-2 tw:text-center tw:text-xl tw:font-medium">
           {{ props.owner?.firstName ?? "" }} invited you to join <br />"{{
             event.name
           }}"
         </h1>
-        <div class="tw-text-center tw-text-dark-gray">
+        <div class="tw:text-center tw:text-dark-gray">
           Join the group now to share your real-time <br v-if="!isPhone" />
           calendar availability with each other!
         </div>
       </div>
       <template v-if="signInEnabled">
-        <v-btn color="primary" class="tw-mb-8" @click="join"
+        <v-btn color="primary" class="tw:mb-8" @click="join"
           >Join with Google Calendar</v-btn
         >
-        <div class="tw-text-center tw-text-dark-gray">
+        <div class="tw:text-center tw:text-dark-gray">
           Already have a Timeful account?
-          <a class="tw-underline" @click="signIn">Sign in</a>
+          <a class="tw:underline" @click="signIn">Sign in</a>
         </div>
       </template>
-      <div v-else class="tw-text-center tw-text-dark-gray">
+      <div v-else class="tw:text-center tw:text-dark-gray">
         Sign-in is disabled in this build, so group joining is unavailable here.
       </div>
 
       <v-dialog
         v-model="calendarPermissionsDialog"
         width="400"
-        content-class="tw-m-0"
+        content-class="tw:m-0"
       >
-        <v-card class="tw-p-4 sm:tw-p-6">
+        <v-card class="tw:p-4 tw:sm:p-6">
           <CalendarPermissionsCard
             @cancel="calendarPermissionsDialog = false"
             @allow="allowCalendarAccess"

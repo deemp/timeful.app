@@ -2,24 +2,24 @@
   <v-dialog
     :model-value="props.modelValue"
     max-width="500px"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="handleDialogVisibilityChange"
   >
     <v-card>
       <v-card-title>
-        <span class="tw-text-xl tw-font-medium">Import Timeful Event</span>
+        <span class="tw:text-xl tw:font-medium">Import Timeful Event</span>
         <v-spacer />
         <v-btn
           absolute
           icon
-          class="tw-right-0 tw-mr-2 tw-self-center"
+          class="tw:right-0 tw:mr-2 tw:self-center"
           @click="closeDialog"
         >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      <v-card-text class="tw-text-very-dark-gray">
-        <p class="tw-mb-4">
+      <v-card-text class="tw:text-very-dark-gray">
+        <p class="tw:mb-4">
           Paste a Timeful event URL from another instance to import it along
           with all existing responses.
         </p>

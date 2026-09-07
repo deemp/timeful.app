@@ -1,26 +1,26 @@
 <template>
-  <v-dialog v-model="dialog" max-width="600px" content-class="tw-m-0">
+  <v-dialog v-model="dialog" max-width="600px" content-class="tw:m-0">
     <v-card>
       <v-card-title>
-        <span class="tw-text-xl tw-font-medium"
+        <span class="tw:text-xl tw:font-medium"
           >Convert When2meet to Timeful</span
         >
         <v-spacer />
         <v-btn
           absolute
           icon
-          class="tw-right-0 tw-mr-2 tw-self-center"
+          class="tw:right-0 tw:mr-2 tw:self-center"
           @click="emit('update:modelValue', false)"
         >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      <v-card-text class="tw-text-very-dark-gray">
-        <p class="tw-mb-4">
+      <v-card-text class="tw:text-very-dark-gray">
+        <p class="tw:mb-4">
           If someone accidentally sends you a When2meet link instead of a
           Timeful, you can convert it by following these steps:
         </p>
-        <ol class="tw-mb-6 tw-list-decimal tw-pl-5">
+        <ol class="tw:mb-6 tw:list-decimal tw:pl-5">
           <li>Go to your When2meet event link.</li>
           <li>Add "better" to the beginning of the URL.</li>
           <li>🪄💫✨</li>
@@ -31,8 +31,8 @@
           will be copied over as well.
         </p>
 
-        <p class="tw-mb-2 tw-font-medium">Watch how to do it:</p>
-        <div class="video-container tw-mb-4">
+        <p class="tw:mb-2 tw:font-medium">Watch how to do it:</p>
+        <div class="video-container tw:mb-4">
           <iframe
             width="560"
             height="315"

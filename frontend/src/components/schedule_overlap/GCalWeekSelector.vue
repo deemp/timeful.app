@@ -1,9 +1,9 @@
 <template>
   <div
-    class="tw-flex tw-h-16 tw-items-center tw-justify-between tw-gap-2 tw-bg-white tw-px-2 tw-drop-shadow sm:tw-h-[unset] sm:tw-flex-1 sm:tw-px-0 sm:tw-drop-shadow-none"
+    class="tw:flex tw:h-16 tw:items-center tw:justify-between tw:gap-2 tw:bg-white tw:px-2 tw:drop-shadow tw:sm:h-[unset] tw:sm:flex-1 tw:sm:px-0 tw:sm:drop-shadow-none"
   >
     <v-btn icon @click="prevWeek"><v-icon>mdi-chevron-left</v-icon></v-btn>
-    <div class="tw-text-center">
+    <div class="tw:text-center">
       Showing calendar for week of {{ weekText }}
     </div>
     <v-btn icon @click="nextWeek"><v-icon>mdi-chevron-right</v-icon></v-btn>
