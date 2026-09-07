@@ -513,8 +513,8 @@ watch(
 <style scoped>
 @media screen and (min-width: 375px) and (max-width: 640px) {
   #header {
-    font-size: 1.875rem !important; /* 30px */
-    line-height: 2.25rem !important; /* 36px */
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem; /* 36px */
   }
 }
 </style>

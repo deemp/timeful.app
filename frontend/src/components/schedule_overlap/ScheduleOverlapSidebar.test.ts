@@ -558,9 +558,9 @@ describe("ScheduleOverlapSidebar", () => {
     expect(wrapper.get(".schedule-overlap-sidebar__body").classes()).toContain(
       "tw:pt-5",
     )
-    expect(wrapper.find(".tw-flex.tw-flex-col.tw:gap-5").classes()).toContain(
-      "tw:mb-2",
-    )
+    expect(
+      wrapper.find(".tw\\:flex.tw\\:flex-col.tw\\:gap-5").classes(),
+    ).toContain("tw:mb-2")
   })
 
   it("offsets the desktop days-only sidebar to the top of the grid", () => {
@@ -618,8 +618,8 @@ describe("ScheduleOverlapSidebar", () => {
     expect(wrapper.html()).not.toContain("tw:pt-2")
     expect(wrapper.html()).not.toContain("tw:pt-4")
     expect(wrapper.html()).not.toContain("tw:pt-14")
-    expect(wrapper.find(".tw-flex.tw-flex-col.tw:gap-5").classes()).toContain(
-      "tw:mb-2",
-    )
+    expect(
+      wrapper.find(".tw\\:flex.tw\\:flex-col.tw\\:gap-5").classes(),
+    ).toContain("tw:mb-2")
   })
 })

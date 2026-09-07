@@ -51,7 +51,7 @@ test("create flow with specific-times lands directly in the specific-times grid"
   expect(created.createPayload).not.toHaveProperty("enabledSlots")
   // Smoke: the create grid starts with an empty selection; the class-to-state
   // mapping itself is unit-locked in scheduleOverlapRendering.test.ts.
-  expect(await countGridCellsByClass(page, "tw-bg-white")).toBe(0)
+  expect(await countGridCellsByClass(page, "tw:bg-white")).toBe(0)
 })
 
 test("create specific-times saves and reopens the canonical active subset instead of the full domain", async ({
@@ -192,7 +192,7 @@ test("create specific-times without grid edits persists an empty active subset u
 
   await openEventPage(page, created.shortId)
   await waitForSpecificTimesGrid(page)
-  expect(await countGridCellsByClass(page, "tw-bg-white")).toBe(0)
+  expect(await countGridCellsByClass(page, "tw:bg-white")).toBe(0)
 })
 
 test("selecting midnight slots outside the default 9-5 enabled range saves the exact cross-day selection", async ({

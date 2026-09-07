@@ -2386,8 +2386,8 @@ watch(
 }
 
 .destructive-outlined-button {
-  color: var(--timeful-red-canonical) !important;
-  border: 1px solid var(--timeful-red-canonical) !important;
+  color: var(--timeful-red-canonical);
+  border: 1px solid var(--timeful-red-canonical);
   --v-hover-opacity: 0;
 }
 
@@ -2396,11 +2396,11 @@ watch(
     in srgb,
     var(--timeful-red-canonical) 5%,
     transparent
-  ) !important;
+  );
 }
 
 .event-header-description {
-  margin-top: 0 !important;
+  margin-top: 0;
 }
 
 .event-metadata-action-button {
@@ -2415,19 +2415,19 @@ watch(
 }
 
 .desktop-primary-availability-button {
-  border: 1px solid var(--timeful-primary-action-bg) !important;
+  border: 1px solid var(--timeful-primary-action-bg);
 }
 
 .desktop-primary-availability-button--add {
-  -webkit-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14) !important;
-  -moz-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14) !important;
-  box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14) !important;
+  -webkit-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14);
+  -moz-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14);
+  box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14);
 }
 
 .desktop-primary-availability-button--edit {
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 
 .mobile-primary-availability-button {
@@ -2435,10 +2435,10 @@ watch(
 }
 
 .mobile-primary-availability-button--edit {
-  border: 1px solid var(--timeful-primary-action-bg) !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  border: 1px solid var(--timeful-primary-action-bg);
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 
 .mobile-schedule-button .v-btn__content,
@@ -2447,9 +2447,9 @@ watch(
 }
 
 .mobile-schedule-button {
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 
 .mobile-schedule-button--disabled {
@@ -2467,9 +2467,9 @@ watch(
 
 .desktop-editing-save-button,
 .mobile-editing-save-button {
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 </style>
 

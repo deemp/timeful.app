@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <AutoSnackbar color="error" :text="error" />
-    <AutoSnackbar color="tw-bg-blue" :text="info" />
+    <AutoSnackbar color="tw:bg-blue" :text="info" />
     <SignInNotSupportedDialog v-model="webviewDialog" />
     <SignInDialog
       v-if="signInEnabled"
@@ -19,6 +19,7 @@
     <UpvoteRedditSnackbar />
     <div
       v-if="showHeader"
+      data-testid="app-header"
       class="tw:fixed tw:z-60 tw:h-14 tw:w-screen tw:bg-white tw:sm:h-16"
       dark
     >
@@ -119,7 +120,7 @@
           color="primary"
           class="tw:mx-2 tw:rounded-md"
           :style="{
-            boxShadow: '0px 2px 8px 0px #00994C80 !important',
+            boxShadow: '0px 2px 8px 0px #00994C80',
           }"
           @click="() => _createNew()"
         >
@@ -350,14 +351,14 @@ watch(
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans&display=swap");
 
 html {
-  overflow-y: auto !important;
+  overflow-y: auto;
   /* overscroll-behavior: none; */
   scroll-behavior: smooth;
 }
 
 * {
   font-family: "DM Sans", sans-serif;
-  /* touch-action: manipulation !important; */
+  /* touch-action: manipulation; */
 }
 
 .v-messages__message {
@@ -367,32 +368,32 @@ html {
 
 /** Buttons */
 .v-btn {
-  letter-spacing: unset !important;
-  text-transform: unset !important;
+  letter-spacing: unset;
+  text-transform: unset;
 }
-.v-btn:not(.v-btn--round, .v-btn-toggle > .v-btn).v-size--default {
-  height: 38px !important;
-  border-radius: 0.375rem !important;
+.v-btn:not(.v-btn--icon, .v-btn-toggle > .v-btn).v-btn--size-default {
+  height: 38px;
+  border-radius: 0.375rem;
 }
 .v-menu__content {
   box-shadow:
     0px 5px 5px -1px rgba(0, 0, 0, 0.1),
     0px 8px 10px 0.5px rgba(0, 0, 0, 0.07),
-    0px 3px 14px 1px rgba(0, 0, 0, 0.06) !important;
+    0px 3px 14px 1px rgba(0, 0, 0, 0.06);
 }
 .overlay-avail-shadow-green {
-  box-shadow: 0px 3px 6px 0px #1c7d454d !important;
+  box-shadow: 0px 3px 6px 0px #1c7d454d;
 }
 .overlay-avail-shadow-yellow {
-  box-shadow: 0px 2px 8px 0px #e5a8004d !important;
+  box-shadow: 0px 2px 8px 0px #e5a8004d;
 }
 
 .v-text-field__details {
-  padding: 0 !important;
+  padding: 0;
 }
 
 /** Dialog interaction */
 .v-dialog > .v-overlay__content {
-  pointer-events: auto !important;
+  pointer-events: auto;
 }
 </style>

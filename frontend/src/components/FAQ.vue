@@ -1,6 +1,6 @@
 <template>
   <div
-    class="tw:flex tw:w-full tw:cursor-pointer tw:flex-col tw:overflow-hidden tw:rounded-md tw:border tw:bg-white tw:p-4 tw:text-left tw:shadow-sm tw:transition-all tw:sm:p-6"
+    class="tw:flex tw:w-full tw:cursor-pointer tw:flex-col tw:overflow-hidden tw:rounded-md tw:border tw:bg-white tw:p-4 tw:text-left tw:shadow-xs tw:transition-all tw:sm:p-6"
     :class="{
       'tw:border-green': toggled,
       'tw:border-outline-neutral': !toggled,

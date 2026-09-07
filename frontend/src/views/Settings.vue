@@ -84,7 +84,7 @@
             <div
               v-for="(h, i) in heading"
               :key="i"
-              :class="`tw-border-r-[${i == heading.length - 1 ? '0' : '1'}px]`"
+              :class="`tw:border-r-[${i == heading.length - 1 ? '0' : '1'}px]`"
               class="tw:w-1/3 tw:border-outline-neutral tw:p-4 tw:font-bold"
             >
               {{ h }}
@@ -94,13 +94,13 @@
           <div
             v-for="(c, j) in content"
             :key="j"
-            :class="`tw-border-b-[${j == content.length - 1 ? '0' : '1'}px]`"
+            :class="`tw:border-b-[${j == content.length - 1 ? '0' : '1'}px]`"
             class="tw:flex tw:w-full tw:flex-row tw:border-outline-neutral"
           >
             <div
               v-for="(text, k) in c"
               :key="k"
-              :class="`tw-border-r-[${k == c.length - 1 ? '0' : '1'}px]`"
+              :class="`tw:border-r-[${k == c.length - 1 ? '0' : '1'}px]`"
               class="tw:w-1/3 tw:border-outline-neutral tw:p-4"
             >
               {{ text }}

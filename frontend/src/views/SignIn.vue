@@ -92,7 +92,7 @@
                 />
                 <p
                   v-if="accountNotFound"
-                  class="tw-text-error tw:mb-2 tw:flex tw:items-center tw:gap-2 tw:text-sm"
+                  class="tw:text-error tw:mb-2 tw:flex tw:items-center tw:gap-2 tw:text-sm"
                 >
                   <v-icon color="error" size="16">mdi-alert-circle</v-icon>
                   Couldn’t find this account.
@@ -186,7 +186,7 @@
               v-if="sendOtpError"
               class="tw:mt-3 tw:flex tw:flex-col tw:items-center tw:gap-1 tw:text-sm"
             >
-              <p class="tw-text-error">{{ sendOtpError }}</p>
+              <p class="tw:text-error">{{ sendOtpError }}</p>
               <a
                 class="tw:font-medium tw:text-blue tw:underline"
                 :href="feedbackUrl"
@@ -259,7 +259,7 @@
               v-if="sendOtpError"
               class="tw:mt-3 tw:flex tw:flex-col tw:items-center tw:gap-1 tw:text-sm"
             >
-              <p class="tw-text-error">{{ sendOtpError }}</p>
+              <p class="tw:text-error">{{ sendOtpError }}</p>
               <a
                 class="tw:font-medium tw:text-blue tw:underline"
                 :href="feedbackUrl"

@@ -49,7 +49,7 @@ const RenderingVSelectStub = defineComponent({
       <slot
         v-if="selectedItem"
         name="selection"
-        :item="{ raw: selectedItem }"
+        :item="selectedItem"
       />
       <div v-else>{{ renderedLabel }}</div>
     </div>
@@ -70,7 +70,7 @@ const ItemSlotRenderingVSelectStub = defineComponent({
         v-for="item in items"
         :key="String(item.value)"
         name="item"
-        :item="{ raw: item }"
+        :item="item"
         :props="{ title: item.title, value: item.value }"
       />
     </div>
@@ -116,13 +116,13 @@ const DirectRawItemVSelectStub = defineComponent({
       <slot
         v-if="selectedTimezone"
         name="item"
-        :item="{ raw: selectedTimezone }"
+        :item="selectedTimezone"
         :props="{ title: { text: '[object Object]' }, value: selectedTimezone.value }"
       />
       <slot
         v-if="selectedTimezone"
         name="selection"
-        :item="{ raw: selectedTimezone }"
+        :item="selectedTimezone"
       />
     </div>
   `,
@@ -245,7 +245,7 @@ describe("TimezoneSelector", () => {
       'data-testid="timezone-select-option"',
     )
     expect(timezoneSelectorSource).toContain(
-      ':data-timezone-value="getTimezoneFromSelectItem(item.raw).value"',
+      ':data-timezone-value="getTimezoneFromSelectItem(internalItem).value"',
     )
   })
 
@@ -423,10 +423,10 @@ describe("TimezoneSelector", () => {
       "(compact && !fitContent) || fixedWidth ? 'tw:flex-1' : ''",
     )
     expect(timezoneSelectorSource).toContain(
-      ".compact-inline-select:not(.timeful-solo-field) :deep(.v-field__input) {\n  flex-wrap: nowrap !important;\n  min-width: 0 !important;",
+      ".compact-inline-select:not(.timeful-solo-field) :deep(.v-field__input) {\n  flex-wrap: nowrap;\n  min-width: 0;",
     )
     expect(timezoneSelectorSource).toContain(
-      ".compact-inline-select :deep(.v-select__selection) {\n  display: block !important;",
+      ".compact-inline-select :deep(.v-select__selection) {\n  display: block;",
     )
   })
 
@@ -467,7 +467,7 @@ describe("TimezoneSelector", () => {
     expect(timezoneSelectorSource).toContain('size="32"')
     expect(timezoneSelectorSource).toContain('variant="outlined"')
     expect(timezoneSelectorSource).toContain(
-      ".timezone-select__reset-button--right {\n  border-color: var(--timeful-outline-neutral) !important;\n  border-radius: 0.375rem;\n  color: rgb(0, 0, 0);\n  height: 32px;",
+      ".timezone-select__reset-button--right {\n  border-color: var(--timeful-outline-neutral);\n  border-radius: 0.375rem;\n  color: rgb(0, 0, 0);\n  height: 32px;",
     )
     expect(timezoneSelectorSource).not.toContain(
       ".compact-inline-select :deep(.v-field__outline) {\n  display: none;",
@@ -476,10 +476,10 @@ describe("TimezoneSelector", () => {
 
   it("keeps the toolbar button as short as the time-format switch", () => {
     expect(timezoneSelectorSource).toContain(
-      ".timezone-select--compact-button :deep(.v-field) {\n  min-height: 32px !important;\n  height: 32px !important;\n  filter: none !important;\n  box-shadow: none !important;\n  border: 1px solid var(--timeful-outline-neutral) !important;",
+      ".timezone-select--compact-button :deep(.v-field) {\n  min-height: 32px;\n  height: 32px;\n  filter: none;\n  box-shadow: none;\n  border: 1px solid var(--timeful-outline-neutral);",
     )
     expect(timezoneSelectorSource).toContain(
-      ".timezone-select--compact-button :deep(.v-field__input) {\n  align-items: center !important;\n  min-height: 32px !important;\n  padding-top: 0 !important;\n  padding-bottom: 0 !important;\n  font-size: 0.875rem;\n  font-weight: 500;",
+      ".timezone-select--compact-button :deep(.v-field__input) {\n  align-items: center;\n  min-height: 32px;\n  padding-top: 0;\n  padding-bottom: 0;\n  font-size: 0.875rem;\n  font-weight: 500;",
     )
     expect(timezoneSelectorSource).toContain(
       ".timezone-select--compact-button :deep(.v-select__selection-text) {\n  color: rgb(0, 0, 0);\n  font-family: inherit;\n  font-size: 0.875rem;\n  font-weight: 500;",
@@ -623,10 +623,10 @@ describe("TimezoneSelector", () => {
       ".compact-inline-select :deep(.v-input__control),\n.compact-inline-select :deep(.v-field__field)",
     )
     expect(timezoneSelectorSource).not.toContain(
-      ".compact-inline-select :deep(.v-field__input) {\n  align-items: center !important;",
+      ".compact-inline-select :deep(.v-field__input) {\n  align-items: center;",
     )
     expect(timezoneSelectorSource).not.toContain(
-      ".compact-inline-select :deep(.v-field) {\n  background: transparent;\n  border: 0;\n  border-radius: 0;\n  height: 26px !important;",
+      ".compact-inline-select :deep(.v-field) {\n  background: transparent;\n  border: 0;\n  border-radius: 0;\n  height: 26px;",
     )
   })
 

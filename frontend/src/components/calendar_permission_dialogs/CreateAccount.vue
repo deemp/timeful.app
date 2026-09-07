@@ -1,7 +1,7 @@
 <template>
   <div class="tw:flex tw:flex-col tw:gap-6">
     <div
-      class="tw-text-md tw:flex tw:flex-col tw:items-center tw:gap-2 tw:font-normal"
+      class="tw:text-md tw:flex tw:flex-col tw:items-center tw:gap-2 tw:font-normal"
     >
       Create a Timeful account to link your
       <div class="tw:flex tw:items-center tw:gap-1">

@@ -18,7 +18,7 @@
             class="tw:flex tw:w-full tw:items-center tw:justify-between tw:gap-1 tw:bg-light-gray tw:px-2 tw:py-2 tw:text-sm tw:text-very-dark-gray"
           >
             <div
-              :class="`tw:flex tw-gap-${overlay.hintText.length > 60 ? 2 : 1}`"
+              :class="`tw:flex tw:gap-${overlay.hintText.length > 60 ? 2 : 1}`"
             >
               <v-icon small>mdi-information-outline</v-icon>
               <div>

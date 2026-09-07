@@ -16,7 +16,7 @@ export const newEventFormScenario = {
       name: "newEventCloseButton",
       kind: "selector",
       selector:
-        ".v-card .v-card-title .v-btn:last-child, .v-card .v-card-title button:last-child, .v-card > .tw-flex.tw-rounded > .v-btn:last-child, .v-card > .tw-flex.tw-rounded > button:last-child",
+        ".v-card .v-card-title .v-btn:last-child, .v-card .v-card-title button:last-child, .v-card > .tw\\:flex.tw\\:rounded > .v-btn:last-child, .v-card > .tw\\:flex.tw\\:rounded > button:last-child",
     },
     {
       name: "newEventSubmitButton",

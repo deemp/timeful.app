@@ -1,3 +1,5 @@
+// Establish cascade priority before any dependency or component imports CSS.
+import "./styles/layers.css"
 import { createApp } from "vue"
 import { createPinia } from "pinia"
 import { createHead } from "@unhead/vue/client"

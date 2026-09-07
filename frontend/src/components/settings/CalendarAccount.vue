@@ -4,7 +4,7 @@
       class="tw:group tw:flex tw:h-10 tw:flex-row tw:items-center tw:justify-between tw:text-black"
     >
       <div
-        :class="`tw-gap-${toggleState ? '0' : '2'}`"
+        :class="`tw:gap-${toggleState ? '0' : '2'}`"
         class="tw:flex tw:w-full tw:flex-row tw:items-center"
       >
         <div v-if="toggleState" class="tw:flex tw:items-center">
@@ -25,7 +25,7 @@
             <div class="tw:rotate-0 tw:rotate-90"></div>
 
             <v-icon
-              :class="`tw-rotate-${showSubCalendars ? 90 : 0}`"
+              :class="`tw:rotate-${showSubCalendars ? 90 : 0}`"
               class="tw:text-dark-gray tw:transition-all"
               >mdi-chevron-right</v-icon
             >
@@ -34,7 +34,7 @@
         <UserAvatarContent v-else :size="24" :user="account" />
         <div
           :class="toggleState && !fillSpace ? 'tw:w-[180px]' : ''"
-          class="tw-align-text-middle tw:inline-block tw:wrap-break-word tw:text-sm"
+          class="tw:align-text-middle tw:inline-block tw:wrap-break-word tw:text-sm"
         >
           {{ account.email }}
         </div>
@@ -55,7 +55,7 @@
 
       <v-btn
         icon
-        :class="`tw-opacity-${
+        :class="`tw:opacity-${
           account.email == selectedRemoveEmail && removeDialog ? '100' : '0'
         } ${!allowDelete ? 'tw:hidden' : ''}`"
         class="tw:group-hover:opacity-100"
@@ -84,7 +84,7 @@
           />
           <div
             :class="!fillSpace ? 'tw:w-40' : ''"
-            class="tw-align-text-middle tw:ml-8 tw:inline-block tw:wrap-break-word tw:text-sm"
+            class="tw:align-text-middle tw:ml-8 tw:inline-block tw:wrap-break-word tw:text-sm"
           >
             {{ subCalendar.name }}
           </div>

@@ -62,20 +62,20 @@
         :variant="fieldVariant"
         @update:model-value="onChangeValue"
       >
-        <template #item="{ item, props: itemProps }">
+        <template #item="{ item: internalItem, props: itemProps }">
           <v-list-item
             v-bind="stripGeneratedTitle(itemProps)"
             class="timezone-select__item"
             data-testid="timezone-select-option"
-            :data-timezone-value="getTimezoneFromSelectItem(item.raw).value"
+            :data-timezone-value="getTimezoneFromSelectItem(internalItem).value"
             :class="{
               'timezone-select__item--active':
-                getTimezoneFromSelectItem(item.raw).value ===
+                getTimezoneFromSelectItem(internalItem).value ===
                 selectedTimezoneValue,
             }"
           >
             <v-list-item-title class="timezone-select__item-title">
-              {{ formatTimezoneSelectItemLabel(item.raw) }}
+              {{ formatTimezoneSelectItemLabel(internalItem) }}
             </v-list-item-title>
           </v-list-item>
         </template>
@@ -83,7 +83,7 @@
           <div
             class="timezone-select__selection-text v-select__selection v-select__selection--comma"
           >
-            {{ selectedTimezoneLabel(item.raw) }}
+            {{ selectedTimezoneLabel(item) }}
           </div>
         </template>
       </v-select>
@@ -259,18 +259,18 @@ function onChangeValue(val: string | null) {
 }
 
 .timezone-select--compact-button :deep(.v-field) {
-  min-height: 32px !important;
-  height: 32px !important;
-  filter: none !important;
-  box-shadow: none !important;
-  border: 1px solid var(--timeful-outline-neutral) !important;
+  min-height: 32px;
+  height: 32px;
+  filter: none;
+  box-shadow: none;
+  border: 1px solid var(--timeful-outline-neutral);
 }
 
 .timezone-select--compact-button :deep(.v-field__input) {
-  align-items: center !important;
-  min-height: 32px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  align-items: center;
+  min-height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -283,9 +283,9 @@ function onChangeValue(val: string | null) {
 }
 
 .timezone-select--compact-button :deep(.v-field__append-inner) {
-  align-self: center !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  align-self: center;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .timezone-select--compact-button :deep(.v-field) {
@@ -319,7 +319,7 @@ function onChangeValue(val: string | null) {
 .compact-inline-select :deep(.v-field__input),
 .compact-inline-select :deep(.v-select__selection),
 .compact-inline-select :deep(.v-select__selection-text) {
-  letter-spacing: normal !important;
+  letter-spacing: normal;
 }
 
 .compact-inline-select:deep(.v-input),
@@ -328,7 +328,7 @@ function onChangeValue(val: string | null) {
 .compact-inline-select :deep(.v-field__field),
 .compact-inline-select :deep(.v-select__selection),
 .compact-inline-select :deep(.v-select__selection-text) {
-  min-width: 0 !important;
+  min-width: 0;
 }
 
 .compact-inline-select:not(.timeful-solo-field) :deep(.v-field) {
@@ -344,41 +344,41 @@ function onChangeValue(val: string | null) {
 }
 
 .compact-inline-select:not(.timeful-solo-field) :deep(.v-field__input) {
-  flex-wrap: nowrap !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  padding-inline: 0 !important;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  padding-inline: 0;
   padding-bottom: 0;
   padding-top: 0;
 }
 
 .compact-inline-select :deep(.v-select__selection) {
-  display: block !important;
-  flex: 1 1 0% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+  display: block;
+  flex: 1 1 0%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .compact-inline-select:not(.timeful-solo-field) :deep(.v-field__append-inner) {
-  align-items: center !important;
-  align-self: center !important;
-  display: flex !important;
-  height: 26px !important;
-  min-height: 26px !important;
-  padding-inline-start: 4px !important;
-  padding-bottom: 0 !important;
-  padding-top: 0 !important;
+  align-items: center;
+  align-self: center;
+  display: flex;
+  height: 26px;
+  min-height: 26px;
+  padding-inline-start: 4px;
+  padding-bottom: 0;
+  padding-top: 0;
 }
 
 .compact-inline-select :deep(.v-select__selection-text) {
-  display: block !important;
-  max-width: 100% !important;
-  line-height: 22px !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+  display: block;
+  max-width: 100%;
+  line-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .compact-inline-select :deep(.v-field__overlay) {
@@ -398,7 +398,7 @@ function onChangeValue(val: string | null) {
 }
 
 .timezone-select__reset-button--right {
-  border-color: var(--timeful-outline-neutral) !important;
+  border-color: var(--timeful-outline-neutral);
   border-radius: 0.375rem;
   color: rgb(0, 0, 0);
   height: 32px;

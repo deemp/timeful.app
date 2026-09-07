@@ -183,7 +183,7 @@ describe("NewDialog", () => {
   it("emits close through the dialog model and resets the active child form", async () => {
     const wrapper = mountDialog()
 
-    await wrapper.get(".tw:self-center").trigger("click")
+    await wrapper.get(".tw\\:self-center").trigger("click")
 
     expect(wrapper.emitted("update:modelValue")).toEqual([[false]])
     expect(editableFormState.reset).toHaveBeenCalledTimes(1)
@@ -207,7 +207,7 @@ describe("NewDialog", () => {
 
     const wrapper = mountDialog({ edit: true })
 
-    await wrapper.get(".tw:self-center").trigger("click")
+    await wrapper.get(".tw\\:self-center").trigger("click")
 
     expect(wrapper.emitted("update:modelValue")).toBeUndefined()
     expect(
@@ -222,7 +222,7 @@ describe("NewDialog", () => {
 
     const wrapper = mountDialog({ edit: true })
 
-    await wrapper.get(".tw:self-center").trigger("click")
+    await wrapper.get(".tw\\:self-center").trigger("click")
 
     expect(
       wrapper.get('[data-testid="unsaved-dialog"]').attributes("data-open"),

@@ -102,7 +102,7 @@ describe("ColorLegend", () => {
     expect(indicatorSlots).toHaveLength(6)
 
     for (const indicatorSlot of indicatorSlots) {
-      expect(indicatorSlot.find(".tw-h-4.tw:w-4").exists()).toBe(true)
+      expect(indicatorSlot.find(".tw\\:h-4.tw\\:w-4").exists()).toBe(true)
     }
   })
 

@@ -13,7 +13,7 @@
       </span>
       <v-spacer />
       <v-icon
-        :class="`tw-rotate-${modelValue ? '180' : '0'} ${iconClass}`"
+        :class="`tw:rotate-${modelValue ? '180' : '0'} ${iconClass}`"
         :size="30"
         >mdi-chevron-down</v-icon
       ></v-btn
@@ -76,16 +76,16 @@ watch(
 
 <style scoped>
 .expandable-section-toggle {
-  width: calc(100% + 1rem) !important;
-  max-width: none !important;
-  min-height: 38px !important;
-  border: 0 !important;
-  border-radius: 6px !important;
+  width: calc(100% + 1rem);
+  max-width: none;
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
   letter-spacing: normal;
   line-height: 21px;
-  outline: none !important;
-  box-shadow: none !important;
-  color: rgba(0, 0, 0, 0.87) !important;
+  outline: none;
+  box-shadow: none;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 .expandable-section-toggle :deep(.v-btn__content) {
@@ -93,12 +93,12 @@ watch(
   white-space: nowrap;
   width: 100%;
   color: rgba(0, 0, 0, 0.87);
-  letter-spacing: normal !important;
+  letter-spacing: normal;
 }
 
 .expandable-section-toggle :deep(.v-btn__content *) {
   color: rgba(0, 0, 0, 0.87);
-  letter-spacing: normal !important;
+  letter-spacing: normal;
 }
 
 .expandable-section-toggle :deep(.v-btn__overlay) {
@@ -107,7 +107,7 @@ watch(
 
 .expandable-section-toggle:focus,
 .expandable-section-toggle:focus-visible {
-  outline: none !important;
-  outline-width: 0 !important;
+  outline: none;
+  outline-width: 0;
 }
 </style>

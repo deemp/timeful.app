@@ -86,25 +86,29 @@
                           density="compact"
                           :rules="[rules.validEmail]"
                         >
-                          <template #item="{ item, props: itemProps }">
+                          <template
+                            #item="{ item: internalItem, props: itemProps }"
+                          >
                             <v-list-item v-bind="itemProps">
                               <template #prepend>
                                 <img
                                   v-if="
-                                    item.raw.picture &&
-                                    item.raw.picture.length > 0
+                                    internalItem.picture &&
+                                    internalItem.picture.length > 0
                                   "
-                                  :src="item.raw.picture"
+                                  :src="internalItem.picture"
                                   referrerpolicy="no-referrer"
                                 />
                                 <v-icon v-else>mdi-account</v-icon>
                               </template>
                               <v-list-item-title
-                                >{{ item.raw.firstName ?? "" }}
-                                {{ item.raw.lastName ?? "" }}</v-list-item-title
+                                >{{ internalItem.firstName ?? "" }}
+                                {{
+                                  internalItem.lastName ?? ""
+                                }}</v-list-item-title
                               >
                               <v-list-item-subtitle>{{
-                                item.raw.email
+                                internalItem.email
                               }}</v-list-item-subtitle>
                             </v-list-item>
                           </template>

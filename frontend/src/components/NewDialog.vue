@@ -20,7 +20,7 @@
             :tab-value="t.type"
             variant="text"
             size="small"
-            :class="`tw-text-xs tw-text-dark-gray tw-transition-all ${
+            :class="`tw:text-xs tw:text-dark-gray tw:transition-all ${
               t.type == tab ? 'tw:bg-ligher-green tw:text-green' : ''
             }`"
             @click="() => (tab = t.type)"

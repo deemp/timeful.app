@@ -108,9 +108,7 @@
               : 'tw:overflow-y-auto tw:overflow-x-hidden'
           "
           :style="
-            scrollViewMaxHeight
-              ? `max-height: ${scrollViewMaxHeight}px !important;`
-              : ''
+            scrollViewMaxHeight ? `max-height: ${scrollViewMaxHeight}px;` : ''
           "
         >
           <div
@@ -262,7 +260,7 @@
                   </div>
                   <div
                     v-if="isOwner && event.collectEmails"
-                    class="email-hover-target tw:flex tw:items-center tw:rounded-sm tw:p-px tw:text-xs tw:text-dark-gray tw:transition-all tw:hover:bg-light-gray"
+                    class="email-hover-target tw:flex tw:items-center tw:rounded-xs tw:p-px tw:text-xs tw:text-dark-gray tw:transition-all tw:hover:bg-light-gray"
                     :class="respondentClass(user._id ?? '')"
                     @mouseover.stop
                     @click.stop="copyEmailToClipboard(user.email)"

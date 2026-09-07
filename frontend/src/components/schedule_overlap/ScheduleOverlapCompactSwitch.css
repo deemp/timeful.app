@@ -17,49 +17,49 @@
 }
 
 .schedule-overlap-compact-switch :deep(.v-selection-control__wrapper) {
-  width: 38.4px !important;
-  height: 22.4px !important;
+  width: 38.4px;
+  height: 22.4px;
 }
 
 .schedule-overlap-compact-switch :deep(.v-switch__track) {
-  min-width: 38.4px !important;
-  width: 38.4px !important;
-  height: 22.4px !important;
-  padding: 0 !important;
-  border: 2px solid var(--timeful-compact-switch-track-border) !important;
-  border-radius: 14px !important;
-  background-color: var(--timeful-compact-switch-track-bg) !important;
-  box-shadow: none !important;
-  opacity: 1 !important;
+  min-width: 38.4px;
+  width: 38.4px;
+  height: 22.4px;
+  padding: 0;
+  border: 2px solid var(--timeful-compact-switch-track-border);
+  border-radius: 14px;
+  background-color: var(--timeful-compact-switch-track-bg);
+  box-shadow: none;
+  opacity: 1;
 }
 
 .schedule-overlap-compact-switch :deep(.v-selection-control__input) {
-  width: 15.2px !important;
-  height: 15.2px !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(calc(-50% - 8px), -50%) !important;
+  width: 15.2px;
+  height: 15.2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(calc(-50% - 8px), -50%);
 }
 
 .schedule-overlap-compact-switch :deep(.v-switch__thumb) {
-  width: 15.2px !important;
-  height: 15.2px !important;
-  transform: none !important;
-  background-color: var(--timeful-compact-switch-thumb-bg) !important;
-  box-shadow: none !important;
+  width: 15.2px;
+  height: 15.2px;
+  transform: none;
+  background-color: var(--timeful-compact-switch-thumb-bg);
+  box-shadow: none;
 }
 
 .schedule-overlap-compact-switch
   :deep(.v-selection-control--dirty .v-selection-control__input) {
-  transform: translate(calc(-50% + 8px), -50%) !important;
+  transform: translate(calc(-50% + 8px), -50%);
 }
 
 .schedule-overlap-compact-switch
   :deep(.v-selection-control--dirty .v-switch__track) {
-  border-color: var(--timeful-compact-switch-track-active-border) !important;
-  background-color: var(--timeful-compact-switch-track-active-bg) !important;
-  box-shadow: none !important;
-  opacity: 1 !important;
+  border-color: var(--timeful-compact-switch-track-active-border);
+  background-color: var(--timeful-compact-switch-track-active-bg);
+  box-shadow: none;
+  opacity: 1;
 }
 
 .schedule-overlap-compact-switch :deep(.v-label) {

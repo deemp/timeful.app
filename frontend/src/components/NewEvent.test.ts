@@ -916,7 +916,6 @@ describe("NewEvent", () => {
 
   it("derives every red role from one canonical hue", () => {
     const vuetifyThemeSource = readFileSync("src/plugins/vuetify.ts", "utf8")
-    const tailwindConfigSource = readFileSync("tailwind.config.cjs", "utf8")
 
     expect(appCssSource).toMatch(/--timeful-red-canonical:\s*#db1616;/i)
     expect(appCssSource).toMatch(
@@ -926,17 +925,17 @@ describe("NewEvent", () => {
     expect(appCssSource).not.toMatch(/--timeful-destructive-btn/)
     expect(appCssSource).not.toMatch(/#991b1b/i)
     expect(vuetifyThemeSource).toMatch(/error:\s*"#DB1616"/i)
-    expect(tailwindConfigSource).toMatch(
-      /red:\s*"var\(--timeful-red-canonical\)"/,
+    expect(appCssSource).toMatch(
+      /--color-red:\s*var\(--timeful-red-canonical\);/,
     )
   })
 
   it("renders time-range menu items with shared semantic selection tokens", () => {
     expect(newEventSource).toContain(
-      '<template #item="{ item, props: itemProps }">',
+      '<template #item="{ item: internalItem, props: itemProps }">',
     )
     expect(newEventSource).toContain(
-      "'time-range-select-item--active':\n                      item.raw === selectedDateOption",
+      "'time-range-select-item--active':\n                      internalItem === selectedDateOption",
     )
     expect(timeRangePickerSource).toContain("'time-range-select-item--active':")
     expect(timeRangePickerSource).toMatch(
@@ -946,9 +945,9 @@ describe("NewEvent", () => {
 
   it("uses the shared selection palette for the date option dropdown items", () => {
     expect(newEventSource).toContain(
-      "'time-range-select-item--active':\n                      item.raw === selectedDateOption",
+      "'time-range-select-item--active':\n                      internalItem === selectedDateOption",
     )
-    expect(newEventSource).not.toContain("item.raw.value === timeIncrement")
+    expect(newEventSource).not.toContain("internalItem.value === timeIncrement")
   })
 
   it("uses token-backed selected styling for day-of-week controls instead of Vuetify palette props", () => {
@@ -962,7 +961,7 @@ describe("NewEvent", () => {
     )
     expect(dayOfWeekButtonSnippet).not.toContain('color="primary"')
     expect(newEventStyleBlock).toMatch(
-      /\.editor-dow-button--selected\s*\{\s*background-color:\s*var\(--timeful-selection-bg\) !important;\s*color:\s*var\(--timeful-selection-fg\) !important;/,
+      /\.editor-dow-button--selected\s*\{\s*background-color:\s*var\(--timeful-selection-bg\);\s*color:\s*var\(--timeful-selection-fg\);/,
     )
   })
 
@@ -989,7 +988,7 @@ describe("NewEvent", () => {
       /\.editor-dow-toggle\s*\{\s*display:\s*grid;[\s\S]*grid-template-columns:\s*repeat\(7, minmax\(0, 1fr\)\);[\s\S]*border:\s*1px solid var\(--timeful-weekday-segment-border\);[\s\S]*border-radius:\s*12px;[\s\S]*background-color:\s*var\(--timeful-weekday-segment-surface\);/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.editor-dow-button\s*\{[^}]*border-radius:\s*8px !important;[^}]*color:\s*var\(--timeful-weekday-segment-foreground\) !important;/,
+      /\.editor-dow-button\s*\{[^}]*border-radius:\s*8px;[^}]*color:\s*var\(--timeful-weekday-segment-foreground\);/,
     )
     expect(newEventStyleBlock).toMatch(
       /\.editor-dow-button \+ \.editor-dow-button\s*\{\s*border-left:\s*1px solid var\(--timeful-weekday-segment-border\);/,
@@ -1021,19 +1020,19 @@ describe("NewEvent", () => {
       /--timeful-compact-switch-track-active-bg:\s*#00994c;/i,
     )
     expect(compactSwitchCssSource).toMatch(
-      /border:\s*2px solid var\(--timeful-compact-switch-track-border\) !important;/,
+      /border:\s*2px solid var\(--timeful-compact-switch-track-border\);/,
     )
     expect(compactSwitchCssSource).toMatch(
-      /background-color:\s*var\(--timeful-compact-switch-track-bg\) !important;/,
+      /background-color:\s*var\(--timeful-compact-switch-track-bg\);/,
     )
     expect(compactSwitchCssSource).toMatch(
-      /background-color:\s*var\(--timeful-compact-switch-thumb-bg\) !important;/,
+      /background-color:\s*var\(--timeful-compact-switch-thumb-bg\);/,
     )
     expect(compactSwitchCssSource).toMatch(
-      /border-color:\s*var\(--timeful-compact-switch-track-active-border\) !important;/,
+      /border-color:\s*var\(--timeful-compact-switch-track-active-border\);/,
     )
     expect(compactSwitchCssSource).toMatch(
-      /background-color:\s*var\(--timeful-compact-switch-track-active-bg\) !important;/,
+      /background-color:\s*var\(--timeful-compact-switch-track-active-bg\);/,
     )
   })
 
@@ -1451,31 +1450,31 @@ describe("NewEvent", () => {
       /\.new-event-form \.v-checkbox \.v-selection-control\s*\{\s*--v-selection-control-size:\s*32px;/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.gated-feature-checkbox\s*\{\s*--v-disabled-opacity:\s*1;\s*opacity:\s*1 !important;/,
+      /\.gated-feature-checkbox\s*\{\s*--v-disabled-opacity:\s*1;\s*opacity:\s*1;/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.gated-feature-checkbox \.v-selection-control\s*\{\s*opacity:\s*1 !important;/,
+      /\.gated-feature-checkbox \.v-selection-control\s*\{\s*opacity:\s*1;/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.gated-feature-checkbox \.v-input__details,\s*\.gated-feature-checkbox \.v-messages,\s*\.gated-feature-checkbox \.v-messages__message\s*\{\s*opacity:\s*1 !important;/,
+      /\.gated-feature-checkbox \.v-input__details,\s*\.gated-feature-checkbox \.v-messages,\s*\.gated-feature-checkbox \.v-messages__message\s*\{\s*opacity:\s*1;/,
     )
     expect(newEventSource).toMatch(
-      /advanced-options-disabled-message[\s\S]*?tw-ml-\[32px\]/,
+      /advanced-options-disabled-message[\s\S]*?tw:ml-\[32px\]/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.gated-feature-checkbox \.v-selection-control__input > \.v-icon\s*\{\s*color:\s*var\(--timeful-disabled-checkbox-icon\) !important;\s*opacity:\s*1 !important;/,
+      /\.gated-feature-checkbox \.v-selection-control__input > \.v-icon\s*\{\s*color:\s*var\(--timeful-disabled-checkbox-icon\);\s*opacity:\s*1;/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.advanced-options-disabled-label\s*\{\s*color:\s*var\(--timeful-disabled-foreground\) !important;/,
+      /\.advanced-options-disabled-label\s*\{\s*color:\s*var\(--timeful-disabled-foreground\);/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.advanced-options-disabled-message\s*\{\s*color:\s*var\(--timeful-muted-foreground\) !important;/,
+      /\.advanced-options-disabled-message\s*\{\s*color:\s*var\(--timeful-muted-foreground\);/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.advanced-options-disabled-copy\s*\{\s*color:\s*var\(--timeful-emphasis-foreground\) !important;/,
+      /\.advanced-options-disabled-copy\s*\{\s*color:\s*var\(--timeful-emphasis-foreground\);/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.advanced-options-sign-in-link\s*\{\s*color:\s*var\(--timeful-selection-fg\) !important;/,
+      /\.advanced-options-sign-in-link\s*\{\s*color:\s*var\(--timeful-selection-fg\);/,
     )
     expect(newEventStyleBlock).not.toMatch(
       /v-selection-control--disabled \.v-label/,
@@ -1492,16 +1491,16 @@ describe("NewEvent", () => {
     expect(appCssSource).toContain(".timeful-elevated-button")
     expect(appCssSource).toContain(".timeful-switch")
     expect(appCssSource).toMatch(
-      /\.timeful-solo-field \.v-field\s*\{[^}]*box-shadow: none !important;/,
+      /\.timeful-solo-field \.v-field\s*\{[^}]*box-shadow: none;/,
     )
     expect(appCssSource).toMatch(
-      /\.timeful-solo-field \.v-field\s*\{[^}]*border: 1px solid var\(--timeful-outline-neutral\) !important;/,
+      /\.timeful-solo-field \.v-field\s*\{[^}]*border: 1px solid var\(--timeful-outline-neutral\);/,
     )
     expect(appCssSource).toMatch(
-      /\.timeful-elevated-button\s*\{[^}]*border: 1px solid var\(--timeful-outline-neutral\) !important;/,
+      /\.timeful-elevated-button\s*\{[^}]*border: 1px solid var\(--timeful-outline-neutral\);/,
     )
     expect(appCssSource).toMatch(
-      /\.timeful-switch \.v-switch__track\s*\{[^}]*border: 2px solid var\(--timeful-compact-switch-track-border\) !important;/,
+      /\.timeful-switch \.v-switch__track\s*\{[^}]*border: 2px solid var\(--timeful-compact-switch-track-border\);/,
     )
     expect(appCssSource).not.toContain("drop-shadow")
     expect(appCssSource).not.toContain(".v-btn--is-elevated")

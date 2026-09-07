@@ -10,8 +10,5 @@
     ".vscode",
     "index.html",
     "src/types/api.ts"
-  ],
-  "sortTailwindcss": {
-    "config": "tailwind.config.cjs"
-  }
+  ]
 }

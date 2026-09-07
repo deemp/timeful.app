@@ -122,7 +122,7 @@
             variant="text"
             @click="showAdvancedOptions = !showAdvancedOptions"
             ><span class="tw:mr-1">Advanced options</span>
-            <v-icon :class="`tw-rotate-${showAdvancedOptions ? '180' : '0'}`"
+            <v-icon :class="`tw:rotate-${showAdvancedOptions ? '180' : '0'}`"
               >mdi-chevron-down</v-icon
             ></v-btn
           >

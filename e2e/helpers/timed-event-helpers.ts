@@ -754,7 +754,7 @@ export async function collectGridState(page: Page): Promise<GridState> {
 
     const visibleDateStrings = Array.from(
       document.querySelectorAll<HTMLElement>(
-        ".schedule-overlap-time-grid__header .tw-text-\\[12px\\]",
+        ".schedule-overlap-time-grid__header .tw\\:text-\\[12px\\]",
       ),
     ).map((element) => normalizeText(element.textContent))
 
@@ -1208,7 +1208,7 @@ export async function readTimeGridHeaderGeometry(
         htmlChild.classList.contains("schedule-overlap-time-grid__day-column")
       ) {
         const dateElement = htmlChild.querySelector<HTMLElement>(
-          ".tw-text-\\[12px\\]",
+          ".tw\\:text-\\[12px\\]",
         )
         columns.push({
           label: normalizeText(htmlChild.textContent),

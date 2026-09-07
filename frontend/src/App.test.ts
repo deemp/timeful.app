@@ -163,7 +163,7 @@ describe("App auth restore state", () => {
       },
     })
 
-    expect(wrapper.find("div.tw:fixed").exists()).toBe(true)
+    expect(wrapper.find("div.tw\\:fixed").exists()).toBe(true)
   })
 
   it("places sign in first and limits it to signed-out visitors when enabled", () => {

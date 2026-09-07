@@ -45,7 +45,7 @@ test("UTC+4 specific-times edit preserves active slots in grid", async ({
   // remain addressable through their event-timezone membership dates. FR-026
   // projects every enabled slot into the viewer timezone: the full-day Dubai
   // domain spans UTC Jun 23-25, so the grid renders 24 rows x 3 columns.
-  const whiteCount = await countGridCellsByClass(page, "tw-bg-white")
+  const whiteCount = await countGridCellsByClass(page, "tw:bg-white")
   const totalCells = await page.locator("#drag-section .timeslot").count()
   console.log(
     `White cells: ${String(whiteCount)}, Total cells: ${String(totalCells)}`,

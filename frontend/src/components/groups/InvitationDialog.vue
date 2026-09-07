@@ -8,7 +8,7 @@
   >
     <v-expand-transition>
       <v-card
-        class="tw-overflow-none tw:relative tw:flex tw:flex-col tw:rounded-lg tw:px-2 tw:py-5 tw:transition-all"
+        class="tw:overflow-none tw:relative tw:flex tw:flex-col tw:rounded-lg tw:px-2 tw:py-5 tw:transition-all"
       >
         <v-card-text>
           <div

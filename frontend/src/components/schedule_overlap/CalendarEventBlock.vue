@@ -52,6 +52,6 @@ const textColor = computed(() => {
       : props.noEventNames
         ? "dark-gray"
         : "blue"
-  return `tw-text-${color}`
+  return `tw:text-${color}`
 })
 </script>

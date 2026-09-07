@@ -99,7 +99,7 @@ describe("Landing minimal mode", () => {
     expect(wrapper.find('[data-test="faq"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="landing-footer"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="sign-in-dialog"]').exists()).toBe(false)
-    expect(wrapper.find(".tw:top-2\\/3").exists()).toBe(false)
+    expect(wrapper.find(".tw\\:top-2\\/3").exists()).toBe(false)
     expect(wrapper.text()).not.toContain("People love us on Reddit!")
     expect(wrapper.text()).not.toContain("Frequently Asked Questions")
     expect(wrapper.text()).not.toContain("Integrates with your")

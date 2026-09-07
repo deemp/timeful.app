@@ -26,6 +26,17 @@ export default defineConfig(({ command, mode, isPreview }) => {
         ? createFrontendDevServerConfig(mode)
         : undefined,
     preview: isPreview ? createFrontendPreviewServerConfig(mode) : undefined,
+    optimizeDeps: {
+      // Vite 8 miscompiles v0's Vue namespace import during prebundling.
+      exclude: ["@vuetify/v0"],
+      include: [
+        "vuetify/components/VOverlay",
+        "vuetify/components/VDialog",
+        "vuetify/components/VMenu",
+        "vuetify/components/VSelect",
+        "vuetify/components/VTooltip",
+      ],
+    },
     build: {
       outDir: "dist",
     },

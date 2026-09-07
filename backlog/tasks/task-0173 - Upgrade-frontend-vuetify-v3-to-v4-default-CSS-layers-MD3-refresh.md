@@ -1,9 +1,11 @@
 ---
 id: TASK-0173
 title: 'Upgrade frontend vuetify v3 to v4 (default CSS layers, MD3 refresh)'
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - Codex
 created_date: '2026-09-07 17:33'
+updated_date: '2026-09-07 20:44'
 labels:
   - frontend
   - vuetify
@@ -53,3 +55,15 @@ Decisions (user-approved 2026-09-07): tracked as a separate upgrade task ahead o
 - [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
 - [ ] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+Review follow-up authorized by user: restore the removed reset behavior in vuetify-core.reset, migrate the shared button size/icon selector, and add browser coverage for margins, native button borders, and normal/icon/toggle sizing. Run required frontend checks and relevant isolated browser suites.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Review follow-up: corrected the shared selector to .v-btn--size-default with .v-btn--icon excluded; restored native text/list margins and native form-control borders/backgrounds in vuetify-core.reset. During E2E, Vite 8.0.16 repeatedly generated an undefined init_runtime_dom_esm_bundler call inside the @vuetify/v0 prebundle even after cache reset. Excluding that ESM dependency from optimization resolves the startup crash; overlay includes now match Vuetify's official migration guide. All four new styling browser checks pass on desktop and mobile; broader validation is in progress.
+<!-- SECTION:NOTES:END -->

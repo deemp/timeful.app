@@ -1,11 +1,11 @@
 ---
 id: TASK-0172
 title: Remove !important from frontend styling (Tailwind v4 cascade cleanup)
-status: To Do
+status: In Progress
 assignee:
-  - '@opencode'
+  - Codex
 created_date: '2026-09-07 16:53'
-updated_date: '2026-09-07 17:34'
+updated_date: '2026-09-07 20:30'
 labels:
   - frontend
   - tailwind
@@ -63,6 +63,8 @@ Deferred until TASK-0171 and TASK-0173 land (user-approved 2026-09-07). Sequence
 4. Drop every hand-written !important (index.css, ~12 component files, App.vue inline style); unlayered overrides win by cascade; spot-check overrides against the ~30 remaining third-party !important helpers.
 5. Update CSS-text assertions in NewEvent/TimezoneSelector/Event/RespondentsList/GuestDialog tests.
 6. Verify: build + dist inspection (layer order, utilities without importance, bundle-size delta note), required checks, firefox e2e, visual smoke; graphify update; finalize.
+
+Review follow-up authorized by user: load the layer-order declaration before every stylesheet, add rendered cascade regression coverage, and verify production CSS plus required checks. The combined staged 0171–0173 implementation supplies the dependencies for this fix.
 <!-- SECTION:PLAN:END -->
 
 ## Comments

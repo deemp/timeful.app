@@ -2,7 +2,7 @@
   <div class="tw:flex tw:flex-col tw:gap-6">
     <div class="tw:flex tw:flex-col tw:gap-3">
       <div
-        class="tw-text-md tw:flex tw:flex-row tw:items-center tw:justify-start tw:gap-2 tw:font-medium"
+        class="tw:text-md tw:flex tw:flex-row tw:items-center tw:justify-start tw:gap-2 tw:font-medium"
       >
         Connect your
         <div class="tw:flex tw:items-center tw:gap-1">

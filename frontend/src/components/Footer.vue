@@ -195,9 +195,9 @@ div:has(a) {
   line-height: 1;
 }
 a {
-  color: rgb(255 255 255 / 0.8) !important;
+  color: rgb(255 255 255 / 0.8);
 }
 a:hover {
-  color: #ffffff !important;
+  color: #ffffff;
 }
 </style>

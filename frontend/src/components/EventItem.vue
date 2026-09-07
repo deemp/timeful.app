@@ -7,13 +7,13 @@
   >
     <v-container
       v-ripple
-      class="tw:flex tw:min-h-16 tw:items-center tw:justify-between tw:rounded-lg tw:bg-white tw:px-4 tw:py-2.5 tw:text-black tw:drop-shadow tw:transition-all tw:hover:drop-shadow-md tw:sm:py-3"
+      class="tw:flex tw:min-h-16 tw:items-center tw:justify-between tw:rounded-lg tw:bg-white tw:px-4 tw:py-2.5 tw:text-black tw:drop-shadow-sm tw:transition-all tw:hover:drop-shadow-md tw:sm:py-3"
       :data-ph-capture-attribute-event-id="event._id"
       :data-ph-capture-attribute-event-name="event.name"
     >
       <div class="tw:flex tw:items-center">
         <div
-          class="tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded"
+          class="tw:flex tw:size-10 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-sm"
           :class="{
             'tw:bg-pale-green': isOwner,
             'tw:bg-off-white': !isOwner,

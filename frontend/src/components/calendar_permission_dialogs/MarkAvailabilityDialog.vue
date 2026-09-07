@@ -8,7 +8,7 @@
     <v-card class="tw:p-4 tw:sm:p-6">
       <v-expand-transition>
         <div v-show="state === states.CHOICES">
-          <div class="tw-text-md mb-1 tw:text-center">
+          <div class="tw:text-md mb-1 tw:text-center">
             How would you like to add <br class="tw:block tw:sm:hidden" />
             your availability?
           </div>

@@ -109,7 +109,7 @@ test("adding a non-consecutive date keeps one column per projected civil date at
   const dayColumns = page.locator(
     ".schedule-overlap-time-grid__header .schedule-overlap-time-grid__day-column",
   )
-  const dateLabels = dayColumns.locator(".tw-text-\\[12px\\]")
+  const dateLabels = dayColumns.locator(".tw\\:text-\\[12px\\]")
   await expect(dayColumns).toHaveCount(3)
   await expect(dateLabels).toHaveText([/^jun 3$/i, /^jun 4$/i, /^jun 9$/i])
 
@@ -139,13 +139,13 @@ test("adding a non-consecutive date keeps one column per projected civil date at
   // active (00:00-01:00 Paris on both seeded days = 4 cells per column) and
   // the added Jun 9 column has none.
   await expect(
-    page.locator('#drag-section .timeslot.tw-bg-white[data-col="0"]'),
+    page.locator('#drag-section .timeslot.tw\\:bg-white[data-col="0"]'),
   ).toHaveCount(4)
   await expect(
-    page.locator('#drag-section .timeslot.tw-bg-white[data-col="1"]'),
+    page.locator('#drag-section .timeslot.tw\\:bg-white[data-col="1"]'),
   ).toHaveCount(4)
   await expect(
-    page.locator('#drag-section .timeslot.tw-bg-white[data-col="2"]'),
+    page.locator('#drag-section .timeslot.tw\\:bg-white[data-col="2"]'),
   ).toHaveCount(0)
-  expect(await countGridCellsByClass(page, "tw-bg-white")).toBe(8)
+  expect(await countGridCellsByClass(page, "tw:bg-white")).toBe(8)
 })

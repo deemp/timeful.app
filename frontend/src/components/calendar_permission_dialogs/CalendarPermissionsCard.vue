@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="tw-text-md tw:mb-4 tw:font-medium">
+    <div class="tw:text-md tw:mb-4 tw:font-medium">
       We need the following permissions to access your Google Calendar events
     </div>
 
@@ -25,7 +25,7 @@
       </div>
     </div>
 
-    <div class="tw-text-md tw:mb-4 tw:font-medium">These permissions will</div>
+    <div class="tw:text-md tw:mb-4 tw:font-medium">These permissions will</div>
     <div
       class="tw:mb-8 tw:flex tw:flex-col tw:gap-4 tw:text-sm tw:text-very-dark-gray"
     >

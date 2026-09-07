@@ -140,16 +140,16 @@
               hide-details
               class="timeful-solo-field tw:mb-4"
             >
-              <template #item="{ item, props: itemProps }">
+              <template #item="{ item: internalItem, props: itemProps }">
                 <div
                   v-bind="itemProps"
                   class="time-range-select-item"
                   :class="{
                     'time-range-select-item--active':
-                      item.raw === selectedDateOption,
+                      internalItem === selectedDateOption,
                   }"
                 >
-                  {{ item.raw }}
+                  {{ internalItem }}
                 </div>
               </template>
             </v-select>
@@ -275,7 +275,7 @@
                 <EmailInput
                   v-show="authUser"
                   :key="emailInputKey"
-                  label-color="tw-text-very-dark-gray"
+                  label-color="tw:text-very-dark-gray"
                   :added-emails="addedEmails"
                   @request-contacts-access="requestContactsAccess"
                   @update:emails="
@@ -1121,7 +1121,7 @@ watch(
 
 <style>
 .email-me-after-text-field input {
-  padding: 0px !important;
+  padding: 0px;
 }
 
 .editor-dow-toggle {
@@ -1139,8 +1139,8 @@ watch(
 .editor-dow-button {
   min-width: 0;
   width: 100%;
-  border-radius: 8px !important;
-  color: var(--timeful-weekday-segment-foreground) !important;
+  border-radius: 8px;
+  color: var(--timeful-weekday-segment-foreground);
 }
 
 .editor-dow-button + .editor-dow-button {
@@ -1148,8 +1148,8 @@ watch(
 }
 
 .editor-dow-button--selected {
-  background-color: var(--timeful-selection-bg) !important;
-  color: var(--timeful-selection-fg) !important;
+  background-color: var(--timeful-selection-bg);
+  color: var(--timeful-selection-fg);
 }
 
 .new-event-dow-toggle :deep(.v-btn) {
@@ -1224,39 +1224,39 @@ watch(
 
 .gated-feature-checkbox {
   --v-disabled-opacity: 1;
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 .gated-feature-checkbox .v-selection-control {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 .gated-feature-checkbox .v-selection-control__input > .v-icon {
-  color: var(--timeful-disabled-checkbox-icon) !important;
-  opacity: 1 !important;
+  color: var(--timeful-disabled-checkbox-icon);
+  opacity: 1;
 }
 
 .gated-feature-checkbox .v-input__details,
 .gated-feature-checkbox .v-messages,
 .gated-feature-checkbox .v-messages__message {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 .advanced-options-disabled-label {
-  color: var(--timeful-disabled-foreground) !important;
+  color: var(--timeful-disabled-foreground);
 }
 
 .advanced-options-disabled-message {
-  color: var(--timeful-muted-foreground) !important;
-  line-height: 16px !important;
+  color: var(--timeful-muted-foreground);
+  line-height: 16px;
 }
 
 .advanced-options-disabled-copy {
-  color: var(--timeful-emphasis-foreground) !important;
+  color: var(--timeful-emphasis-foreground);
 }
 
 .advanced-options-sign-in-link {
-  color: var(--timeful-selection-fg) !important;
+  color: var(--timeful-selection-fg);
   cursor: pointer;
 }
 </style>

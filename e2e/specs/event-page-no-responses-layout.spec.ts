@@ -59,7 +59,7 @@ test("event page without responses pairs each header row with one action column"
       ".schedule-overlap-sidebar__pager button.v-btn",
     )
     const title = page.locator(
-      "#event-header > .event-header-row:first-child > .tw-min-w-0.tw-flex-1 > div:first-child",
+      "#event-header > .event-header-row:first-child > .tw\\:min-w-0.tw\\:flex-1 > div:first-child",
     )
     const editEventButton = page.locator("#edit-event-btn")
     const [
@@ -197,12 +197,12 @@ test("event page without responses pairs each header row with one action column"
     ).toBeLessThanOrEqual(2)
   }
 
-  // Verify the parent wrapper does NOT have tw-col-span-2 (which makes it very wide)
+  // Verify the parent wrapper does NOT have tw:col-span-2 (which makes it very wide)
   const parentWrapper = page.locator(
     "#event-header-actions .desktop-primary-availability-anchor",
   )
   const parentClass = await parentWrapper.getAttribute("class")
-  expect(parentClass).not.toContain("tw-col-span-2")
+  expect(parentClass).not.toContain("tw:col-span-2")
 
   // Verify "More options" is NOT present
   const moreOptions = page.locator("#desktop-header-more-options")

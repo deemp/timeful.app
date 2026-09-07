@@ -86,7 +86,7 @@ describe("SignUpBlocksList", () => {
       },
     })
 
-    const root = wrapper.get(".tw-flex.tw:flex-col")
+    const root = wrapper.get(".tw\\:flex.tw\\:flex-col")
     Object.defineProperty(root.element, "getBoundingClientRect", {
       configurable: true,
       value: () => ({
@@ -111,7 +111,7 @@ describe("SignUpBlocksList", () => {
       },
     })
 
-    const root = wrapper.get(".tw-flex.tw:flex-col")
+    const root = wrapper.get(".tw\\:flex.tw\\:flex-col")
     Object.defineProperty(root.element, "getBoundingClientRect", {
       configurable: true,
       value: () => ({
@@ -137,8 +137,9 @@ describe("SignUpBlocksList", () => {
       },
     })
 
-    const scrollView = wrapper.get(".tw-overflow-y-auto.tw:overflow-x-hidden")
-      .element as HTMLElement
+    const scrollView = wrapper.get(
+      ".tw\\:overflow-y-auto.tw\\:overflow-x-hidden",
+    ).element as HTMLElement
     const scrollTo = vi.fn()
     Object.defineProperty(scrollView, "scrollTo", {
       configurable: true,
@@ -173,8 +174,9 @@ describe("SignUpBlocksList", () => {
       },
     })
 
-    const scrollView = wrapper.get(".tw-overflow-y-auto.tw:overflow-x-hidden")
-      .element as HTMLElement
+    const scrollView = wrapper.get(
+      ".tw\\:overflow-y-auto.tw\\:overflow-x-hidden",
+    ).element as HTMLElement
     const scrollTo = vi.fn()
     Object.defineProperty(scrollView, "scrollTo", {
       configurable: true,

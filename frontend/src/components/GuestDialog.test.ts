@@ -469,7 +469,7 @@ describe("GuestDialog", () => {
       },
     })
 
-    const label = wrapper.get("span.tw:text-sm")
+    const label = wrapper.get("span.tw\\:text-sm")
     expect(label.classes()).toContain("tw:text-very-dark-gray")
     expect(label.text()).toBe("Allow others to edit this availability")
 
@@ -510,7 +510,7 @@ describe("GuestDialog", () => {
     expect(submitButton.classes()).toContain("tw:bg-green")
     expect(submitButton.classes()).toContain("tw:text-white")
     expect(appCssSource).toMatch(
-      /\.timeful-flat-button\s*\{[^}]*box-shadow: none !important;/,
+      /\.timeful-flat-button\s*\{[^}]*box-shadow: none;/,
     )
   })
 })

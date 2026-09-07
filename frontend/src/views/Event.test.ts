@@ -539,7 +539,7 @@ describe("Event primary availability button outline", () => {
     expect(mobileRuleBody).toBeDefined()
     for (const ruleBody of [desktopRuleBody, mobileRuleBody]) {
       expect(ruleBody).toContain(
-        "border: 1px solid var(--timeful-primary-action-bg) !important;",
+        "border: 1px solid var(--timeful-primary-action-bg);",
       )
       expect(ruleBody).not.toContain("#29bc68")
     }
@@ -2694,10 +2694,10 @@ describe("Event guest edit action", () => {
       'class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw:normal-case"',
     )
     expect(eventViewSource).toContain(
-      ".destructive-outlined-button {\n  color: var(--timeful-red-canonical) !important;\n  border: 1px solid var(--timeful-red-canonical) !important;\n  --v-hover-opacity: 0;\n}",
+      ".destructive-outlined-button {\n  color: var(--timeful-red-canonical);\n  border: 1px solid var(--timeful-red-canonical);\n  --v-hover-opacity: 0;\n}",
     )
     expect(eventViewSource).toContain(
-      ".destructive-outlined-button:hover {\n  background-color: color-mix(\n    in srgb,\n    var(--timeful-red-canonical) 5%,\n    transparent\n  ) !important;\n}",
+      ".destructive-outlined-button:hover {\n  background-color: color-mix(\n    in srgb,\n    var(--timeful-red-canonical) 5%,\n    transparent\n  );\n}",
     )
     expect(eventViewSource).toContain(
       ".desktop-editing-overlay-availability-toggle :deep(.v-selection-control) {\n  align-items: center;\n  inline-size: 100%;\n  justify-content: center;\n  min-inline-size: 0;",
@@ -3257,7 +3257,7 @@ describe("Event guest edit action", () => {
     expect(editAvailabilityButton.text()).toContain("Edit availability")
     expect(editAvailabilityButton.attributes("disabled")).toBeDefined()
     expect(editEventButton.attributes("disabled")).toBeDefined()
-    await wrapper.find(".tw:text-xl").trigger("click")
+    await wrapper.find(".tw\\:text-xl").trigger("click")
     expect(editEventMock).not.toHaveBeenCalled()
     expect(wrapper.find("#show-best-times-header-toggle").exists()).toBe(true)
     expect(wrapper.find("#desktop-header-more-options").exists()).toBe(true)

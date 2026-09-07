@@ -174,7 +174,7 @@ describe("RespondentsList", () => {
     expect(timezone.classes()).not.toContain("tw:mb-2")
     expect(
       timezone.element.compareDocumentPosition(
-        wrapper.get(".tw:text-lg").element,
+        wrapper.get(".tw\\:text-lg").element,
       ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
   })
@@ -203,9 +203,9 @@ describe("RespondentsList", () => {
     })
 
     const daysOnlyEmptyState = daysOnlyWrapper.get(
-      "span.tw:text-very-dark-gray",
+      "span.tw\\:text-very-dark-gray",
     ).element.parentElement
-    const timedEmptyState = timedWrapper.get("span.tw:text-very-dark-gray")
+    const timedEmptyState = timedWrapper.get("span.tw\\:text-very-dark-gray")
       .element.parentElement
 
     expect(daysOnlyEmptyState?.classList.contains("tw:mb-2")).toBe(true)
@@ -223,8 +223,8 @@ describe("RespondentsList", () => {
       setEntry: baseDate,
     })
 
-    expect(daysOnlyWrapper.find(".tw:h-1").exists()).toBe(true)
-    expect(timedWrapper.find(".tw:h-2").exists()).toBe(true)
+    expect(daysOnlyWrapper.find(".tw\\:h-1").exists()).toBe(true)
+    expect(timedWrapper.find(".tw\\:h-2").exists()).toBe(true)
   })
 
   it("uses a fixed respondent control slot with hover-visible checkbox shell", () => {
@@ -234,12 +234,14 @@ describe("RespondentsList", () => {
     })
 
     const respondentRow = wrapper.find(".respondent-row")
-    const labelColumn = wrapper.find(".tw-flex.tw-flex-col.tw:justify-center")
+    const labelColumn = wrapper.find(
+      ".tw\\:flex.tw\\:flex-col.tw\\:justify-center",
+    )
     const nameLabel = wrapper.find(
-      ".tw-mr-1.tw-text-sm.tw-leading-5.tw:transition-all",
+      ".tw\\:mr-1.tw\\:text-sm.tw\\:leading-5.tw\\:transition-all",
     )
     const controlSlot = wrapper.find(
-      ".tw-ml-1.tw-mr-3.tw-flex.tw-h-5.tw-w-5.tw-shrink-0.tw-items-center.tw:justify-center",
+      ".tw\\:ml-1.tw\\:mr-3.tw\\:flex.tw\\:h-5.tw\\:w-5.tw\\:shrink-0.tw\\:items-center.tw\\:justify-center",
     )
 
     expect(respondentRow.classes()).toContain("tw:text-sm")
@@ -267,7 +269,7 @@ describe("RespondentsList", () => {
     expect(checkboxShell.classes()).toContain("tw:w-4")
     expect(checkboxShell.classes()).toContain("tw:border-2")
     expect(checkboxShell.classes()).toContain("tw:border-solid")
-    expect(checkboxShell.classes()).not.toContain("tw-border-primary")
+    expect(checkboxShell.classes()).not.toContain("tw:border-primary")
     expect(checkboxShell.attributes("style")).toContain(
       "border-color: var(--timeful-primary-action-bg);",
     )
@@ -280,7 +282,7 @@ describe("RespondentsList", () => {
     })
 
     const avatar = wrapper.find(".respondent-control__avatar")
-    expect(avatar.find("div.tw-h-4.tw:w-4").exists()).toBe(false)
+    expect(avatar.find("div.tw\\:h-4.tw\\:w-4").exists()).toBe(false)
     expect(wrapper.findComponent({ name: "UserAvatarContent" }).exists()).toBe(
       true,
     )
@@ -294,7 +296,7 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw:w-4",
+      ".respondent-control__avatar div.tw\\:h-4.tw\\:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain("tw:bg-[#00994C77]")
@@ -311,7 +313,7 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw:w-4",
+      ".respondent-control__avatar div.tw\\:h-4.tw\\:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain("tw:bg-yellow")
@@ -328,7 +330,7 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw:w-4",
+      ".respondent-control__avatar div.tw\\:h-4.tw\\:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain("tw:bg-[#F9CCCC]")
@@ -343,7 +345,7 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw:w-4",
+      ".respondent-control__avatar div.tw\\:h-4.tw\\:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain("tw:bg-light-gray-stroke")
@@ -362,7 +364,7 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw:w-4",
+      ".respondent-control__avatar div.tw\\:h-4.tw\\:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain(
@@ -383,7 +385,7 @@ describe("RespondentsList", () => {
     })
 
     const statusSquare = wrapper.find(
-      ".respondent-control__avatar div.tw-h-4.tw:w-4",
+      ".respondent-control__avatar div.tw\\:h-4.tw\\:w-4",
     )
     expect(statusSquare.exists()).toBe(true)
     expect(statusSquare.classes()).toContain("tw:bg-gray")
@@ -415,7 +417,7 @@ describe("RespondentsList", () => {
     })
 
     const nameActionRow = wrapper.find(
-      ".tw-flex.tw-items-center.tw-justify-between.tw:gap-2",
+      ".tw\\:flex.tw\\:items-center.tw\\:justify-between.tw\\:gap-2",
     )
     expect(nameActionRow.exists()).toBe(true)
     expect(nameActionRow.find(".respondent-name-line").exists()).toBe(true)
@@ -492,14 +494,12 @@ describe("RespondentsList", () => {
       '[data-testid="respondents-scrollable-section"]',
     )
 
-    expect(scrollView.attributes("style")).toContain(
-      "max-height: 240px !important;",
-    )
+    expect(scrollView.attributes("style")).toContain("max-height: 240px;")
     expect(scrollView.classes()).toContain("tw:overflow-y-auto")
     expect(scrollView.classes()).toContain("tw:overflow-x-hidden")
     expect(scrollableSection.attributes("style")).toBeUndefined()
 
-    const responsesHeading = wrapper.get(".tw:text-lg")
+    const responsesHeading = wrapper.get(".tw\\:text-lg")
     expect(responsesHeading.element.tagName).toBe("DIV")
     expect(scrollView.element.contains(responsesHeading.element)).toBe(false)
     expect(scrollableSection.element.contains(responsesHeading.element)).toBe(
@@ -521,14 +521,12 @@ describe("RespondentsList", () => {
         '[data-testid="respondents-scrollable-section"]',
       )
 
-      expect(scrollView.attributes("style")).toContain(
-        "max-height: 300px !important;",
-      )
+      expect(scrollView.attributes("style")).toContain("max-height: 300px;")
       expect(scrollView.classes()).toContain("tw:overflow-y-auto")
       expect(scrollView.classes()).toContain("tw:overflow-x-hidden")
       expect(scrollableSection.attributes("style")).toBeUndefined()
 
-      const responsesHeading = wrapper.get(".tw:text-lg")
+      const responsesHeading = wrapper.get(".tw\\:text-lg")
       expect(responsesHeading.element.tagName).toBe("DIV")
       expect(scrollView.element.contains(responsesHeading.element)).toBe(false)
     } finally {
@@ -552,7 +550,9 @@ describe("RespondentsList", () => {
       "tw:bg-yellow",
     )
     expect(
-      wrapper.find(".respondent-control__avatar div.tw-h-4.tw:w-4").classes(),
+      wrapper
+        .find(".respondent-control__avatar div.tw\\:h-4.tw\\:w-4")
+        .classes(),
     ).toContain("tw:bg-yellow")
   })
 

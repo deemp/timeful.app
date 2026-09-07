@@ -537,6 +537,6 @@ defineExpose({ reset, resetToEventData, hasEventBeenEdited })
 
 <style>
 .email-me-after-text-field input {
-  padding: 0px !important;
+  padding: 0px;
 }
 </style>

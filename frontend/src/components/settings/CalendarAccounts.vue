@@ -11,7 +11,7 @@
       @click="toggleShowCalendars"
     >
       <span class="tw:mr-1 tw:text-base tw:font-medium">My calendars</span>
-      <v-icon :class="`tw-rotate-${showCalendars ? '180' : '0'}`"
+      <v-icon :class="`tw:rotate-${showCalendars ? '180' : '0'}`"
         >mdi-chevron-down</v-icon
       ></v-btn
     >
