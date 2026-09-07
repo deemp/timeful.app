@@ -56,6 +56,23 @@ export interface GridState {
   visibleDateStrings: string[]
 }
 
+export interface TimeGridHeaderColumnBox {
+  label: string
+  dateLabel: string
+  x: number
+  width: number
+}
+
+export interface TimeGridHeaderSpacerBox {
+  x: number
+  width: number
+}
+
+export interface TimeGridHeaderGeometry {
+  columns: TimeGridHeaderColumnBox[]
+  spacers: TimeGridHeaderSpacerBox[]
+}
+
 export interface SpecificDateSeedInput {
   name: string
   selectedDays: string[]
@@ -1050,4 +1067,161 @@ export function buildSpecificDateSeed(
     },
     hasSpecificTimes: input.hasSpecificTimes ?? true,
   }
+}
+
+export interface ChangeDisplayTimezoneOptions {
+  // data-timezone-value of the menu item, for example "Asia/Dhaka". Verified
+  // against TimezoneSelector.vue, which stamps each option with the zone key.
+  optionValue?: string
+  // Fallback/failure-proof label match against the option title, which renders
+  // as "(GMT+6:00) Astana, Dhaka" style text.
+  optionLabelPattern?: RegExp
+}
+
+// The grid-page Display Timezone control lives in the schedule-overlap sidebar
+// ToolRow (curTimezone), not in the editor card that changeTimezone targets.
+// Scoping to the sidebar keeps this helper unambiguous even while an editor
+// dialog with its own timezone select is mounted.
+export async function changeDisplayTimezone(
+  page: Page,
+  options: ChangeDisplayTimezoneOptions,
+): Promise<void> {
+  const container = page.locator(
+    ".schedule-overlap-sidebar #timezone-select-container",
+  )
+  const timezoneSelectRoot = container
+    .getByTestId("timezone-select-trigger")
+    .first()
+  const timezoneSelect = timezoneSelectRoot.getByRole("combobox").first()
+
+  await timezoneSelectRoot.scrollIntoViewIfNeeded()
+  await expect(timezoneSelectRoot).toBeVisible({ timeout: 30000 })
+
+  const selectionTextBeforeOpen = normalizeTimezoneSelectionText(
+    await container.locator(".timezone-select__selection-text").textContent(),
+  )
+  expect(selectionTextBeforeOpen).not.toBe("")
+
+  for (const openAction of [
+    async () => timezoneSelectRoot.click({ force: true }),
+    async () => timezoneSelect.click({ force: true }),
+    async () => timezoneSelect.press("ArrowDown"),
+    async () => timezoneSelect.press("Enter"),
+    async () => timezoneSelect.press(" "),
+  ]) {
+    if ((await getActiveTimezoneOptions(page).count()) > 0) {
+      break
+    }
+    await openAction()
+    await settlePage(page, 150)
+  }
+  await expect
+    .poll(
+      async () =>
+        Math.max(
+          await getActiveTimezoneOptions(page).count(),
+          await getAnyVisibleTimezoneOptions(page).count(),
+        ),
+      { timeout: 15000 },
+    )
+    .toBeGreaterThan(0)
+  const timezoneItems =
+    (await getActiveTimezoneOptions(page).count()) > 0
+      ? getActiveTimezoneOptions(page)
+      : getAnyVisibleTimezoneOptions(page)
+
+  let chosenItem: Locator | null = null
+  if (options.optionValue) {
+    const optionByValue = page.locator(
+      `[data-testid="timezone-select-option"][data-timezone-value="${options.optionValue}"]:visible`,
+    )
+    if ((await optionByValue.count()) > 0) {
+      chosenItem = optionByValue.first()
+    }
+  }
+
+  if (!chosenItem && options.optionLabelPattern) {
+    const optionCount = await timezoneItems.count()
+    for (let index = 0; index < optionCount; index += 1) {
+      const item = timezoneItems.nth(index)
+      const titleText = normalizeTimezoneSelectionText(
+        await item.locator(".timezone-select__item-title").textContent(),
+      )
+      if (options.optionLabelPattern.test(titleText)) {
+        chosenItem = item
+        break
+      }
+    }
+  }
+
+  expect(
+    chosenItem,
+    "Expected to find a display timezone option",
+  ).not.toBeNull()
+  const timezoneOption = assertDefined(
+    chosenItem,
+    "Expected to find a display timezone option",
+  )
+  const chosenLabel = normalizeTimezoneSelectionText(
+    await timezoneOption.locator(".timezone-select__item-title").textContent(),
+  )
+  await timezoneOption.click({ force: true })
+
+  // The sidebar selector is compact, so the selection slot shows only the
+  // UTC offset (for example "+6:00") while menu items carry the full label.
+  const compactSelectionText = compactTimezoneSelectionText(chosenLabel)
+  await expect
+    .poll(async () =>
+      normalizeTimezoneSelectionText(
+        await container
+          .locator(".timezone-select__selection-text")
+          .textContent(),
+      ),
+    )
+    .toMatch(
+      new RegExp(
+        `^(?:${escapeRegExp(chosenLabel)}|${escapeRegExp(compactSelectionText)})$`,
+      ),
+    )
+}
+
+// Reads the Projected Date Column labels and spacer geometry of the timed
+// grid header. Spacers are direct header children that are not day columns
+// (ScheduleOverlapTimeGrid renders one per non-consecutive day boundary).
+export async function readTimeGridHeaderGeometry(
+  page: Page,
+): Promise<TimeGridHeaderGeometry> {
+  const header = page.locator(".schedule-overlap-time-grid__header")
+  await expect(header).toBeVisible()
+
+  return header.evaluate((element) => {
+    // textContent is nullish at runtime even where the DOM lib types it as
+    // string, so normalize null-safe here instead of at each call site.
+    const normalizeText = (text: string | null | undefined) =>
+      (text ?? "").replace(/\s+/g, " ").trim()
+    const columns: TimeGridHeaderColumnBox[] = []
+    const spacers: TimeGridHeaderSpacerBox[] = []
+
+    for (const child of Array.from(element.children)) {
+      const htmlChild = child as HTMLElement
+      if (
+        htmlChild.classList.contains("schedule-overlap-time-grid__day-column")
+      ) {
+        const dateElement = htmlChild.querySelector<HTMLElement>(
+          ".tw-text-\\[12px\\]",
+        )
+        columns.push({
+          label: normalizeText(htmlChild.textContent),
+          dateLabel: normalizeText(dateElement?.textContent),
+          x: htmlChild.getBoundingClientRect().x,
+          width: htmlChild.getBoundingClientRect().width,
+        })
+      } else {
+        const box = htmlChild.getBoundingClientRect()
+        spacers.push({ x: box.x, width: box.width })
+      }
+    }
+
+    return { columns, spacers }
+  })
 }

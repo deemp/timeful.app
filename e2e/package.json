@@ -6,10 +6,6 @@
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "test:e2e:repro": "node --experimental-strip-types ./repro/repro-specific-times-firefox.ts",
-    "test:e2e:repro:anonymous-create": "node --experimental-strip-types ./repro/repro-anonymous-timed-create-firefox.ts",
-    "test:e2e:repro:edit-date-preserves-selection": "node --experimental-strip-types ./repro/repro-edit-date-preserves-selection.ts",
-    "test:e2e:repro:utc4-edit-clears-active-slots": "node --experimental-strip-types ./repro/repro-utc4-edit-clears-active-slots.ts",
     "inspect": "tsx ./inspect/src/inspect.ts",
     "inspect:landing": "tsx ./inspect/src/inspect.ts --target landing",
     "inspect:route": "tsx ./inspect/src/route-profile.ts",

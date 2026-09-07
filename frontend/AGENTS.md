@@ -77,7 +77,7 @@ Glossary entries briefly define terms and identify their authoritative functiona
 ## Browser Verification
 
 - the browser E2E suite is a self-contained package at `../e2e`, not part of the frontend package
-- keep repo-tracked Playwright specs, helpers, and repro entrypoints under `../e2e`
+- keep repo-tracked Playwright specs and helpers under `../e2e`
 - use Playwright specs for assertion-based regression coverage
 - run browser E2E through `npm run test:e2e` from `../e2e`; it owns the isolated test API on `3003` and Vite on `4174`, never the development API on `3002`
 - use `npm run inspect -- --target <scenario-name>` from `../e2e` for current-app diagnostics

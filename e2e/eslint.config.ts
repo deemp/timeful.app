@@ -121,13 +121,6 @@ const config: ConfigArray = [
       "no-restricted-syntax": ["error", ...temporalNoDateRestrictions],
     },
   },
-  // Diagnostic repro entrypoints run outside test:e2e and intentionally use raw page APIs.
-  {
-    files: ["repro/**/*.ts"],
-    rules: {
-      "no-restricted-syntax": ["error", ...temporalNoDateRestrictions],
-    },
-  },
 
   // Must be last — disables formatting rules that conflict with Prettier
   configPrettier,

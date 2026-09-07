@@ -23,7 +23,6 @@
     "*.ts",
     "specs/**/*.ts",
     "helpers/**/*.ts",
-    "repro/**/*.ts",
     "inspect/**/*.ts"
   ]
 }
