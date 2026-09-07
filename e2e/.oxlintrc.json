@@ -7,7 +7,7 @@
   "options": {
     "typeAware": true
   },
-  "ignorePatterns": ["dist/**", "node_modules/**", "public/**"],
+  "ignorePatterns": ["dist/**", "node_modules/**", "inspect/**"],
   "rules": {
     "eslint/no-unused-vars": [
       "error",

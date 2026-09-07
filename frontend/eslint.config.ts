@@ -35,33 +35,6 @@ const temporalNoDateRestrictions = [
   },
 ]
 
-const e2eLocatorHygieneRestrictions = [
-  {
-    selector: "CallExpression[callee.property.name='waitForSelector']",
-    message: 'Use page.locator(...).waitFor() instead of page.waitForSelector().',
-  },
-  {
-    selector: "CallExpression[callee.property.name='waitForTimeout']",
-    message:
-      'Prefer web-first expect() or locator.waitFor(); for an unavoidable fixed settle delay use settlePage from e2e/helpers/settle.',
-  },
-  {
-    selector: "CallExpression[callee.property.name='$']",
-    message:
-      'Use page.locator() instead of page.$; locators auto-wait and fail loudly on ambiguous matches.',
-  },
-  {
-    selector: "CallExpression[callee.property.name='$$']",
-    message:
-      'Use page.locator() with toHaveCount() instead of page.$$; locators auto-wait and fail loudly on ambiguous matches.',
-  },
-  {
-    selector: "CallExpression[callee.property.name='pause']",
-    message:
-      'Use playwright --debug or --ui for interactive debugging; committed tests must not pause.',
-  },
-]
-
 const config: ConfigArray = [
   {
     ignores: ['dist/**', 'node_modules/**', 'public/**', '*.config.cjs'],
@@ -127,32 +100,6 @@ const config: ConfigArray = [
       'no-unused-vars': 'off',
       // Keep frontend runtime and tests on the Temporal model; native Date is allowed
       // only in explicit adapter files that integrate with APIs requiring Date objects.
-      'no-restricted-syntax': ['error', ...temporalNoDateRestrictions],
-    },
-  },
-
-  // E2E locator hygiene: auto-waiting locators over raw page queries, and no
-  // fixed sleeps outside the single documented settle helper.
-  {
-    files: ['e2e/**/*.ts'],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        ...temporalNoDateRestrictions,
-        ...e2eLocatorHygieneRestrictions,
-      ],
-    },
-  },
-  {
-    files: ['e2e/helpers/settle.ts'],
-    rules: {
-      'no-restricted-syntax': ['error', ...temporalNoDateRestrictions],
-    },
-  },
-  // Diagnostic repro entrypoints run outside test:e2e and intentionally use raw page APIs.
-  {
-    files: ['e2e/repro/**/*.ts'],
-    rules: {
       'no-restricted-syntax': ['error', ...temporalNoDateRestrictions],
     },
   },

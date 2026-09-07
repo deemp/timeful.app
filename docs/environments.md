@@ -32,7 +32,7 @@ Shareable defaults live in:
 ## How the env files are used
 
 - Frontend dev tooling reads `.env.development` through `frontend/config/tooling.ts`.
-- Frontend browser tests read `.env.test` through `frontend/config/tooling.ts` and run Vite in test mode.
+- Frontend browser tests read `.env.test` through `e2e/config/tooling.ts` and run Vite in test mode.
 - Frontend staging-style builds read `.env.staging`.
 - Frontend production builds and `vite preview` read `.env.production`.
 - Vite client env loading uses the repo root as `envDir`, so `import.meta.env.VITE_*` also comes from the same root file for the active mode.
@@ -386,7 +386,7 @@ It inherits the complete `.env.test` server environment contract.
 The E2E harness overrides only the generated PostgreSQL database name and the opt-in anonymous PostgreSQL creation flag; `.env.test` clears external integration secrets to prevent side effects:
 
 ```sh
-cd frontend
+cd e2e
 npm run test:e2e
 ```
 

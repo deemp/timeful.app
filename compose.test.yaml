@@ -149,7 +149,7 @@ volumes:
   # remove them with `docker volume rm timeful-test-go-build-cache
   # timeful-test-go-mod-cache` to reset. Compose never creates external
   # volumes; CI seeds them via actions/cache and the E2E stack manager
-  # (frontend/e2e/isolated-test-stack.ts) creates them locally.
+  # (e2e/isolated-test-stack.ts) creates them locally.
   go_build_cache:
     external: true
     name: timeful-test-go-build-cache

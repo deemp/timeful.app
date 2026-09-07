@@ -25,20 +25,22 @@
           graphify-cli = pkgs.writeShellScriptBin "graphify" ''
             exec ${graphify-sql}/bin/graphify "$@"
           '';
-          frontend-e2e = pkgs.writeShellScriptBin "frontend-e2e" ''
+          e2e = pkgs.writeShellScriptBin "e2e" ''
             set -euo pipefail
             export PATH="${pkgs.nodejs_26}/bin:$PATH"
             export PLAYWRIGHT_BROWSERS_PATH="${pkgs.playwright-driver.browsers}"
             REPO_ROOT="$(git rev-parse --show-toplevel)"
             cd "$REPO_ROOT/frontend"
             npm ci
+            cd "$REPO_ROOT/e2e"
+            npm ci
             exec npm run test:e2e -- "$@"
           '';
         in {
-          packages = { inherit frontend-e2e; };
-          apps.frontend-e2e = {
+          packages = { inherit e2e; };
+          apps.e2e = {
             type = "app";
-            program = "${frontend-e2e}/bin/frontend-e2e";
+            program = "${e2e}/bin/e2e";
           };
           devShells.default = pkgs.mkShell {
           packages = [

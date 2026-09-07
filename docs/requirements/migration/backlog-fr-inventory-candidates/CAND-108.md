@@ -16,7 +16,7 @@ confidence: inferred
 
 ## Candidate behavior
 
-Interacting in space between split sub-grids clears the prior slot highlight and tooltip.
+Interacting in the [Sub-grid Gap](../../../terminology/glossary.md#sub-grid-gap) clears the prior slot highlight and tooltip.
 
 ## Applicability
 

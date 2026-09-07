@@ -79,6 +79,7 @@ Its definitions are concise references; the linked authoritative context defines
   - [Timed Grid](#timed-grid)
   - [Dates-Only Grid](#dates-only-grid)
   - [Projected Date Column](#projected-date-column)
+  - [Sub-grid Gap](#sub-grid-gap)
   - [Grid Pointer](#grid-pointer)
   - [Padding Cell](#padding-cell)
   - [Disabled Status](#disabled-status)
@@ -600,6 +601,13 @@ A grid column derived from [Time Slots](#time-slot) of the [Enabled Domain](#ena
 A projected **Time Slot** belongs to its display-local calendar-date column; an adjacent column is created when that date is otherwise absent, and a slot crossing midnight is not duplicated.
 
 Authoritative context: [FR-002](../requirements/functional/fr/FR-002.md).
+
+### Sub-grid Gap
+
+The visible separation between adjacent [Projected Date Columns](#projected-date-column) whose [Civil Dates](#civil-date) are not consecutive in the [Display Timezone](#display-timezone).
+It splits a [Timed Grid](#timed-grid) into sub-grids and contains no grid cells.
+
+Authoritative context: [FR-120](../requirements/functional/fr/FR-120.md).
 
 ### Grid Pointer
 
