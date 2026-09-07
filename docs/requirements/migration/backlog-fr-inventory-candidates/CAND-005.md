@@ -1,7 +1,8 @@
 ---
 id: CAND-005
-verdict: excluded
-related_requirements: []
+verdict: proposed-requirement
+requirement_type: FR
+related_requirements: [FR-120]
 confidence: confirmed
 ---
 
@@ -13,7 +14,7 @@ confidence: confirmed
 
 ## Candidate behavior
 
-No new requirement behavior asserted; this is grid layout styling.
+Adjacent [Projected Date Columns](../../../terminology/glossary.md#projected-date-column) whose [Civil Dates](../../../terminology/glossary.md#civil-date) are not consecutive in the [Display Timezone](../../../terminology/glossary.md#display-timezone) are separated by a [Sub-grid Gap](../../../terminology/glossary.md#sub-grid-gap) that splits the [Timed Grid](../../../terminology/glossary.md#timed-grid) into sub-grids.
 
 ## Applicability
 
@@ -27,16 +28,16 @@ Exclusions: consecutive days.
 
 ## Classification
 
-implementation detail
+candidate FR
 
 ## Existing Requirements and Confidence
 
-FR-002 defines columns, not spacing.
+FR-002 defines projected columns and their contents, not spacing; FR-093 presupposes the gap between split sub-grids without requiring it.
 Confidence: confirmed.
 
 ## Disposition
 
-Exclude from requirements.
+Promoted to [FR-120](../../functional/fr/FR-120.md), reversing the earlier implementation-detail exclusion after product review confirmed the spacing behavior is durable, verifiable grid behavior.
 
 ## Open Questions
 

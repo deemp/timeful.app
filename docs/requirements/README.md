@@ -229,6 +229,7 @@ For guidance on authoring functional requirements, read [`functional/README.md`]
 | [FR-117](functional/fr/FR-117.md) | Cancel a pending [Access Transfer](../terminology/glossary.md#access-transfer) from the source browser                                                                                                                              | frontend, backend |
 | [FR-118](functional/fr/FR-118.md) | Restrict event-editor date selection to the [Event Timezone](../terminology/glossary.md#event-timezone) current date and later                                                                                                      | frontend          |
 | [FR-119](functional/fr/FR-119.md) | Limit event names to 100 characters                                                                                                                                                                                                 | frontend, backend |
+| [FR-120](functional/fr/FR-120.md) | Separate non-consecutive [Projected Date Columns](../terminology/glossary.md#projected-date-column) with a [Sub-grid Gap](../terminology/glossary.md#sub-grid-gap)                                                                  | frontend          |
 
 ## Quality Requirements
 
