@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - opencode
 created_date: '2026-09-07 14:26'
-updated_date: '2026-09-07 16:06'
+updated_date: '2026-09-07 16:53'
 labels:
   - frontend
   - tailwind
@@ -114,3 +114,13 @@ Decisions (user-approved 2026-09-07):
 <!-- SECTION:NOTES:BEGIN -->
 2026-09-07: User ran `npx @tailwindcss/upgrade` on chore/tailwind-v4. Audit of the tool output (worktree, uncommitted, mostly staged): package.json now has tailwindcss ^4.3.3 + @tailwindcss/postcss with autoprefixer removed (tool chose the PostCSS route; vite.config.ts untouched, tailwind.config.cjs kept via `@config`); index.css is a bare `@import 'tailwindcss' prefix(tw);` + `@config '../tailwind.config.cjs';` + a tool-added `@layer base` border-color compat block; all ~135 src files' class strings and class-string test assertions were rewritten to prefix-first v4 syntax and `!tw-opacity-0` became trailing-`!`. NOT done by the tool: v4 renames (zero -xs utilities; bare tw:rounded ~19 uses in vue, tw:rounded-sm 1, tw:shadow-sm 1, tw:drop-shadow 3), dot-selector escaping in tests (find(".tw:fixed") unescaped-invalid, some find() selectors still dash-form: RespondentsList.test.ts 13, ScheduleOverlap.mobileTooltip.test.ts 7, SignUpBlocksList.test.ts 4, ScheduleOverlapSidebar.test.ts 2, App/ColorLegend/NewEvent 1 each), ~29 remaining dash-form hits across ~20 vue files needing an audit, 6 dash-form override selectors in index.css, e2e specs untouched (33 dash-form occurrences in 10 files), NewEvent.test.ts still reads tailwind.config.cjs. Plan rewritten accordingly; task decision bullet updated from 'official tool is not used' to 'tool ran, output is the baseline'.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: opencode
+created: 2026-09-07 16:53
+---
+Supersede note: the utilities-carry-!important parity decision in AC #2/#6 (and the CSS-first `important` param in plan steps 2-3) is superseded by TASK-0172, which removes !important from frontend styling entirely: important: true is dropped from tailwind.config.cjs and hand-written overrides keep winning via unlayered-vs-layered cascade over tw: utilities and strictly higher specificity (or Vuetify props/slots) over runtime-injected Vuetify styles. The tailwind.config.cjs deletion and CSS-first @theme rewrite remain owned here.
+---
+<!-- COMMENTS:END -->
