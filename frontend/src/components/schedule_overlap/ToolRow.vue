@@ -110,7 +110,7 @@
             class="tw:w-full"
             variant="menu"
             menu-button-label="More options"
-            menu-button-size="32"
+            menu-button-height="32"
             menu-activator-class="tw:w-fit"
             :event="toolRow.event"
             :show-best-times="toolRow.showBestTimes"

@@ -159,7 +159,7 @@ describe("ToolRow", () => {
     expect(toolRowSource).toContain('variant="menu"')
     expect(toolRowSource).toContain('menu-activator-class="tw:w-fit"')
     expect(toolRowSource).toContain('menu-button-label="More options"')
-    expect(toolRowSource).toContain('menu-button-size="32"')
+    expect(toolRowSource).toContain('menu-button-height="32"')
     expect(toolRowSource).toContain(':include-show-best-times="false"')
     expect(toolRowSource).toContain(
       'style scoped src="./ScheduleOverlapCompactSwitch.css"',
