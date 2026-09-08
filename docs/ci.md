@@ -13,7 +13,7 @@ Each workflow validates one area of the repository, and Dependabot opens weekly 
 | E2E CI      | `e2e-ci.yml`      | Runs the browser E2E suite against the isolated Compose test stack, covering the Chromium desktop and mobile projects and the PostgreSQL plugin Firefox spec |
 
 Markdown CI triggers on Markdown changes and on changes to any file matching `.github/workflows/*.yml`, so every workflow edit is validated in CI.
-Dependabot is configured in `.github/dependabot.yml` with weekly updates for the `github-actions` ecosystem and the npm ecosystems for the root and frontend directories.
+Dependabot is configured in `.github/dependabot.yml` with weekly updates for the `github-actions` ecosystem and the npm ecosystems for the root, frontend, and e2e directories.
 
 ## Validating workflow files locally
 
