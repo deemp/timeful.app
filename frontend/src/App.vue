@@ -348,8 +348,6 @@ watch(
 </script>
 
 <style>
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans&display=swap");
-
 html {
   overflow-y: auto;
   /* overscroll-behavior: none; */

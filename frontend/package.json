@@ -21,6 +21,8 @@
     "fmt:check": "oxfmt --check src"
   },
   "dependencies": {
+    "@fontsource/chivo-mono": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
     "@gtm-support/vue-gtm": "^3.1.0",
     "@mdi/font": "^7.4.47",
     "@unhead/vue": "^3.4.0",
