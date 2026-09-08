@@ -85,7 +85,7 @@ jobs:
 
       - name: Restore Go build cache
         id: go-build-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .go-build-cache
           key: go-build-linux-${{ hashFiles('server/go.sum') }}
@@ -93,11 +93,14 @@ jobs:
 
       # The module cache rides the same restore/save pattern as the Go build
       # cache: exact go.sum key hits skip saving, unlike buildx gha which
-      # re-uploads layer blobs on every run. The test containers mount it at
-      # /go/pkg/mod (see compose.test.yaml).
+      # re-uploads layer blobs on each run. The test containers mount it at
+      # /go/pkg/mod (see compose.test.yaml). Both Go caches use the split
+      # restore/save actions because the monolithic actions/cache exposes its
+      # keys only as runner state, never as step outputs, and the copy-out
+      # gating below depends on those outputs.
       - name: Restore Go module cache
         id: go-mod-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .go-mod-cache
           key: go-mod-linux-${{ hashFiles('server/go.sum') }}
@@ -141,30 +144,48 @@ jobs:
       - name: Run backend tests
         run: docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml run --rm server-route-test go test ./... -count=1
 
-      # Copy the warmed caches back out of the external volumes so the
-      # actions/cache post steps save them for the next run. When the primary
-      # key was restored exactly, the post save is a no-op, so skip the copy
-      # out.
-      - name: Save Go caches
+      # Copy the warmed caches back out of the external volumes so the explicit
+      # save steps below upload them for the next run. Runs after the test
+      # steps so compile work is captured too. Skips exact primary-key hits
+      # (nothing new to save) and refuses to copy out an empty volume, so an
+      # aborted run can never save an empty entry over a key.
+      - name: Copy warmed Go caches out of the external volumes
+        id: go-cache-copyout
         if: always()
         run: |
           mkdir -p .go-build-cache .go-mod-cache
-          if [ "${{ steps.go-build-cache.outputs.cache-primary-key }}" != "${{ steps.go-build-cache.outputs.cache-matched-key }}" ]; then
-            if docker volume inspect timeful-test-go-build-cache > /dev/null 2>&1; then
-              docker run --rm \
-                -v timeful-test-go-build-cache:/src:ro \
-                -v "$PWD/.go-build-cache:/out" \
-                alpine:3.24 sh -c 'cp -a /src/. /out/'
-            fi
+          if [ "${{ steps.go-build-cache.outputs.cache-primary-key }}" != "${{ steps.go-build-cache.outputs.cache-matched-key }}" ] \
+            && docker volume inspect timeful-test-go-build-cache > /dev/null 2>&1 \
+            && [ -n "$(docker run --rm -v timeful-test-go-build-cache:/src:ro alpine:3.24 sh -c 'ls -A /src' 2>/dev/null)" ]; then
+            docker run --rm \
+              -v timeful-test-go-build-cache:/src:ro \
+              -v "$PWD/.go-build-cache:/out" \
+              alpine:3.24 sh -c 'cp -a /src/. /out/'
+            echo "build=true" >> "$GITHUB_OUTPUT"
           fi
-          if [ "${{ steps.go-mod-cache.outputs.cache-primary-key }}" != "${{ steps.go-mod-cache.outputs.cache-matched-key }}" ]; then
-            if docker volume inspect timeful-test-go-mod-cache > /dev/null 2>&1; then
-              docker run --rm \
-                -v timeful-test-go-mod-cache:/src:ro \
-                -v "$PWD/.go-mod-cache:/out" \
-                alpine:3.24 sh -c 'cp -a /src/. /out/'
-            fi
+          if [ "${{ steps.go-mod-cache.outputs.cache-primary-key }}" != "${{ steps.go-mod-cache.outputs.cache-matched-key }}" ] \
+            && docker volume inspect timeful-test-go-mod-cache > /dev/null 2>&1 \
+            && [ -n "$(docker run --rm -v timeful-test-go-mod-cache:/src:ro alpine:3.24 sh -c 'ls -A /src' 2>/dev/null)" ]; then
+            docker run --rm \
+              -v timeful-test-go-mod-cache:/src:ro \
+              -v "$PWD/.go-mod-cache:/out" \
+              alpine:3.24 sh -c 'cp -a /src/. /out/'
+            echo "mod=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Save Go build cache
+        if: always() && steps.go-cache-copyout.outputs.build == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .go-build-cache
+          key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
+
+      - name: Save Go module cache
+        if: always() && steps.go-cache-copyout.outputs.mod == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .go-mod-cache
+          key: ${{ steps.go-mod-cache.outputs.cache-primary-key }}
 
       - name: Dump one-shot service logs on failure
         if: failure()
