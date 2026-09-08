@@ -43,6 +43,7 @@ export function useTimedGridInteractions(
 ) {
   const selectedTooltipSlot = ref<RowCol | null>(null)
   const tooltipPosition = ref<TooltipPositionOverride | null>(null)
+  const explicitMobileSelection = ref(false)
   const documentRef = opts.document ?? globalThis.document
   const visibleTooltipContent = computed(() =>
     !opts.isPhone.value || selectedTooltipSlot.value
@@ -91,6 +92,7 @@ export function useTimedGridInteractions(
       slot.col === opts.dragCur.value.col
     ) {
       selectedTooltipSlot.value = slot
+      explicitMobileSelection.value = true
     }
   }
 
@@ -137,6 +139,7 @@ export function useTimedGridInteractions(
       return
     }
     selectedTooltipSlot.value = null
+    explicitMobileSelection.value = false
     tooltipPosition.value = null
     opts.tooltipContent.value = []
   }
@@ -201,10 +204,12 @@ export function useTimedGridInteractions(
         if (opts.isPhone.value && !opts.daysOnly.value) {
           if (isSelectableSlot(row, col)) {
             selectedTooltipSlot.value = { row, col }
+            explicitMobileSelection.value = true
             setTooltipPositionForSelectedSlot()
             setTooltipForRowCol(row, col)
           } else {
             selectedTooltipSlot.value = null
+            explicitMobileSelection.value = false
             tooltipPosition.value = null
             opts.tooltipContent.value = []
             opts.clearSelectedSlot?.()
@@ -221,6 +226,7 @@ export function useTimedGridInteractions(
         if (opts.shouldHighlightAvailability()) opts.highlightAvailability()
       },
       mouseover: () => {
+        if (opts.isPhone.value && explicitMobileSelection.value) return
         if (!opts.timeslotSelected.value) {
           if (opts.daysOnly.value && !isSelectableSlot(row, col)) {
             opts.showAvailability(row, col)
@@ -274,6 +280,7 @@ export function useTimedGridInteractions(
   const clickSplitGapOutside = () => {
     opts.deselectGridOutside?.()
     selectedTooltipSlot.value = null
+    explicitMobileSelection.value = false
     tooltipPosition.value = null
     opts.tooltipContent.value = []
   }

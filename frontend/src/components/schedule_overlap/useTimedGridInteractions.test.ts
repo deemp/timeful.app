@@ -115,6 +115,59 @@ const appendSlot = (
 }
 
 describe("useTimedGridInteractions", () => {
+  it("retains a clicked mobile cell through scroll-generated hover until another click or dismissal", () => {
+    let top = 140
+    appendSlot(1, 0, () => top)
+    appendSlot(2, 0, 180)
+    const { interactions, tooltipContent, showAvailability } =
+      mountInteractions(true)
+
+    interactions.getTimeslotVon(1, 0).click()
+    showAvailability.mockClear()
+    top = 80
+    window.dispatchEvent(new Event("scroll"))
+    interactions.getTimeslotVon(2, 0).mouseover()
+
+    expect(interactions.selectedTooltipSlot.value).toEqual({ row: 1, col: 0 })
+    expect(joinTooltipSegments(tooltipContent.value)).toBe("slot-1-0")
+    expect(interactions.tooltipPosition.value).toEqual({
+      x: 100,
+      y: 100,
+      placement: "below",
+    })
+    expect(showAvailability).not.toHaveBeenCalled()
+
+    interactions.getTimeslotVon(2, 0).click()
+    expect(interactions.selectedTooltipSlot.value).toEqual({ row: 2, col: 0 })
+    expect(joinTooltipSegments(tooltipContent.value)).toBe("slot-2-0")
+
+    document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    interactions.getTimeslotVon(1, 0).mouseover()
+    expect(joinTooltipSegments(tooltipContent.value)).toBe("slot-1-0")
+    interactions.getTimeslotVon(2, 0).mouseover()
+    expect(joinTooltipSegments(tooltipContent.value)).toBe("slot-2-0")
+  })
+
+  it("retains the mobile drag endpoint through mouseover after release", () => {
+    const first = appendSlot(1, 0)
+    const second = appendSlot(2, 0)
+    const { interactions, moveDrag, dragCur, tooltipContent } =
+      mountInteractions(true)
+    interactions.startTimedGridDrag({
+      target: first,
+    } as unknown as PointerEvent)
+    moveDrag.mockImplementation(() => {
+      dragCur.value = { row: 2, col: 0 }
+    })
+    interactions.moveTimedGridDrag({
+      target: second,
+    } as unknown as PointerEvent)
+    interactions.endTimedGridDrag({ target: second } as unknown as PointerEvent)
+    interactions.getTimeslotVon(1, 0).mouseover()
+    expect(interactions.selectedTooltipSlot.value).toEqual({ row: 2, col: 0 })
+    expect(joinTooltipSegments(tooltipContent.value)).toBe("slot-2-0")
+  })
+
   it("registers and removes its outside-grid handler in capture phase", () => {
     const addEventListener = vi.spyOn(document, "addEventListener")
     const removeEventListener = vi.spyOn(document, "removeEventListener")
