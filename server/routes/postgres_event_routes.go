@@ -66,22 +66,10 @@ func postgresResponseModel(stored pgstore.Response) (*models.Response, string, e
 	if err := json.Unmarshal(stored.Payload, &value); err != nil {
 		return nil, "", err
 	}
-	if stored.RespondentKind == pgstore.RespondentKindAccount {
-		value.UserId = utils.StringToObjectID(*stored.AccountUserID)
-		key, ok := populateResponsePayloadIdentity(&value, *stored.AccountUserID)
-		if !ok {
-			return nil, "", errors.New("invalid account response")
-		}
-		return &value, key, nil
-	}
 	value.UserId = primitive.NilObjectID
-	value.GuestId = dereference(stored.GuestID)
-	value.GuestEditToken = dereference(stored.GuestEditToken)
-	value.GuestEditPolicy = dereference(stored.GuestEditPolicy)
-	value.GuestOwnershipMode = dereference(stored.GuestOwnershipMode)
-	value.Name = dereference(stored.CanonicalGuestName)
-	normalizeGuestResponseForPayload(&value)
-	return &value, guestResponseLookupKey(models.EventResponse{Response: &value}), nil
+	value.User = nil
+	value.GuestId, value.GuestEditToken, value.GuestEditPolicy, value.GuestOwnershipMode = "", "", "", ""
+	return &value, stored.PublicID, nil
 }
 
 func dereference(value *string) string {
@@ -91,28 +79,53 @@ func dereference(value *string) string {
 	return *value
 }
 
-func postgresResponses(ctx context.Context, repository *pgstore.Repository, event *pgstore.Event) (map[string]*models.Response, error) {
-	stored, err := repository.ListResponses(ctx, event.ID)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[string]*models.Response, len(stored))
-	for _, response := range stored {
-		value, key, err := postgresResponseModel(response)
-		if err != nil {
-			return nil, err
-		}
-		result[key] = value
-	}
-	return result, nil
+type postgresPublicResponse struct {
+	*models.Response
+	PublicID string `json:"publicId"`
+	CanEdit  bool   `json:"canEdit"`
 }
 
-func postgresEventPayload(event *pgstore.Event, responseMap map[string]*models.Response) (map[string]any, error) {
+func postgresResponses(c *gin.Context, repository *pgstore.Repository, event *pgstore.Event, visitor *postgresVisitor) (map[string]*postgresPublicResponse, bool, error) {
+	value, err := postgresEventModel(event)
+	if err != nil {
+		return nil, false, err
+	}
+	owner := false
+	if event.OwnerEventVisitorIdentityID != nil {
+		owner, err = visitor.controls(c.Request.Context(), repository, *event.OwnerEventVisitorIdentityID)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+	filtered := utils.Coalesce(value.BlindAvailabilityEnabled) && !owner
+	stored, err := repository.ListResponses(c.Request.Context(), event.ID)
+	if err != nil {
+		return nil, false, err
+	}
+	result := make(map[string]*postgresPublicResponse)
+	for _, response := range stored {
+		authorized, err := visitor.controls(c.Request.Context(), repository, response.EventVisitorIdentityID)
+		if err != nil {
+			return nil, false, err
+		}
+		if filtered && !authorized {
+			continue
+		}
+		value, key, err := postgresResponseModel(response)
+		if err != nil {
+			return nil, false, err
+		}
+		result[key] = &postgresPublicResponse{Response: value, PublicID: key, CanEdit: authorized}
+	}
+	return result, filtered, nil
+}
+
+func postgresEventPayload(event *pgstore.Event, responseMap map[string]*postgresPublicResponse) (map[string]any, error) {
 	value, err := postgresEventModel(event)
 	if err != nil {
 		return nil, err
 	}
-	value.ResponsesMap = responseMap
+	value.ResponsesMap = nil
 	payload, err := json.Marshal(value)
 	if err != nil {
 		return nil, err
@@ -121,6 +134,7 @@ func postgresEventPayload(event *pgstore.Event, responseMap map[string]*models.R
 	if err := json.Unmarshal(payload, &result); err != nil {
 		return nil, err
 	}
+	result["responses"] = responseMap
 	result["_id"] = event.ShortID
 	result["shortId"] = event.ShortID
 	result["ownerId"] = primitive.NilObjectID.Hex()
@@ -148,7 +162,12 @@ func postgresGetEvent(c *gin.Context) {
 	if event == nil {
 		return
 	}
-	responseMap, err := postgresResponses(c.Request.Context(), repository, event)
+	visitor, err := resolvePostgresVisitor(c, repository, event)
+	if err != nil {
+		postgresMutationError(c, err)
+		return
+	}
+	responseMap, filtered, err := postgresResponses(c, repository, event, visitor)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-responses"})
 		return
@@ -164,31 +183,14 @@ func postgresGetEvent(c *gin.Context) {
 		response.ManualAvailability = nil
 		responseMap[key] = response
 	}
-	value, err := postgresEventModel(event)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
-		return
-	}
-	blind := utils.Coalesce(value.BlindAvailabilityEnabled)
-	if blind {
-		key := guestQueryLookupKey(c.Query("guestId"), c.Query("guestName"))
-		if sessionID, ok := sessions.Default(c).Get("userId").(string); ok {
-			key = sessionID
-		}
-		if key == "" {
-			responseMap = nil
-		} else if response, exists := responseMap[key]; exists {
-			responseMap = map[string]*models.Response{key: response}
-		} else {
-			responseMap = map[string]*models.Response{}
-		}
-	}
 	payload, err := postgresEventPayload(event, responseMap)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
 		return
 	}
-	if blind {
+	payload["eventVisitorId"] = visitor.identity.PublicID
+	payload["canCreateResponse"] = visitor.authorized
+	if filtered {
 		delete(payload, "numResponses")
 		if responseMap == nil {
 			delete(payload, "responses")
@@ -213,7 +215,12 @@ func postgresGetResponses(c *gin.Context) {
 	if event == nil {
 		return
 	}
-	responseMap, err := postgresResponses(c.Request.Context(), repository, event)
+	visitor, err := resolvePostgresVisitor(c, repository, event)
+	if err != nil {
+		postgresMutationError(c, err)
+		return
+	}
+	responseMap, _, err := postgresResponses(c, repository, event, visitor)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-responses"})
 		return
@@ -227,27 +234,6 @@ func postgresGetResponses(c *gin.Context) {
 			response.User.Email = ""
 		}
 		responseMap[key] = response
-	}
-	value, err := postgresEventModel(event)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
-		return
-	}
-	if utils.Coalesce(value.BlindAvailabilityEnabled) {
-		key := guestQueryLookupKey(c.Query("guestId"), c.Query("guestName"))
-		if sessionID, ok := sessions.Default(c).Get("userId").(string); ok {
-			key = sessionID
-		}
-		if key == "" {
-			c.JSON(http.StatusOK, map[string]*models.Response{})
-			return
-		}
-		if response, exists := responseMap[key]; exists {
-			c.JSON(http.StatusOK, map[string]*models.Response{key: response})
-			return
-		}
-		c.JSON(http.StatusOK, map[string]*models.Response{})
-		return
 	}
 	c.JSON(http.StatusOK, responseMap)
 }
@@ -376,123 +362,19 @@ func postgresUpdateSchedule(c *gin.Context, clear bool) {
 	c.Status(http.StatusOK)
 }
 
-func postgresUpdateResponse(c *gin.Context) {
-	payload := struct {
-		Availability    []primitive.DateTime `json:"availability"`
-		IfNeeded        []primitive.DateTime `json:"ifNeeded"`
-		Guest           *bool                `json:"guest" binding:"required"`
-		Name            string               `json:"name"`
-		Email           string               `json:"email"`
-		GuestId         string               `json:"guestId"`
-		GuestEditToken  string               `json:"guestEditToken"`
-		GuestEditPolicy *string              `json:"guestEditPolicy"`
-	}{}
-	if err := c.Bind(&payload); err != nil {
-		return
-	}
-	repository := postgresRepository(c)
-	if repository == nil {
-		return
-	}
-	event := postgresEvent(c, repository)
-	if event == nil {
-		return
-	}
-	availability, ifNeeded := normalizeTimedResponseAvailabilitySlots(payload.Availability, payload.IfNeeded)
-	result := guestResponseMutationResult{}
-	err := repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
-		if *payload.Guest {
-			return postgresMutateGuestResponse(ctx, tx, event, payload, availability, ifNeeded, &result, c)
-		}
-		userID, ok := sessions.Default(c).Get("userId").(string)
-		if !ok {
-			return errNotSignedIn
-		}
-		existing, err := tx.GetResponseByAccountUserID(ctx, event.ID, userID)
-		response := models.Response{UserId: utils.StringToObjectID(userID), Availability: availability, IfNeeded: ifNeeded}
-		encoded, _ := json.Marshal(response)
-		if errors.Is(err, pgx.ErrNoRows) {
-			id := userID
-			if err := tx.CreateResponse(ctx, &pgstore.Response{EventID: event.ID, RespondentKind: pgstore.RespondentKindAccount, AccountUserID: &id, Payload: encoded}); err != nil {
-				return err
-			}
-			event.NumResponses++
-			return tx.UpdateEvent(ctx, event)
-		}
-		if err != nil {
-			return err
-		}
-		existing.Payload = encoded
-		return tx.UpdateResponse(ctx, existing)
-	})
-	if errors.Is(err, errNotSignedIn) {
-		c.JSON(http.StatusUnauthorized, responses.Error{Error: errs.NotSignedIn})
-		return
-	}
-	if err != nil {
-		postgresMutationError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, result)
+type postgresResponseInput struct {
+	ResponseID     string               `json:"responseId"`
+	CreateResponse bool                 `json:"createResponse"`
+	Name           string               `json:"name"`
+	NewName        string               `json:"newName"`
+	Email          string               `json:"email"`
+	Availability   []primitive.DateTime `json:"availability"`
+	IfNeeded       []primitive.DateTime `json:"ifNeeded"`
 }
 
-var errNotSignedIn = errors.New("not signed in")
-
-func postgresMutateGuestResponse(ctx context.Context, tx *pgstore.Repository, event *pgstore.Event, input struct {
-	Availability    []primitive.DateTime `json:"availability"`
-	IfNeeded        []primitive.DateTime `json:"ifNeeded"`
-	Guest           *bool                `json:"guest" binding:"required"`
-	Name            string               `json:"name"`
-	Email           string               `json:"email"`
-	GuestId         string               `json:"guestId"`
-	GuestEditToken  string               `json:"guestEditToken"`
-	GuestEditPolicy *string              `json:"guestEditPolicy"`
-}, availability, ifNeeded []primitive.DateTime, result *guestResponseMutationResult, c *gin.Context) error {
-	validated := respondents.ValidateGuestName(input.Name)
-	if validated.Code != respondents.GuestNameValid {
-		return guestNameError{guestNameValidationErrorMessage(validated.Code)}
-	}
-	existing, err := tx.GetResponseByGuestID(ctx, event.ID, input.GuestId)
-	if errors.Is(err, pgx.ErrNoRows) {
-		existing, err = tx.GetResponseByGuestName(ctx, event.ID, validated.Name)
-	}
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return err
-	}
-	response := models.Response{Name: validated.Name, Email: input.Email, Availability: availability, IfNeeded: ifNeeded}
-	if existing != nil {
-		stored, _, err := postgresResponseModel(*existing)
-		if err != nil {
-			return err
-		}
-		if !canMutateGuestResponse(stored, guestQueryLookupKey(c.Query("guestId"), c.Query("guestName")), input.GuestEditToken) {
-			return guestForbidden{"This guest response is protected and cannot be edited without its edit token"}
-		}
-		response.GuestId, response.GuestEditToken, response.GuestOwnershipMode = stored.GuestId, stored.GuestEditToken, stored.GuestOwnershipMode
-		response.GuestEditPolicy = stored.GuestEditPolicy
-		if input.GuestEditPolicy != nil {
-			response.GuestEditPolicy = normalizeGuestEditPolicy(*input.GuestEditPolicy)
-		}
-		result.GuestCredentials = buildGuestCredentialsResponse(&response, validated.Name)
-		encoded, _ := json.Marshal(response)
-		existing.CanonicalGuestName = &validated.Name
-		existing.GuestEditPolicy = &response.GuestEditPolicy
-		existing.Payload = encoded
-		return tx.UpdateResponse(ctx, existing)
-	}
-	policy := guestEditPolicyProtected
-	if input.GuestEditPolicy != nil {
-		policy = *input.GuestEditPolicy
-	}
-	result.GuestCredentials = ensureGuestTokenOwnership(&response, policy)
-	encoded, _ := json.Marshal(response)
-	guestID, token, ownership, editPolicy := response.GuestId, response.GuestEditToken, response.GuestOwnershipMode, response.GuestEditPolicy
-	if err := tx.CreateResponse(ctx, &pgstore.Response{EventID: event.ID, RespondentKind: pgstore.RespondentKindGuest, GuestID: &guestID, CanonicalGuestName: &validated.Name, GuestEditPolicy: &editPolicy, GuestOwnershipMode: &ownership, GuestEditToken: &token, Payload: encoded}); err != nil {
-		return err
-	}
-	event.NumResponses++
-	return tx.UpdateEvent(ctx, event)
-}
+func postgresUpdateResponse(c *gin.Context) { postgresMutateResponse(c, "save") }
+func postgresDeleteResponse(c *gin.Context) { postgresMutateResponse(c, "delete") }
+func postgresRenameUser(c *gin.Context)     { postgresMutateResponse(c, "rename") }
 
 type guestNameError struct{ message string }
 
@@ -502,15 +384,13 @@ type guestForbidden struct{ message string }
 
 func (e guestForbidden) Error() string { return e.message }
 
-func postgresDeleteResponse(c *gin.Context) {
-	payload := struct {
-		UserId         string `json:"userId"`
-		Guest          *bool  `json:"guest" binding:"required"`
-		Name           string `json:"name"`
-		GuestId        string `json:"guestId"`
-		GuestEditToken string `json:"guestEditToken"`
-	}{}
-	if err := c.Bind(&payload); err != nil {
+func postgresMutateResponse(c *gin.Context, operation string) {
+	var input postgresResponseInput
+	if err := c.BindJSON(&input); err != nil {
+		return
+	}
+	if (input.CreateResponse && input.ResponseID != "") || (input.ResponseID == "" && (!input.CreateResponse || operation != "save")) {
+		c.JSON(http.StatusBadRequest, responses.Error{Error: "select-response-or-explicitly-create"})
 		return
 	}
 	repository := postgresRepository(c)
@@ -521,141 +401,83 @@ func postgresDeleteResponse(c *gin.Context) {
 	if event == nil {
 		return
 	}
-	if !*payload.Guest {
-		userID, ok := sessions.Default(c).Get("userId").(string)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, responses.Error{Error: errs.NotSignedIn})
-			return
-		}
-		if payload.UserId != userID {
-			c.JSON(http.StatusForbidden, responses.Error{Error: errs.UserNotEventOwner})
-			return
-		}
-		if err := postgresDeleteStoredResponse(c.Request.Context(), repository, event, func(tx *pgstore.Repository) (*pgstore.Response, error) {
-			return tx.GetResponseByAccountUserID(c.Request.Context(), event.ID, userID)
-		}); err != nil {
-			postgresMutationError(c, err)
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{})
-		return
-	}
-	canonicalName := canonicalGuestName(payload.Name)
-	if payload.GuestId == "" && canonicalName == "" {
-		c.JSON(http.StatusBadRequest, responses.Error{Error: "Guest name is required"})
-		return
-	}
-	err := repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
-		var stored *pgstore.Response
-		var err error
-		if payload.GuestId != "" {
-			stored, err = tx.GetResponseByGuestID(ctx, event.ID, payload.GuestId)
-		} else {
-			stored, err = tx.GetResponseByGuestName(ctx, event.ID, canonicalName)
-		}
-		if err != nil {
-			return err
-		}
-		value, _, err := postgresResponseModel(*stored)
-		if err != nil {
-			return err
-		}
-		if !canMutateGuestResponse(value, guestQueryLookupKey(c.Query("guestId"), c.Query("guestName")), payload.GuestEditToken) {
-			return guestForbidden{"This guest response is protected and cannot be deleted without its edit token"}
-		}
-		if err := tx.DeleteResponse(ctx, stored.ID); err != nil {
-			return err
-		}
-		if event.NumResponses > 0 {
-			event.NumResponses--
-		}
-		return tx.UpdateEvent(ctx, event)
-	})
+	visitor, err := resolvePostgresVisitor(c, repository, event)
 	if err != nil {
 		postgresMutationError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-func postgresDeleteStoredResponse(ctx context.Context, repository *pgstore.Repository, event *pgstore.Event, lookup func(*pgstore.Repository) (*pgstore.Response, error)) error {
-	return repository.WithTransaction(ctx, func(txCtx context.Context, tx *pgstore.Repository) error {
-		stored, err := lookup(tx)
+	publicID := input.ResponseID
+	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
+		locked, err := tx.LockEvent(ctx, event.ID)
 		if err != nil {
 			return err
 		}
-		if err := tx.DeleteResponse(txCtx, stored.ID); err != nil {
-			return err
-		}
-		if event.NumResponses > 0 {
-			event.NumResponses--
-		}
-		return tx.UpdateEvent(txCtx, event)
-	})
-}
-
-func postgresRenameUser(c *gin.Context) {
-	payload := struct {
-		OldName        string `json:"oldName"`
-		NewName        string `json:"newName"`
-		GuestId        string `json:"guestId"`
-		GuestEditToken string `json:"guestEditToken"`
-	}{}
-	if err := c.Bind(&payload); err != nil {
-		return
-	}
-	oldName := canonicalGuestName(payload.OldName)
-	if payload.GuestId == "" && oldName == "" {
-		c.JSON(http.StatusBadRequest, responses.Error{Error: "Existing guest name is required"})
-		return
-	}
-	validated := respondents.ValidateGuestName(payload.NewName)
-	if validated.Code != respondents.GuestNameValid {
-		c.JSON(http.StatusBadRequest, responses.Error{Error: guestNameValidationErrorMessage(validated.Code)})
-		return
-	}
-	repository := postgresRepository(c)
-	if repository == nil {
-		return
-	}
-	event := postgresEvent(c, repository)
-	if event == nil {
-		return
-	}
-	result := guestResponseMutationResult{}
-	err := repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		var stored *pgstore.Response
-		var err error
-		if payload.GuestId != "" {
-			stored, err = tx.GetResponseByGuestID(ctx, event.ID, payload.GuestId)
+		value := &models.Response{}
+		if input.CreateResponse {
+			if !visitor.authorized {
+				return guestForbidden{"visitor-credential-required"}
+			}
+			stored = &pgstore.Response{EventID: event.ID, EventVisitorIdentityID: visitor.identity.ID, RespondentKind: pgstore.RespondentKindGuest}
 		} else {
-			stored, err = tx.GetResponseByGuestName(ctx, event.ID, oldName)
+			stored, err = tx.GetResponseByPublicID(ctx, event.ID, input.ResponseID)
+			if err != nil {
+				return err
+			}
+			authorized, err := visitor.controls(ctx, tx, stored.EventVisitorIdentityID)
+			if err != nil {
+				return err
+			}
+			if !authorized {
+				return guestForbidden{"response-credential-required"}
+			}
+			value, _, err = postgresResponseModel(*stored)
+			if err != nil {
+				return err
+			}
 		}
-		if err != nil {
-			return err
+		if operation == "delete" {
+			if err := tx.DeleteResponse(ctx, stored.ID); err != nil {
+				return err
+			}
+			locked.NumResponses--
+			return tx.UpdateEvent(ctx, locked)
 		}
-		value, _, err := postgresResponseModel(*stored)
-		if err != nil {
-			return err
+		name := input.Name
+		if operation == "rename" {
+			name = input.NewName
 		}
-		if !canMutateGuestResponse(value, guestQueryLookupKey(c.Query("guestId"), c.Query("guestName")), payload.GuestEditToken) {
-			return guestForbidden{"This guest response is protected and cannot be renamed without its edit token"}
+		if name == "" && !input.CreateResponse {
+			name = value.Name
+		}
+		validated := respondents.ValidateGuestName(name)
+		if validated.Code != respondents.GuestNameValid {
+			return guestNameError{guestNameValidationErrorMessage(validated.Code)}
 		}
 		value.Name = validated.Name
-		if !isTokenBackedGuestResponse(value) {
-			result.GuestCredentials = ensureGuestTokenOwnership(value, guestEditPolicyProtected)
-		} else {
-			result.GuestCredentials = buildGuestCredentialsResponse(value, validated.Name)
+		if operation == "save" {
+			value.Email = input.Email
+			value.Availability, value.IfNeeded = normalizeTimedResponseAvailabilitySlots(input.Availability, input.IfNeeded)
 		}
-		encoded, _ := json.Marshal(value)
-		stored.CanonicalGuestName, stored.GuestID, stored.GuestEditToken, stored.GuestEditPolicy, stored.GuestOwnershipMode, stored.Payload = &validated.Name, &value.GuestId, &value.GuestEditToken, &value.GuestEditPolicy, &value.GuestOwnershipMode, encoded
+		stored.Payload, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		if input.CreateResponse {
+			if err := tx.CreateResponse(ctx, stored); err != nil {
+				return err
+			}
+			publicID = stored.PublicID
+			locked.NumResponses++
+			return tx.UpdateEvent(ctx, locked)
+		}
 		return tx.UpdateResponse(ctx, stored)
 	})
 	if err != nil {
 		postgresMutationError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, gin.H{"responseId": publicID, "eventVisitorId": visitor.identity.PublicID})
 }
 
 func postgresMutationError(c *gin.Context, err error) {
@@ -741,9 +563,28 @@ func postgresCreateEvent(c *gin.Context) {
 		return
 	}
 	stored := &pgstore.Event{Name: event.Name, Type: string(event.Type), ScheduleVersion: 1, CreatorPosthogID: event.CreatorPosthogId, Payload: encoded}
-	if err := repository.CreateEvent(c.Request.Context(), stored); err != nil {
+	var visitor *pgstore.EventVisitorIdentity
+	var credential string
+	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
+		if err := tx.CreateEvent(ctx, stored); err != nil {
+			return err
+		}
+		var err error
+		visitor, err = tx.CreateEventVisitorIdentity(ctx, stored.ID)
+		if err != nil {
+			return err
+		}
+		credential, err = issuePostgresCredential(ctx, tx, visitor.ID)
+		if err != nil {
+			return err
+		}
+		stored.OwnerEventVisitorIdentityID = &visitor.ID
+		return tx.UpdateEvent(ctx, stored)
+	})
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-create-event"})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"eventId": stored.ShortID})
+	setPostgresCredentialCookie(c, stored.ShortID, visitor.PublicID, credential)
+	c.JSON(http.StatusCreated, gin.H{"eventId": stored.ShortID, "eventVisitorId": visitor.PublicID})
 }

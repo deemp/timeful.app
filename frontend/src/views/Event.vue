@@ -1122,8 +1122,14 @@ import { hasEventDraftData } from "@/composables/event/draftBoundary"
 import { fetchEventResponses } from "@/composables/event/eventTransportBoundary"
 import {
   encodeEventResponseSubmissionPayload,
+  encodeVisitorResponseSubmission,
   toEventResponseSubmissionPayload,
 } from "@/composables/event/responseSubmissionBoundary"
+import {
+  selectVisitorResponse,
+  selectedVisitorResponse,
+  withEventVisitorIdentity,
+} from "@/composables/event/visitorIdentityStorage"
 import {
   toScheduleOverlapEvent,
   states as scheduleOverlapStates,
@@ -1876,7 +1882,58 @@ async function setSlots(e: MessageEvent<PluginMessageData>) {
   const isGuest = forceGuestMode || !authUser.value
   let guestName = ""
   let guestEmail = ""
-  if (isGuest) {
+  let visitorResponseId: string | undefined
+  if (ev.eventVisitorId) {
+    // PostgreSQL events own responses through Event Visitor Identities, so the
+    // plugin acts on the browser visitor's selected or named response instead
+    // of MongoDB guest credentials.
+    const responses = ev.responses ?? {}
+    const namedResponseId = hasGuestName
+      ? Object.keys(responses).find(
+          (key) => responses[key]?.name === payloadGuestName,
+        )
+      : undefined
+    visitorResponseId = namedResponseId ?? selectedVisitorResponse(ev._id ?? "")
+    if (hasGuestName) {
+      guestName = payloadGuestName
+    } else {
+      guestName =
+        responses[visitorResponseId ?? ""]?.name ??
+        [authUser.value?.firstName, authUser.value?.lastName]
+          .filter(Boolean)
+          .join(" ")
+      if (!visitorResponseId && guestName.length === 0) {
+        sendPluginError(
+          requestId,
+          command,
+          "Guest name is required. Please provide 'guestName' in the payload or add your availability through the UI first.",
+        )
+        return
+      }
+    }
+    guestEmail =
+      e.data.payload?.guestEmail ??
+      responses[visitorResponseId ?? ""]?.email ??
+      ""
+    if (!visitorResponseId && ev.collectEmails) {
+      if (guestEmail.length === 0) {
+        sendPluginError(
+          requestId,
+          command,
+          "Guest email is required because this event collects emails. Please provide 'guestEmail' in the payload.",
+        )
+        return
+      }
+      if (!validateEmail(guestEmail)) {
+        sendPluginError(
+          requestId,
+          command,
+          `Invalid email format: ${guestEmail}`,
+        )
+        return
+      }
+    }
+  } else if (isGuest) {
     const guestNameKey = getGuestNameStorageKey(ev._id ?? "")
     const guestOwnershipCollection = readGuestOwnershipCollectionForEvent(
       ev._id ?? "",
@@ -2084,6 +2141,22 @@ async function setSlots(e: MessageEvent<PluginMessageData>) {
     const ifNeeded = allIfNeededTimestamps.map((ms) =>
       Temporal.Instant.fromEpochMilliseconds(ms).toZonedDateTimeISO("UTC"),
     )
+    if (ev.eventVisitorId) {
+      const result = await post<{ responseId: string }>(
+        withEventVisitorIdentity(`/events/${sanitizedId}/response`),
+        encodeVisitorResponseSubmission({
+          availability,
+          ifNeeded,
+          responseId: visitorResponseId,
+          name: guestName,
+          email: guestEmail,
+        }),
+      )
+      selectVisitorResponse(ev._id ?? "", result.responseId)
+      await loader.refreshEvent()
+      sendPluginSuccess(requestId, command)
+      return
+    }
     const storedGuestOwnership = event.value._id
       ? getSelectedGuestOwnership(
           readGuestOwnershipCollectionForEvent(event.value._id),

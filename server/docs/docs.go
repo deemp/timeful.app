@@ -493,6 +493,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/visitor-identities": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Associate browser Event Visitor Identities with the authenticated account",
+                "parameters": [
+                    {
+                        "description": "Browser-local public identities; matching HttpOnly credentials are required",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "identities": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "eventId": {
+                                                "type": "string"
+                                            },
+                                            "eventVisitorId": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
         "/events": {
             "post": {
                 "consumes": [
@@ -586,7 +635,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "PostgreSQL creation also returns eventVisitorId, the creator's browser Event Visitor Identity public ID, and issues the private EVCC as an HttpOnly cookie",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -661,11 +710,17 @@ const docTemplate = `{
                         "name": "eventId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "PostgreSQL events also return eventVisitorId and canCreateResponse, and each responses entry adds publicId and canEdit",
                         "schema": {
                             "$ref": "#/definitions/models.Event"
                         }
@@ -1016,7 +1071,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Object containing info about the guest response to rename",
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object containing info about the guest response to rename; PostgreSQL events require the opaque responseId instead of oldName",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1027,6 +1088,9 @@ const docTemplate = `{
                                     "type": "string"
                                 },
                                 "oldName": {
+                                    "type": "string"
+                                },
+                                "responseId": {
                                     "type": "string"
                                 }
                             }
@@ -1109,7 +1173,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Object containing info about the event response to update",
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1124,6 +1194,12 @@ const docTemplate = `{
                                 },
                                 "calendarOptions": {
                                     "$ref": "#/definitions/models.CalendarOptions"
+                                },
+                                "createResponse": {
+                                    "type": "boolean"
+                                },
+                                "email": {
+                                    "type": "string"
                                 },
                                 "enabledCalendars": {
                                     "type": "object",
@@ -1155,6 +1231,9 @@ const docTemplate = `{
                                 "name": {
                                     "type": "string"
                                 },
+                                "responseId": {
+                                    "type": "string"
+                                },
                                 "signUpBlockIds": {
                                     "type": "array",
                                     "items": {
@@ -1171,6 +1250,12 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "400": {
+                        "description": "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             },
@@ -1194,7 +1279,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Object containing info about the event response to delete",
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object containing info about the event response to delete; PostgreSQL events require the opaque responseId",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1205,6 +1296,9 @@ const docTemplate = `{
                                     "type": "boolean"
                                 },
                                 "name": {
+                                    "type": "string"
+                                },
+                                "responseId": {
                                     "type": "string"
                                 },
                                 "userId": {
@@ -1240,6 +1334,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Lower bound for start time to filter availability by",
                         "name": "timeMin",
                         "in": "query",
@@ -1255,7 +1355,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "PostgreSQL responses are keyed by opaque publicId and each entry adds publicId and canEdit",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

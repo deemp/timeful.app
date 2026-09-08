@@ -199,7 +199,7 @@ func normalizeTimedResponseAvailabilitySlots(
 // @Accept json
 // @Produce json
 // @Param payload body object{name=string,description=string,type=models.EventType,isSignUpForm=bool,signUpBlocks=[]models.SignUpBlock,notificationsEnabled=bool,blindAvailabilityEnabled=bool,daysOnly=bool,dates=[]string,remindees=[]string,sendEmailAfterXResponses=int,when2meetHref=string,activeSlots=[]string,eventTimezone=string,slotGeneration=models.SlotGeneration,timedRecurrence=models.TimedRecurrence,attendees=[]string} true "Timed events require the complete canonical slot contract; day-only events require dates"
-// @Success 201 {object} object{eventId=string}
+// @Success 201 {object} object{eventId=string} "PostgreSQL creation also returns eventVisitorId, the creator's browser Event Visitor Identity public ID, and issues the private EVCC as an HttpOnly cookie"
 // @Router /events [post]
 func createEvent(c *gin.Context) {
 	if err := rejectLegacyTimedScheduleFields(c); err != nil {
@@ -713,7 +713,8 @@ func getEventIds(c *gin.Context) {
 // @Tags events
 // @Produce json
 // @Param eventId path string true "Event ID"
-// @Success 200 {object} models.Event
+// @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
+// @Success 200 {object} models.Event "PostgreSQL events also return eventVisitorId and canCreateResponse, and each responses entry adds publicId and canEdit"
 // @Router /events/{eventId} [get]
 func getEvent(c *gin.Context) {
 	eventId := c.Param("eventId")
@@ -853,9 +854,10 @@ func getEvent(c *gin.Context) {
 // @Tags events
 // @Produce json
 // @Param eventId path string true "Event ID"
+// @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
 // @Param timeMin query string true "Lower bound for start time to filter availability by"
 // @Param timeMax query string true "Upper bound for end time to filter availability by"
-// @Success 200 {object} map[string]models.Response
+// @Success 200 {object} map[string]models.Response "PostgreSQL responses are keyed by opaque publicId and each entry adds publicId and canEdit"
 // @Router /events/{eventId}/responses [get]
 func getResponses(c *gin.Context) {
 	// Bind query parameters
@@ -983,8 +985,10 @@ func getResponses(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param eventId path string true "Event ID"
-// @Param payload body object{availability=[]string,ifNeeded=[]string,guest=bool,name=string,useCalendarAvailability=bool,enabledCalendars=map[string][]string,manualAvailability=map[string][]string,calendarOptions=models.CalendarOptions,signUpBlockIds=[]string} true "Object containing info about the event response to update"
+// @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
+// @Param payload body object{responseId=string,createResponse=bool,availability=[]string,ifNeeded=[]string,guest=bool,name=string,email=string,useCalendarAvailability=bool,enabledCalendars=map[string][]string,manualAvailability=map[string][]string,calendarOptions=models.CalendarOptions,signUpBlockIds=[]string} true "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId"
 // @Success 200
+// @Failure 400 {object} responses.Error "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse"
 // @Router /events/{eventId}/response [post]
 func updateEventResponse(c *gin.Context) {
 	payload := struct {
@@ -1349,7 +1353,8 @@ func updateEventResponse(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param eventId path string true "Event ID"
-// @Param payload body object{userId=string,guest=bool,name=string} true "Object containing info about the event response to delete"
+// @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
+// @Param payload body object{responseId=string,userId=string,guest=bool,name=string} true "Object containing info about the event response to delete; PostgreSQL events require the opaque responseId"
 // @Success 200
 // @Router /events/{eventId}/response [delete]
 func deleteEventResponse(c *gin.Context) {
@@ -1486,7 +1491,8 @@ func deleteEventResponse(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param eventId path string true "Event ID"
-// @Param payload body object{oldName=string,newName=string} true "Object containing info about the guest response to rename"
+// @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
+// @Param payload body object{responseId=string,oldName=string,newName=string} true "Object containing info about the guest response to rename; PostgreSQL events require the opaque responseId instead of oldName"
 // @Success 200
 // @Failure 400 {object} responses.Error "Guest name already exists"
 // @Router /events/{eventId}/rename-user [post]

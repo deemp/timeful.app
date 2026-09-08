@@ -231,6 +231,7 @@ const shownInTimezoneStorageKey = computed(
 const scheduleOverlapPreferences: UseScheduleOverlapPreferencesReturn =
   useScheduleOverlapPreferences({
     eventId: computed(() => props.event._id ?? ""),
+    event: eventReadonly,
   })
 const guestNameKey = scheduleOverlapPreferences.guestNameKey
 const ownedGuestResponses = scheduleOverlapPreferences.ownedGuestResponses

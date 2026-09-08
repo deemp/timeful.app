@@ -38,6 +38,7 @@ func InitAuth(router *gin.RouterGroup) {
 	authRouter.POST("/sign-in-mobile", signInMobile)
 	authRouter.POST("/sign-out", signOut)
 	authRouter.GET("/status", middleware.AuthRequired(), getStatus)
+	authRouter.POST("/visitor-identities", associatePostgresVisitorIdentities)
 
 	authRouter.POST("/otp/check-email", checkEmail)
 	authRouter.POST("/otp/send", sendOtp)

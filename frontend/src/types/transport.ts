@@ -51,6 +51,8 @@ export type RawEvent = Omit<
   Schemas["models.Event"],
   "dates" | "times" | "enabledSlots" | "activeSlots" | "timedRecurrence"
 > & {
+  eventVisitorId?: string
+  canCreateResponse?: boolean
   dates?: RawInstantValue[]
   times?: RawInstantValue[]
   enabledSlots?: RawInstantValue[]
@@ -64,6 +66,8 @@ export type RawEvent = Omit<
 }
 export type RawFolder = Schemas["models.Folder"]
 export type RawResponse = Schemas["models.Response"] & {
+  publicId?: string
+  canEdit?: boolean
   guestId?: string
   guestEditPolicy?: "protected" | "open"
   guestOwnershipMode?: "legacy" | "token"

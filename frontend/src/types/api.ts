@@ -527,6 +527,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/visitor-identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Associate browser Event Visitor Identities with the authenticated account */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Browser-local public identities; matching HttpOnly credentials are required */
+            requestBody: {
+                content: {
+                    "application/json": {
+                        identities?: {
+                            eventId?: string;
+                            eventVisitorId?: string;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -569,7 +620,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Created */
+                /** @description PostgreSQL creation also returns eventVisitorId, the creator's browser Event Visitor Identity public ID, and issues the private EVCC as an HttpOnly cookie */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -598,7 +649,10 @@ export interface paths {
         /** Gets an event based on its id */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -608,7 +662,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description PostgreSQL events also return eventVisitorId and canCreateResponse, and each responses entry adds publicId and canEdit */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -927,7 +981,10 @@ export interface paths {
         /** Rename a guest response */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -935,12 +992,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the guest response to rename */
+            /** @description Object containing info about the guest response to rename; PostgreSQL events require the opaque responseId instead of oldName */
             requestBody: {
                 content: {
                     "application/json": {
                         newName?: string;
                         oldName?: string;
+                        responseId?: string;
                     };
                 };
             };
@@ -1025,7 +1083,10 @@ export interface paths {
         /** Updates the current user's availability */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -1033,12 +1094,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the event response to update */
+            /** @description Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId */
             requestBody: {
                 content: {
                     "application/json": {
                         availability?: string[];
                         calendarOptions?: components["schemas"]["models.CalendarOptions"];
+                        createResponse?: boolean;
+                        email?: string;
                         enabledCalendars?: {
                             [key: string]: string[];
                         };
@@ -1048,6 +1111,7 @@ export interface paths {
                             [key: string]: string[];
                         };
                         name?: string;
+                        responseId?: string;
                         signUpBlockIds?: string[];
                         useCalendarAvailability?: boolean;
                     };
@@ -1061,12 +1125,24 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
             };
         };
         /** Delete the current user's availability */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -1074,12 +1150,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the event response to delete */
+            /** @description Object containing info about the event response to delete; PostgreSQL events require the opaque responseId */
             requestBody: {
                 content: {
                     "application/json": {
                         guest?: boolean;
                         name?: string;
+                        responseId?: string;
                         userId?: string;
                     };
                 };
@@ -1110,6 +1187,8 @@ export interface paths {
         get: {
             parameters: {
                 query: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
                     /** @description Lower bound for start time to filter availability by */
                     timeMin: string;
                     /** @description Upper bound for end time to filter availability by */
@@ -1124,7 +1203,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description PostgreSQL responses are keyed by opaque publicId and each entry adds publicId and canEdit */
                 200: {
                     headers: {
                         [name: string]: unknown;

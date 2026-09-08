@@ -754,6 +754,38 @@ paths:
       summary: Gets whether the user is signed in or not
       tags:
       - auth
+  /auth/visitor-identities:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Browser-local public identities; matching HttpOnly credentials
+          are required
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            identities:
+              items:
+                properties:
+                  eventId:
+                    type: string
+                  eventVisitorId:
+                    type: string
+                type: object
+              type: array
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      summary: Associate browser Event Visitor Identities with the authenticated account
+      tags:
+      - auth
   /events:
     post:
       consumes:
@@ -815,7 +847,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: PostgreSQL creation also returns eventVisitorId, the creator's
+            browser Event Visitor Identity public ID, and issues the private EVCC
+            as an HttpOnly cookie
           schema:
             properties:
               eventId:
@@ -847,11 +881,16 @@ paths:
         name: eventId
         required: true
         type: string
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: PostgreSQL events also return eventVisitorId and canCreateResponse,
+            and each responses entry adds publicId and canEdit
           schema:
             $ref: '#/definitions/models.Event'
       summary: Gets an event based on its id
@@ -1064,7 +1103,12 @@ paths:
         name: eventId
         required: true
         type: string
-      - description: Object containing info about the guest response to rename
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
+      - description: Object containing info about the guest response to rename; PostgreSQL
+          events require the opaque responseId instead of oldName
         in: body
         name: payload
         required: true
@@ -1073,6 +1117,8 @@ paths:
             newName:
               type: string
             oldName:
+              type: string
+            responseId:
               type: string
           type: object
       produces:
@@ -1124,7 +1170,12 @@ paths:
         name: eventId
         required: true
         type: string
-      - description: Object containing info about the event response to delete
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
+      - description: Object containing info about the event response to delete; PostgreSQL
+          events require the opaque responseId
         in: body
         name: payload
         required: true
@@ -1133,6 +1184,8 @@ paths:
             guest:
               type: boolean
             name:
+              type: string
+            responseId:
               type: string
             userId:
               type: string
@@ -1154,7 +1207,13 @@ paths:
         name: eventId
         required: true
         type: string
-      - description: Object containing info about the event response to update
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
+      - description: Object containing info about the event response to update; PostgreSQL
+          events require responseId or createResponse=true and return responseId with
+          eventVisitorId
         in: body
         name: payload
         required: true
@@ -1166,6 +1225,10 @@ paths:
               type: array
             calendarOptions:
               $ref: '#/definitions/models.CalendarOptions'
+            createResponse:
+              type: boolean
+            email:
+              type: string
             enabledCalendars:
               additionalProperties:
                 items:
@@ -1186,6 +1249,8 @@ paths:
               type: object
             name:
               type: string
+            responseId:
+              type: string
             signUpBlockIds:
               items:
                 type: string
@@ -1198,6 +1263,11 @@ paths:
       responses:
         "200":
           description: OK
+        "400":
+          description: select-response-or-explicitly-create when a PostgreSQL mutation
+            omits both responseId and createResponse
+          schema:
+            $ref: '#/definitions/responses.Error'
       summary: Updates the current user's availability
       tags:
       - events
@@ -1208,6 +1278,10 @@ paths:
         in: path
         name: eventId
         required: true
+        type: string
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
         type: string
       - description: Lower bound for start time to filter availability by
         in: query
@@ -1223,7 +1297,8 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: PostgreSQL responses are keyed by opaque publicId and each
+            entry adds publicId and canEdit
           schema:
             additionalProperties:
               $ref: '#/definitions/models.Response'

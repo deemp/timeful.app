@@ -3,9 +3,9 @@ id: TASK-0071
 title: Implement PostgreSQL platform and event visitor identities
 status: In Progress
 assignee:
-  - OpenCode
+  - '@Codex'
 created_date: '2026-08-25 16:15'
-updated_date: '2026-09-01 19:01'
+updated_date: '2026-09-08 16:14'
 labels:
   - postgresql
   - identity
@@ -26,6 +26,7 @@ references:
   - docs/requirements/functional/fr/FR-084.md
   - docs/requirements/quality/qr/QR-006.md
   - backlog/handoffs/handoff-2026-08-25T21-03-31Z.md
+  - backlog/handoffs/handoff-2026-09-08T16-09-03Z.md
 documentation:
   - docs/terminology/glossary.md
   - server/docs/postgres-anonymous-event-compatibility.md
@@ -103,4 +104,8 @@ The confirmed documentation model establishes source EVCC authority in this foun
 Review gate satisfied 2026-08-31: user approved the revised plan and scope in session. Decisions confirmed: (1) foundation-only scope, cross-device transfers remain in TASK-0071.02; (2) the foundation binds an owner Event Visitor Identity on PostgreSQL events now, while Event Owner Edit Token issuance and FR-018/FR-115/FR-116 owner-power enforcement are deferred to a follow-up task; (3) EVCCs are delivered and validated exclusively through an HttpOnly, SameSite=Lax cookie so the credential value is never available to application JavaScript. Delivery is split into five dependency-chained subtasks under this task (schema/repository, EVCC issuance/transport, backend routes, frontend integration, verification/docs).
 
 Research grounding for the approved plan: PG events are structurally ownerless today (owner_external_id never written, edits unauthenticated); PG responses carry per-response guest_id + guest_edit_token with one-response-per-guest unique indexes that contradict the multi-response-per-EVI contract; no EVI/PVI/EVCC code exists in backend or frontend. Confirmed seams: event-source dispatch centralized in server/routes/events.go, PG handlers in server/routes/postgres_event_routes.go, repository in server/postgres/, frontend transport in src/types/transport.ts with boundary composables eventTransportBoundary.ts and responseSubmissionBoundary.ts, guest credentials in scheduleOverlapStorage.ts, sign-in payload in Auth.vue and UserService.ts.
+
+2026-09-08: User requested implementation of Platform Visitor Identities together with Event Visitor Identities. Resuming the approved foundation plan; transfers and owner-power enforcement remain deferred.
+
+2026-09-08 handoff requested by user before completion. Implementation now spans schema/repository, EVCC cookies, PostgreSQL route ownership/filtering, sign-in association and frontend explicit response selection; detailed evidence and gaps are recorded on TASK-0071.04 through TASK-0071.08. All remain In Progress. No commit or deployment was performed by this session. Current worktree changes were observed staged at handoff time although this agent did not stage them; preserve that state. Existing backlog/backlog.md was already dirty at session start. Foundation not complete: real Firefox run, final checks, compatibility documentation, Swagger contract review and graph update remain.
 <!-- SECTION:NOTES:END -->

@@ -533,6 +533,7 @@
 </template>
 
 <script setup lang="ts">
+import { createEventAtBoundary } from "@/composables/event/eventTransportBoundary"
 import { computed, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
@@ -541,7 +542,6 @@ import { isAnonymousOwnerEvent } from "@/composables/event/eventOwnership"
 import {
   addEventToCreatedList,
   plainTimeToTimeNum,
-  post,
   put,
   resolveTimezoneValue,
   signInGoogle,
@@ -990,7 +990,7 @@ const submit = async () => {
   }
 
   if (!props.edit) {
-    post<{ eventId: string; shortId?: string }>("/events", payload)
+    createEventAtBoundary(payload)
       .then(async ({ eventId, shortId }) => {
         if (authUser.value) {
           await mainStore.setEventFolder({ eventId, folderId: props.folderId })

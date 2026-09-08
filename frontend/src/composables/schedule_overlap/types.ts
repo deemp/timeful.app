@@ -255,6 +255,8 @@ export interface CalendarEventsMapEntry {
 export type CalendarEventsMap = Record<string, CalendarEventsMapEntry>
 
 export interface ParsedResponse {
+  publicId?: string
+  canEdit?: boolean
   user: { _id: string; firstName?: string; email?: string; lastName?: string }
   availability: ZdtSet
   ifNeeded?: ZdtSet

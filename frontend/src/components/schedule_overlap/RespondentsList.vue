@@ -527,7 +527,7 @@ function formatRespondentName(user: User) {
 }
 
 function canEditGuestAvailability(user: User) {
-  if (authUser.value || user._id == null) {
+  if ((authUser.value && !props.event.eventVisitorId) || user._id == null) {
     return false
   }
   return canGuestEditResponse(
