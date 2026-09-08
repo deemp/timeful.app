@@ -50,6 +50,25 @@ PostgreSQL response maps use opaque response IDs.
 The API must define explicit creation, selected-response, update, and deletion contracts that remain valid when one Event Visitor Identity owns multiple responses.
 Blind-availability payloads must expose a non-owner only responses the non-owner is authorized to manage and must not leak other-response counts.
 
+## Delivered Identity Foundation
+
+PostgreSQL event creation establishes an event-scoped Event Visitor Identity and returns its public `eventVisitorId` with the created event.
+Creation also issues the private EVCC as an HttpOnly, SameSite=Lax cookie scoped to `/api`; the credential value never reaches application JavaScript.
+The browser retains `eventVisitorId` per event in localStorage so the identity survives reloads and sign-out, while authority always comes from the EVCC cookie or an authenticated Platform Identity session.
+
+Signing in associates known browser Event Visitor Identities with the private Platform Identity through `POST /auth/visitor-identities`.
+Association never grants authority by itself; response authorization still requires the source EVCC or the associated Platform Identity session.
+
+PostgreSQL response maps are keyed by the opaque `publicId`, and each entry carries `canEdit` so the client can offer exactly the edits the server will honor.
+Response mutation uses an explicit-selection contract: `createResponse: true` creates a new response for the calling Event Visitor Identity, and every edit, deletion, and rename must carry the target `responseId`; otherwise the route rejects with `select-response-or-explicitly-create`.
+The browser plugin `set-slots` wire contract is unchanged; the frontend maps the plugin's named response onto the explicit-selection contract (existing named response, else selected response, else create) before calling the API, and the respondents-list delete submits the same `responseId` contract.
+
+Event creation binds the creator's Event Visitor Identity as the event's blind-availability owner.
+A non-owner blind-availability read exposes only responses that visitor is authorized to manage and omits other-response counts; the owner sees all responses.
+
+Matching-code transfers, Granted EVCC issuance, source revocation, and Event Owner powers (owner edit token with FR-018/FR-115/FR-116 enforcement) are deferred to follow-up tasks and are not part of the delivered foundation.
+The migration downgrade is intentionally refused because the legacy schema cannot represent multiple responses per Event Visitor Identity.
+
 ## Transactions
 
 Response create, update, and delete lock the event row and update the response row plus `num_responses` in one transaction.

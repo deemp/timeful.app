@@ -1,11 +1,11 @@
 ---
 id: TASK-0071
 title: Implement PostgreSQL platform and event visitor identities
-status: In Progress
+status: Done
 assignee:
   - '@Codex'
 created_date: '2026-08-25 16:15'
-updated_date: '2026-09-08 16:14'
+updated_date: '2026-09-08 18:05'
 labels:
   - postgresql
   - identity
@@ -45,25 +45,25 @@ Implement the first PostgreSQL-only Platform Identity and Event Visitor Identity
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 PostgreSQL stores Platform Identities and event-scoped Event Visitor Identities with internal UUID relations
-- [ ] #2 A PostgreSQL Event Visitor Identity is opaque browser-local and retained independently from EVCCs and Platform Identity values
-- [ ] #3 Authenticated PostgreSQL visitors associate Event Visitor Identities with private PostgreSQL Platform Identities without MongoDB queries or migration
-- [ ] #4 PostgreSQL issues and validates private EVCC authority for every response owned by an Event Visitor Identity without exposing credential values to application JavaScript
-- [ ] #5 PostgreSQL availability responses are owned by Event Visitor Identity relations and do not expose raw authentication subjects as response identifiers
-- [ ] #6 One Event Visitor Identity can own multiple availability responses for an event and database integrity rejects an event and owner Event Visitor Identity mismatch
-- [ ] #7 PostgreSQL response APIs use opaque response IDs and an explicit selection creation edit and deletion contract that supports multiple visitor-owned responses
-- [ ] #8 PostgreSQL blind-availability reads expose a non-owner only authorized responses and no other-response counts while an owner can view all responses
-- [ ] #9 MongoDB event and user persistence request behavior and guest credentials remain unchanged
-- [ ] #10 Cross-device transfers matching-code approval and Granted EVCC issuance remain out of scope for this foundation
-- [ ] #11 Repository route and frontend regression coverage verifies PostgreSQL identity behavior blind filtering and MongoDB non-regression
-- [ ] #12 Relevant documentation reflects the delivered PostgreSQL identity boundary and deferred cross-device transfer behavior
+- [x] #1 PostgreSQL stores Platform Identities and event-scoped Event Visitor Identities with internal UUID relations
+- [x] #2 A PostgreSQL Event Visitor Identity is opaque browser-local and retained independently from EVCCs and Platform Identity values
+- [x] #3 Authenticated PostgreSQL visitors associate Event Visitor Identities with private PostgreSQL Platform Identities without MongoDB queries or migration
+- [x] #4 PostgreSQL issues and validates private EVCC authority for every response owned by an Event Visitor Identity without exposing credential values to application JavaScript
+- [x] #5 PostgreSQL availability responses are owned by Event Visitor Identity relations and do not expose raw authentication subjects as response identifiers
+- [x] #6 One Event Visitor Identity can own multiple availability responses for an event and database integrity rejects an event and owner Event Visitor Identity mismatch
+- [x] #7 PostgreSQL response APIs use opaque response IDs and an explicit selection creation edit and deletion contract that supports multiple visitor-owned responses
+- [x] #8 PostgreSQL blind-availability reads expose a non-owner only authorized responses and no other-response counts while an owner can view all responses
+- [x] #9 MongoDB event and user persistence request behavior and guest credentials remain unchanged
+- [x] #10 Cross-device transfers matching-code approval and Granted EVCC issuance remain out of scope for this foundation
+- [x] #11 Repository route and frontend regression coverage verifies PostgreSQL identity behavior blind filtering and MongoDB non-regression
+- [x] #12 Relevant documentation reflects the delivered PostgreSQL identity boundary and deferred cross-device transfer behavior
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -108,4 +108,12 @@ Research grounding for the approved plan: PG events are structurally ownerless t
 2026-09-08: User requested implementation of Platform Visitor Identities together with Event Visitor Identities. Resuming the approved foundation plan; transfers and owner-power enforcement remain deferred.
 
 2026-09-08 handoff requested by user before completion. Implementation now spans schema/repository, EVCC cookies, PostgreSQL route ownership/filtering, sign-in association and frontend explicit response selection; detailed evidence and gaps are recorded on TASK-0071.04 through TASK-0071.08. All remain In Progress. No commit or deployment was performed by this session. Current worktree changes were observed staged at handoff time although this agent did not stage them; preserve that state. Existing backlog/backlog.md was already dirty at session start. Foundation not complete: real Firefox run, final checks, compatibility documentation, Swagger contract review and graph update remain.
+
+Foundation close-out 2026-09-08: all twelve umbrella acceptance criteria verified with objective evidence recorded on subtasks .04 through .08; subtasks .04-.08 marked Done. Isolated backend suite, full frontend check suite, e2e package checks, and firefox-desktop browser specs all pass on the committed foundation (2ada63a4) plus this session's RespondentsList delete-contract fix. Cross-device transfers, matching-code approval, and Granted EVCC issuance remain open in TASK-0071.02 per AC #10; Event Owner powers (owner edit token, FR-018/FR-115/FR-116) are deferred to TASK-0129. Known cosmetic gap: canCreateResponse is decoded at the transport boundary but not yet consumed by UI paths; the server enforces creation authority, so this is not a security gap. Migration downgrade remains intentionally refused (legacy schema cannot represent multiple responses per visitor); review before shipping.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered the PostgreSQL-only identity foundation across the five dependency-chained subtasks (TASK-0071.04 through .08, all verified Done): a migration adding platform_identities, event_visitor_identities, hashed event_visitor_credentials, EVI-owned responses with composite (event_id, event_visitor_identity_id) integrity and opaque public_id plus a legacy-row backfill; EVCC issuance/validation as crypto/rand 256-bit credentials persisted SHA-256-only and delivered via HttpOnly SameSite=Lax /api cookies never exposed to JavaScript; route wiring that binds the owner Event Visitor Identity at creation, filters blind-availability reads by proven authority, enforces the explicit select-response-or-explicitly-create mutation contract with transactional num_responses, and associates browser identities with the Platform Identity at sign-in without MongoDB access; frontend adoption of eventVisitorId plus opaque publicId-keyed selection through dedicated storage and boundary composables with the plugin set-slots wire contract unchanged; and full verification (isolated go test ./postgres ./routes, frontend lint/fmt/typecheck/build/unit 141 files 1042 tests, firefox-desktop e2e for identity retention, multi-response editing, deletion, and plugin contract) with the compatibility contract documented in server/docs/postgres-anonymous-event-compatibility.md. Cross-device transfers, Granted EVCC issuance, matching codes, and Event Owner powers remain out of scope in TASK-0071.02 and the owner-powers follow-up.
+<!-- SECTION:FINAL_SUMMARY:END -->
