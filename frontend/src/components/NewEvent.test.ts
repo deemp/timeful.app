@@ -5,7 +5,7 @@ import {
   flushPromises,
   shallowMount as baseShallowMount,
 } from "@vue/test-utils"
-import { defineComponent, nextTick, ref } from "vue"
+import { nextTick, ref } from "vue"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { durations } from "@/constants"
 import { Temporal } from "temporal-polyfill"
@@ -192,7 +192,7 @@ const TimeFormatToggleStub = {
   `,
 }
 
-const VBtnStub = defineComponent({
+const VBtnStub = {
   name: "VBtn",
   props: {
     class: {
@@ -218,9 +218,9 @@ const VBtnStub = defineComponent({
       <slot />
     </button>
   `,
-})
+}
 
-const VTextFieldCaptureStub = defineComponent({
+const VTextFieldCaptureStub = {
   name: "VTextField",
   props: {
     modelValue: {
@@ -261,7 +261,7 @@ const VTextFieldCaptureStub = defineComponent({
       @input="$emit('update:modelValue', $event.target.value)"
     />
   `,
-})
+}
 
 const newEventStyleBlock =
   /<style>([\s\S]*)<\/style>/.exec(newEventSource)?.[1] ?? ""
