@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Keep cascade priority ahead of bundled and runtime-injected styles. -->
+    <link rel="stylesheet" href="/styles/layers.css" />
     <script>
       window.__timefulThirdPartyShellEnabled = (() => {
         const configuredValue = "%VITE_ENABLE_THIRD_PARTY_SHELL%".trim().toLowerCase()

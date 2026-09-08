@@ -208,7 +208,7 @@
                       {{ formatRespondentName(user) }}
                     </div>
                     <div
-                      class="respondent-row-actions tw:flex tw:shrink-0 tw:items-center tw:gap-1 tw:transition-none tw:group-hover:opacity-100 tw:group-[&:has(.email-hover-target:hover)]:opacity-0!"
+                      class="respondent-row-actions tw:flex tw:shrink-0 tw:items-center tw:gap-1 tw:transition-none tw:group-hover:opacity-100 tw:group-[&:has(.email-hover-target:hover)]:opacity-0"
                       :class="isPhone ? 'tw:opacity-100' : 'tw:opacity-0'"
                     >
                       <component

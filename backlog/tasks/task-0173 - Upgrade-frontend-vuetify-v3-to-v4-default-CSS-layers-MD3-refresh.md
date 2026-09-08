@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - Codex
 created_date: '2026-09-07 17:33'
-updated_date: '2026-09-07 20:44'
+updated_date: '2026-09-08 08:57'
 labels:
   - frontend
   - vuetify
@@ -17,6 +17,7 @@ references:
   - 'https://vuetifyjs.com/en/features/css-utilities/overview/'
   - frontend/src/plugins/vuetify.ts
   - frontend/vite.config.ts
+  - TASK-0134
 documentation:
   - 'https://vuetifyjs.com/en/getting-started/upgrade-guide/'
   - 'https://vuetifyjs.com/en/styles/layers/'
@@ -39,12 +40,12 @@ Decisions (user-approved 2026-09-07): tracked as a separate upgrade task ahead o
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 frontend/package.json declares vuetify ^4.2.0 and the app boots and builds on vite 8 with vite-plugin-vuetify 2.1.3; the documented optimizeDeps.include overlay fix is applied and the node_modules/.vite cache reset is performed
-- [ ] #2 CSS reset and VBtn deltas are handled with recorded decisions: reset restoration scoped by an audit of all vue files rendering h1-h6/p/ul (restore snippet in @layer vuetify-core.reset or per-file audit), and the removed uppercase default restored globally (sass $button-text-transform or defaults) or accepted with label fixes
-- [ ] #3 The 6 v-select-family #item="{ item }" slots are renamed to internalItem; breakpoints verified (explicit display.thresholds kept, sass $grid-breakpoints aligned only if needed); defaultTheme stays light; VSnackbar/VForm/VDatePicker and other touched components verified unaffected
+- [x] #1 frontend/package.json declares vuetify ^4.2.0 and the app boots and builds on vite 8 with vite-plugin-vuetify 2.1.3; the documented optimizeDeps.include overlay fix is applied and the node_modules/.vite cache reset is performed
+- [x] #2 CSS reset and VBtn deltas are handled with recorded decisions: reset restoration scoped by an audit of all vue files rendering h1-h6/p/ul (restore snippet in @layer vuetify-core.reset or per-file audit), and the removed uppercase default restored globally (sass $button-text-transform or defaults) or accepted with label fixes
+- [x] #3 The 6 v-select-family #item="{ item }" slots are renamed to internalItem; breakpoints verified (explicit display.thresholds kept, sass $grid-breakpoints aligned only if needed); defaultTheme stays light; VSnackbar/VForm/VDatePicker and other touched components verified unaffected
 - [ ] #4 Visual parity is verified: dist CSS inspection (five vuetify layers emitted; only the ~30 documented helper/a11y !important declarations remain), local dev flow smoke (sign in, /home, create event), and the firefox e2e suite passes from e2e/
-- [ ] #5 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit
-- [ ] #6 The bundle-size delta from the style-delivery shape change (v3 stylesheet entry vs v4 main.css) is measured from dist output and recorded in the task
+- [x] #5 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit
+- [x] #6 The bundle-size delta from the style-delivery shape change (v3 stylesheet entry vs v4 main.css) is measured from dist output and recorded in the task
 - [ ] #7 Tailwind delivery is untouched by this upgrade: 0171's important:true tw: utilities and index.css behavior are unchanged on vuetify v4, verified by build inspection
 <!-- AC:END -->
 
@@ -60,10 +61,24 @@ Decisions (user-approved 2026-09-07): tracked as a separate upgrade task ahead o
 
 <!-- SECTION:PLAN:BEGIN -->
 Review follow-up authorized by user: restore the removed reset behavior in vuetify-core.reset, migrate the shared button size/icon selector, and add browser coverage for margins, native button borders, and normal/icon/toggle sizing. Run required frontend checks and relevant isolated browser suites.
+
+Resume from handoff-2026-09-08T08-24-36Z.md: reproduce the remaining Firefox touch tooltip failure, compare against the pre-migration styling baseline, and determine whether correction belongs to migration parity or needs separately approved scope; then rerun Firefox suites and finalize all three tasks in dependency order.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 Review follow-up: corrected the shared selector to .v-btn--size-default with .v-btn--icon excluded; restored native text/list margins and native form-control borders/backgrounds in vuetify-core.reset. During E2E, Vite 8.0.16 repeatedly generated an undefined init_runtime_dom_esm_bundler call inside the @vuetify/v0 prebundle even after cache reset. Excluding that ESM dependency from optimization resolves the startup crash; overlay includes now match Vuetify's official migration guide. All four new styling browser checks pass on desktop and mobile; broader validation is in progress.
+
+2026-09-08: Resumed with DatePicker, timed-event helper, and optimizeDeps fixes staged; no new runtime change yet. Desktop cold-cache validation is recorded in the handoff; touch tooltip failure remains unresolved.
+
+Baseline comparison at a1420a77 (before both styling migrations), using its untouched frontend/spec/helpers and locked Tailwind 3/Vuetify 3 dependencies on the isolated test stack: tooltip anchoring fails at the same final geometry predicate; navbar test passes in this run. Artifacts: /tmp/opencode/timeful-e2e-artifacts/2026-09-08T08-38-50.699105957Z-p560129/. Current full touch run: 6 passed, navbar failed; artifacts /tmp/opencode/timeful-e2e-artifacts/2026-09-08T08-37-00.377579102Z-p550687/. Asked user whether to include the existing interaction bug in 0173 or track separately; no tooltip code changed pending that scope decision.
+
+Completion audit: App.vue already disabled button text transformation in the v3 baseline and still does so with an unlayered .v-btn rule; therefore v4's removed uppercase default causes no label change. All six item slots now explicitly alias the v4 raw item as internalItem and consume its raw fields; explicit theme/display thresholds remain. Reset and normal/icon dimensions pass rendered desktop/mobile checks. Fresh final production measurement: index CSS 631695 B, total CSS including the 146 B public layer-order stylesheet 723518 B, down 47799 B / 41339 B from the recorded v3 baseline. The original AC #7 important-utility wording is superseded by the combined authorized TASK-0172 layer/importance cleanup, as already recorded for TASK-0171; Tailwind changes remain owned by 0171/0172.
+
+Graph refresh completed with no final topology changes; graphify reports four generated JSON inputs produce zero nodes (tasks.json twice, timezones.json, swagger.json). Firefox touch is not green and the task remains In Progress pending the requested existing-bug scope decision.
+
+Final current-state Firefox desktop verification: 28 passed, 2 intentional skips (4.8m), log /tmp/timeful-171-firefox-desktop.log. All authorized styling fixes and their checks are complete; task remains In Progress because Firefox touch still has the pre-existing tooltip scrolling failure. The user scope question (include its fix in 0173 versus a separate task) remains unanswered. No commit created.
+
+2026-09-08 user decision: keep the existing Firefox touch tooltip failure in a separate follow-up. TASK-0134 already covers the exact bug and now contains the current diagnosis, baseline comparison, artifacts and regression criteria. This supersedes the pending scope-approval question; tooltip implementation is not part of these migration changes. The failed touch acceptance evidence remains recorded; no failing check is marked as passing.
 <!-- SECTION:NOTES:END -->

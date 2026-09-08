@@ -126,7 +126,7 @@ function continueDrag(date: string) {
 function getDateCell(node: EventTarget | null): HTMLElement | null {
   if (!(node instanceof HTMLElement)) return null
 
-  return node.closest("[data-v-date]")
+  return node.closest(".v-date-picker-month__day")
 }
 
 function isAdjacentDateCell(cell: HTMLElement | null): boolean {
@@ -136,7 +136,14 @@ function isAdjacentDateCell(cell: HTMLElement | null): boolean {
 function getSelectableDateFromNode(node: EventTarget | null): string | null {
   const cell = getDateCell(node)
   if (!cell || isAdjacentDateCell(cell)) return null
-  return cell.dataset.vDate ?? null
+  // Vuetify 4 stamps data-v-date on the click-transparent day button inside
+  // the cell (the readonly v-btn carries pointer-events: none); fall back to
+  // the cell attribute for the pre-v4 shape.
+  return (
+    cell.querySelector("[data-v-date]")?.getAttribute("data-v-date") ??
+    cell.dataset.vDate ??
+    null
+  )
 }
 
 function stopAdjacentMonthNavigation(event: Event): boolean {

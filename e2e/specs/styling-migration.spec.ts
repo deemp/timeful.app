@@ -1,4 +1,87 @@
 import { expect, test } from "@playwright/test"
+import { existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+
+test("respondent actions hide over the email without important utilities", async ({
+  page,
+  hasTouch,
+}) => {
+  test.skip(hasTouch, "Mouse hover behavior")
+  await page.goto("/")
+  await expect(
+    page.getByRole("heading", { name: "Find a time to meet" }),
+  ).toBeVisible()
+  await page.evaluate(() => {
+    const section = document.createElement("dialog")
+    section.setAttribute("aria-label", "Respondent hover probe")
+    section.className = "tw:group"
+    section.innerHTML =
+      '<p>Respondent name</p><div class="tw:opacity-0 tw:group-hover:opacity-100 tw:group-[&:has(.email-hover-target:hover)]:opacity-0">Respondent actions</div><p class="email-hover-target">respondent@example.test</p>'
+    document.body.append(section)
+    section.showModal()
+  })
+  const probe = page.getByRole("dialog", { name: "Respondent hover probe" })
+  const actions = probe.getByText("Respondent actions")
+  await probe.getByText("Respondent name").hover()
+  await expect(actions).toHaveCSS("opacity", "1")
+  await probe.getByText("respondent@example.test").hover()
+  await expect(actions).toHaveCSS("opacity", "0")
+  await probe.getByText("Respondent name").hover()
+  await expect(actions).toHaveCSS("opacity", "1")
+})
+
+test("production styles establish cascade order before component styles", async ({
+  page,
+  baseURL,
+}) => {
+  // Serve the real build through the isolated test origin; API calls still use
+  // the Playwright-owned test server. Run the frontend build before this check.
+  const dist = new URL("../../frontend/dist/", import.meta.url)
+  expect(existsSync(new URL("index.html", dist))).toBe(true)
+  await page.route(`${baseURL}/**`, async (route) => {
+    const pathname = new URL(route.request().url()).pathname
+    const asset = new URL(
+      pathname === "/" ? "index.html" : `.${pathname}`,
+      dist,
+    )
+    if (asset.href.startsWith(dist.href) && existsSync(asset)) {
+      await route.fulfill({ path: fileURLToPath(asset) })
+    } else {
+      await route.continue()
+    }
+  })
+  await page.goto("/")
+  const createEvent = page.getByRole("button", {
+    name: "Create event",
+    exact: true,
+  })
+  await expect(createEvent).toBeVisible()
+  expect(
+    await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        // Vuetify prepends its theme element at runtime, after the document's
+        // linked stylesheets have already established the cascade order.
+        if (
+          (sheet.ownerNode as HTMLElement | null)?.id ===
+          "vuetify-theme-stylesheet"
+        )
+          continue
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule.cssText.startsWith("@layer")) return rule.cssText
+          }
+        } catch {
+          // Cross-origin font stylesheets do not participate in app layers.
+        }
+      }
+      return null
+    }),
+  ).toBe(
+    "@layer tailwind-theme, tailwind-reset, vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, tailwind-utilities, vuetify-final;",
+  )
+  await expect(createEvent).toHaveCSS("color", "rgb(255, 255, 255)")
+  await expect(createEvent).toHaveCSS("background-color", "rgb(0, 153, 76)")
+})
 
 test("Tailwind utilities override Vuetify component colors", async ({
   page,

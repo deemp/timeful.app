@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - Codex
 created_date: '2026-09-07 16:53'
-updated_date: '2026-09-07 20:30'
+updated_date: '2026-09-08 08:57'
 labels:
   - frontend
   - tailwind
@@ -17,6 +17,7 @@ references:
   - TASK-0171
   - frontend/tailwind.config.cjs
   - frontend/src/index.css
+  - TASK-0134
 priority: medium
 type: chore
 ordinal: 181300
@@ -34,15 +35,15 @@ Execution is deferred until TASK-0171 and TASK-0173 land (0171 owns the index.cs
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Zero !important declarations remain in frontend/src hand-written CSS: index.css, all Vue style blocks, ScheduleOverlapCompactSwitch.css, and inline styles
-- [ ] #2 No important flag anywhere in our pipeline: the tailwind config carries none and the tailwind/vuetify imports in index.css use no important param
-- [ ] #3 Vuetify v4 styles are delivered in the default cascade layers (vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, vuetify-final) with the official Tailwind layer-order declaration loaded before vuetify/styles, and tw: theme/utilities are imported into tailwind layers with no important param, so layered tw: utilities beat vuetify component styles without importance
+- [x] #1 Zero !important declarations remain in frontend/src hand-written CSS: index.css, all Vue style blocks, ScheduleOverlapCompactSwitch.css, and inline styles
+- [x] #2 No important flag anywhere in our pipeline: the tailwind config carries none and the tailwind/vuetify imports in index.css use no important param
+- [x] #3 Vuetify v4 styles are delivered in the default cascade layers (vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, vuetify-final) with the official Tailwind layer-order declaration loaded before vuetify/styles, and tw: theme/utilities are imported into tailwind layers with no important param, so layered tw: utilities beat vuetify component styles without importance
 - [ ] #4 Unlayered override classes (timeful-elevated-button, timeful-switch, timeful-solo-field, schedule-overlap-compact-switch, timezone-select--compact-button, destructive-outlined-button, gated-feature-checkbox and peers) still render identically; the remaining ~30 third-party !important declarations in vuetify 4.2.0 are verified not to collide with our overrides
 - [ ] #5 Layered tw: utilities no longer carry !important; no appearance regression where utilities beat Vuetify styles or unlayered overrides
-- [ ] #6 CSS-text unit test assertions (NewEvent.test.ts, TimezoneSelector.test.ts, Event.test.ts, RespondentsList.test.ts, GuestDialog.test.ts) assert the new selector/declaration forms
-- [ ] #7 Grep gate: rg '!important' frontend/src returns no matches
+- [x] #6 CSS-text unit test assertions (NewEvent.test.ts, TimezoneSelector.test.ts, Event.test.ts, RespondentsList.test.ts, GuestDialog.test.ts) assert the new selector/declaration forms
+- [x] #7 Grep gate: rg '!important' frontend/src returns no matches
 - [ ] #8 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit; firefox e2e suite passes from e2e/; bundle-size delta from full-stylesheet delivery is recorded in the task
-- [ ] #9 TASK-0171 remains annotated that its utilities-with-important parity decision (AC #2/#6) is superseded by this task (annotation added 2026-09-07)
+- [x] #9 TASK-0171 remains annotated that its utilities-with-important parity decision (AC #2/#6) is superseded by this task (annotation added 2026-09-07)
 <!-- AC:END -->
 
 ## Definition of Done
@@ -65,7 +66,25 @@ Deferred until TASK-0171 and TASK-0173 land (user-approved 2026-09-07). Sequence
 6. Verify: build + dist inspection (layer order, utilities without importance, bundle-size delta note), required checks, firefox e2e, visual smoke; graphify update; finalize.
 
 Review follow-up authorized by user: load the layer-order declaration before every stylesheet, add rendered cascade regression coverage, and verify production CSS plus required checks. The combined staged 0171–0173 implementation supplies the dependencies for this fix.
+
+Completion audit found two remaining acceptance failures: a trailing-important respondent opacity utility and no global layer-order declaration anywhere in fresh production output. Preserve respondent email-hover behavior without importance; make the canonical layer declaration load before styles in both dev and production; add rendered regression coverage and inspect rebuilt artifacts.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+2026-09-08 fresh build: index CSS 631729 B, total CSS 723406 B, 32 !important declarations in the index chunk, including one app-generated opacity utility. The declared src/styles/layers.css order is absent from all dist CSS/JS/HTML, despite main.ts importing it first. These are TASK-0172 AC #3/#5 failures; source rg '!important' alone misses the trailing ! utility modifier.
+
+2026-09-08 corrections verified: canonical layer declaration moved to frontend/public/styles/layers.css and linked first in frontend/index.html; the JS import was removed because production bundling dropped the declaration. New browser regression serves actual production artifacts through the isolated origin; it failed before the correction and passes after it on Chromium desktop/mobile. Playwright now builds once before its Vite server starts, making the production check self-contained.
+
+Removed the remaining trailing ! from the respondent email-hover opacity utility; its existing :has selector is sufficiently specific. Browser hover probe demonstrates actions visible over the respondent name, hidden over email, then visible over name again; no extra CSS override needed. Styling suite: 11 passed, 1 intentional mobile-hover skip. Production index CSS now 631695 B; all CSS including the 146 B public layer stylesheet totals 723518 B. Compared with v3 (679494 B index / 764857 B total), savings are 47799 B index and 41339 B total. Main CSS has 31 third-party importance declarations (30 in Vuetify main stylesheet plus forced-colors VHighlight); no generated tw: utility contains importance, and source rg '!important' returns no matches.
+
+Frontend lint (two existing warnings), formatting, typecheck, build and 1036 unit tests pass. E2E lint/typecheck pass; formatting found and corrected pre-existing staged helper formatting. Markdown formatter passes. Firefox desktop rerun underway; Firefox touch remains blocked by the existing tooltip interaction pending scope approval.
+
+Final current-state Firefox desktop verification: 28 passed, 2 intentional skips (4.8m), log /tmp/timeful-171-firefox-desktop.log. All authorized styling fixes and their checks are complete; task remains In Progress because Firefox touch still has the pre-existing tooltip scrolling failure. The user scope question (include its fix in 0173 versus a separate task) remains unanswered. No commit created.
+
+2026-09-08 user decision: keep the existing Firefox touch tooltip failure in a separate follow-up. TASK-0134 already covers the exact bug and now contains the current diagnosis, baseline comparison, artifacts and regression criteria. This supersedes the pending scope-approval question; tooltip implementation is not part of these migration changes. The failed touch acceptance evidence remains recorded; no failing check is marked as passing.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - Codex
 created_date: '2026-09-07 14:26'
-updated_date: '2026-09-07 19:48'
+updated_date: '2026-09-08 08:57'
 labels:
   - frontend
   - tailwind
@@ -18,6 +18,7 @@ references:
   - 'https://tailwindcss.com/docs/upgrade-guide'
   - >-
     https://github.com/tailwindlabs/tailwindcss.com/blob/main/src/docs/upgrade-guide.mdx
+  - TASK-0134
 modified_files:
   - frontend/package.json
   - frontend/package-lock.json
@@ -88,6 +89,12 @@ Decisions (user-approved 2026-09-07):
 2026-09-07: User ran `npx @tailwindcss/upgrade` on chore/tailwind-v4. Audit of the tool output (worktree, uncommitted, mostly staged): package.json now has tailwindcss ^4.3.3 + @tailwindcss/postcss with autoprefixer removed (tool chose the PostCSS route; vite.config.ts untouched, tailwind.config.cjs kept via `@config`); index.css is a bare `@import 'tailwindcss' prefix(tw);` + `@config '../tailwind.config.cjs';` + a tool-added `@layer base` border-color compat block; all ~135 src files' class strings and class-string test assertions were rewritten to prefix-first v4 syntax and `!tw-opacity-0` became trailing-`!`. NOT done by the tool: v4 renames (zero -xs utilities; bare tw:rounded ~19 uses in vue, tw:rounded-sm 1, tw:shadow-sm 1, tw:drop-shadow 3), dot-selector escaping in tests (find(".tw:fixed") unescaped-invalid, some find() selectors still dash-form: RespondentsList.test.ts 13, ScheduleOverlap.mobileTooltip.test.ts 7, SignUpBlocksList.test.ts 4, ScheduleOverlapSidebar.test.ts 2, App/ColorLegend/NewEvent 1 each), ~29 remaining dash-form hits across ~20 vue files needing an audit, 6 dash-form override selectors in index.css, e2e specs untouched (33 dash-form occurrences in 10 files), NewEvent.test.ts still reads tailwind.config.cjs. Plan rewritten accordingly; task decision bullet updated from 'official tool is not used' to 'tool ran, output is the baseline'.
 
 Implemented the CSS-first Tailwind v4 entry: source-limited theme/utilities imports, migrated palette/breakpoints/typography tokens, no preflight compatibility block, and removed tailwind.config.cjs/postcss.config.cjs. Corrected a first pass of missed v4 class candidates and selector escaping. `npm run build` and `npm run typecheck` pass; build reports pre-existing :deep() minifier warnings. Remaining work is the complete frontend/e2e selector grep gate and the required lint/fmt/unit/e2e verification before this task can be finalized.
+
+2026-09-08 resumed final verification: all 1036 unit tests and frontend lint/fmt/typecheck/build pass; no v3 candidate syntax found in frontend/src or e2e specs, and source-limited CSS-first theme/breakpoints remain intact. Production cascade and importance audit exposed two TASK-0172 defects, now corrected and covered by rendered checks (11 passes, one mobile-hover skip). Current measurements and correction evidence are recorded in TASK-0172. Firefox desktop rerun is underway; touch tooltip scrolling also fails on pre-migration a1420a77, so completion still awaits resolution of that existing interaction blocker.
+
+Final current-state Firefox desktop verification: 28 passed, 2 intentional skips (4.8m), log /tmp/timeful-171-firefox-desktop.log. All authorized styling fixes and their checks are complete; task remains In Progress because Firefox touch still has the pre-existing tooltip scrolling failure. The user scope question (include its fix in 0173 versus a separate task) remains unanswered. No commit created.
+
+2026-09-08 user decision: keep the existing Firefox touch tooltip failure in a separate follow-up. TASK-0134 already covers the exact bug and now contains the current diagnosis, baseline comparison, artifacts and regression criteria. This supersedes the pending scope-approval question; tooltip implementation is not part of these migration changes. The failed touch acceptance evidence remains recorded; no failing check is marked as passing.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
