@@ -3,7 +3,7 @@
   <v-dialog
     :model-value="modelValue"
     width="400"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="(v: boolean) => emit('update:modelValue', v)"
   >
     <v-card>
@@ -22,7 +22,7 @@
         <v-spacer />
         <v-btn
           variant="text"
-          class="tw-text-green"
+          class="tw:text-green"
           @click="emit('update:modelValue', false)"
         >
           Ok

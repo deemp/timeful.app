@@ -2,38 +2,38 @@
   <div>
     <div
       :class="[
-        'tw-flex tw-min-h-[5rem] tw-flex-1 tw-items-center tw-justify-center tw-text-sm sm:tw-mt-0 sm:tw-justify-between',
-        compact && 'tool-row--compact tw-min-h-0 tw-justify-start',
+        'tw:flex tw:min-h-20 tw:flex-1 tw:items-center tw:justify-center tw:text-sm tw:sm:mt-0 tw:sm:justify-between',
+        compact && 'tool-row--compact tw:min-h-0 tw:justify-start',
       ]"
     >
       <div
         :class="[
-          'tw-flex tw-flex-1 tw-flex-wrap tw-gap-x-4 tw-gap-y-2 tw-py-4 sm:tw-justify-start sm:tw-gap-x-4',
+          'tw:flex tw:flex-1 tw:flex-wrap tw:gap-x-4 tw:gap-y-2 tw:py-4 tw:sm:justify-start tw:sm:gap-x-4',
           !mobileRow &&
             (toolRow.state === toolRow.states.EDIT_AVAILABILITY
-              ? 'tw-justify-center'
-              : 'tw-justify-between'),
+              ? 'tw:justify-center'
+              : 'tw:justify-between'),
           compact && !mobileRow
-            ? 'tw-w-full tw-flex-col tw-items-start tw-justify-start tw-gap-0 tw-pb-0 tw-pt-14'
+            ? 'tw:w-full tw:flex-col tw:items-start tw:justify-start tw:gap-0 tw:pb-0 tw:pt-14'
             : '',
           mobileRow &&
-            'tw-w-full tw-flex-col tw-items-stretch tw-justify-start tw-gap-y-2 tw-py-1',
+            'tw:w-full tw:flex-col tw:items-stretch tw:justify-start tw:gap-y-2 tw:py-1',
         ]"
       >
         <template v-if="mobileRow">
           <!-- Row 1: time format, timezone, days per page, grouped left -->
           <div
             v-if="!toolRow.event.daysOnly"
-            class="tw-flex tw-w-full tw-flex-row tw-items-center tw-gap-x-2"
+            class="tw:flex tw:w-full tw:flex-row tw:items-center tw:gap-x-2"
           >
-            <div class="tw-shrink-0">
+            <div class="tw:shrink-0">
               <TimeFormatToggle
                 :model-value="toolRow.timeType"
                 @update:model-value="toolRow.actions.updateTimeType"
               />
             </div>
             <TimezoneSelector
-              class="tw-min-w-0"
+              class="tw:min-w-0"
               :compact="isCompact"
               fit-content
               fixed-width
@@ -47,7 +47,7 @@
               "
               @reset="toolRow.actions.resetCurTimezone()"
             />
-            <div v-if="toolRow.showMobileNumDaysSwitch" class="tw-shrink-0">
+            <div v-if="toolRow.showMobileNumDaysSwitch" class="tw:shrink-0">
               <TimeFormatToggle
                 :model-value="toolRow.mobileNumDays"
                 :options="mobileNumDaysOptions"
@@ -64,12 +64,12 @@
           <!-- Row 2: Show best times, Collapse disabled times -->
           <div
             v-if="toolRow.numResponses >= 1 || collapseDisabledTimesDirect"
-            class="tw-flex tw-w-full tw-items-center"
+            class="tw:flex tw:w-full tw:items-center"
           >
             <v-switch
               v-if="toolRow.numResponses >= 1"
               id="mobile-show-best-times-toggle"
-              class="schedule-overlap-compact-switch tw-w-full"
+              class="schedule-overlap-compact-switch tw:w-full"
               inset
               :model-value="toolRow.showBestTimes"
               hide-details
@@ -79,7 +79,7 @@
               "
             >
               <template #label>
-                <div class="tw-whitespace-nowrap tw-text-sm tw-text-black">
+                <div class="tw:whitespace-nowrap tw:text-sm tw:text-black">
                   Show best {{ toolRow.event.daysOnly ? "days" : "times" }}
                 </div>
               </template>
@@ -87,7 +87,7 @@
             <v-switch
               v-else-if="collapseDisabledTimesDirect"
               id="mobile-collapse-disabled-times-toggle"
-              class="schedule-overlap-compact-switch tw-w-full"
+              class="schedule-overlap-compact-switch tw:w-full"
               inset
               :model-value="toolRow.collapseDisabledTimes"
               hide-details
@@ -97,7 +97,7 @@
               "
             >
               <template #label>
-                <div class="tw-whitespace-nowrap tw-text-sm tw-text-black">
+                <div class="tw:whitespace-nowrap tw:text-sm tw:text-black">
                   Collapse disabled times
                 </div>
               </template>
@@ -107,11 +107,11 @@
           <!-- Row 3: More options -->
           <EventOptions
             v-if="!collapseDisabledTimesDirect"
-            class="tw-w-full"
+            class="tw:w-full"
             variant="menu"
             menu-button-label="More options"
             menu-button-size="32"
-            menu-activator-class="tw-w-fit"
+            menu-activator-class="tw:w-fit"
             :event="toolRow.event"
             :show-best-times="toolRow.showBestTimes"
             :hide-if-needed="toolRow.hideIfNeeded"
@@ -135,13 +135,13 @@
           <div
             v-if="!toolRow.event.daysOnly"
             :class="[
-              'tw-flex tw-items-center tw-gap-2',
+              'tw:flex tw:items-center tw:gap-2',
               compact && !mobileRow
-                ? 'tw-w-full tw-flex-row tw-items-center tw-gap-3'
+                ? 'tw:w-full tw:flex-row tw:items-center tw:gap-3'
                 : '',
             ]"
           >
-            <div v-if="isCompact" class="tw-shrink-0">
+            <div v-if="isCompact" class="tw:shrink-0">
               <TimeFormatToggle
                 :model-value="toolRow.timeType"
                 @update:model-value="toolRow.actions.updateTimeType"
@@ -149,15 +149,15 @@
             </div>
             <div
               v-if="!isCompact"
-              class="tw-order-first tw-text-sm tw-text-black"
+              class="tw:order-first tw:text-sm tw:text-black"
             >
               Shown in
             </div>
             <TimezoneSelector
               :class="[
                 isCompact
-                  ? 'tw-min-w-0 tw-flex-1'
-                  : 'tw-order-first tw-w-full sm:tw-w-[unset]',
+                  ? 'tw:min-w-0 tw:flex-1'
+                  : 'tw:order-first tw:w-full tw:sm:w-[unset]',
               ]"
               :compact="isCompact"
               field-variant="solo"
@@ -180,7 +180,7 @@
             "
           >
             <v-spacer />
-            <div class="tw-min-w-fit">
+            <div class="tw:min-w-fit">
               <GCalWeekSelector
                 v-if="toolRow.calendarPermissionGranted"
                 :week-offset="toolRow.weekOffset"

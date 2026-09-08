@@ -65,18 +65,18 @@ describe("SpecificTimesInstructions", () => {
     ).toBe(true)
     expect(
       wrapper.find(".specific-times-instructions-swatch--enabled").classes(),
-    ).toContain("tw-bg-light-gray-stroke")
+    ).toContain("tw:bg-light-gray-stroke")
     expect(
       wrapper.find(".specific-times-instructions-swatch--potential").classes(),
-    ).toContain("tw-bg-white")
+    ).toContain("tw:bg-white")
     expect(
       wrapper
         .find(".specific-times-instructions-swatch--disabled-padding")
         .classes(),
-    ).toContain("tw-bg-gray")
+    ).toContain("tw:bg-gray")
     expect(
       wrapper.find(".specific-times-instructions-swatch--disabled-padding")
         .element.parentElement?.classList,
-    ).toContain("tw-items-start")
+    ).toContain("tw:items-start")
   })
 })

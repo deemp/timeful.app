@@ -49,7 +49,7 @@ const RenderingVSelectStub = defineComponent({
       <slot
         v-if="selectedItem"
         name="selection"
-        :item="{ raw: selectedItem }"
+        :item="selectedItem"
       />
       <div v-else>{{ renderedLabel }}</div>
     </div>
@@ -70,7 +70,7 @@ const ItemSlotRenderingVSelectStub = defineComponent({
         v-for="item in items"
         :key="String(item.value)"
         name="item"
-        :item="{ raw: item }"
+        :item="item"
         :props="{ title: item.title, value: item.value }"
       />
     </div>
@@ -116,13 +116,13 @@ const DirectRawItemVSelectStub = defineComponent({
       <slot
         v-if="selectedTimezone"
         name="item"
-        :item="{ raw: selectedTimezone }"
+        :item="selectedTimezone"
         :props="{ title: { text: '[object Object]' }, value: selectedTimezone.value }"
       />
       <slot
         v-if="selectedTimezone"
         name="selection"
-        :item="{ raw: selectedTimezone }"
+        :item="selectedTimezone"
       />
     </div>
   `,
@@ -193,7 +193,7 @@ describe("TimezoneSelector", () => {
     expect(String(selectProps.class)).toContain("compact-inline-select")
     expect(
       wrapper.get("#timezone-select-container").attributes("class"),
-    ).toContain("tw-text-[rgba(0,0,0,0.6)]")
+    ).toContain("tw:text-[rgba(0,0,0,0.6)]")
     const matchingTimezoneItem = (
       selectProps.items as Record<string, unknown>[]
     ).find((item) => item.value === "America/New_York")
@@ -245,7 +245,7 @@ describe("TimezoneSelector", () => {
       'data-testid="timezone-select-option"',
     )
     expect(timezoneSelectorSource).toContain(
-      ':data-timezone-value="getTimezoneFromSelectItem(item.raw).value"',
+      ':data-timezone-value="getTimezoneFromSelectItem(internalItem).value"',
     )
   })
 
@@ -302,7 +302,7 @@ describe("TimezoneSelector", () => {
 
   it("places the compact reset action after the timezone select", () => {
     expect(timezoneSelectorSource).toContain(
-      "'timezone-select__field-row tw-flex tw-min-w-0 tw-items-center'",
+      "'timezone-select__field-row tw:flex tw:min-w-0 tw:items-center'",
     )
     expect(timezoneSelectorSource).toContain(
       'class="timezone-select__reset-button"',
@@ -414,19 +414,19 @@ describe("TimezoneSelector", () => {
 
   it("allows the timezone select and its selection text to shrink for ellipsis", () => {
     expect(timezoneSelectorSource).toContain(
-      "'tw-flex tw-min-w-0 tw-items-center tw-text-[rgba(0,0,0,0.6)]'",
+      "'tw:flex tw:min-w-0 tw:items-center tw:text-[rgba(0,0,0,0.6)]'",
     )
     expect(timezoneSelectorSource).toContain(
-      "(compact && !fitContent) || fixedWidth\n            ? 'tw-w-full tw-flex-1'\n            : fitContent\n              ? 'tw-w-auto tw-flex-initial'\n              : 'tw-w-40 sm:tw-w-44 md:tw-w-64'",
+      "(compact && !fitContent) || fixedWidth\n            ? 'tw:w-full tw:flex-1'\n            : fitContent\n              ? 'tw:w-auto tw:flex-initial'\n              : 'tw:w-40 tw:sm:w-44 tw:md:w-64'",
     )
     expect(timezoneSelectorSource).toContain(
-      "(compact && !fitContent) || fixedWidth ? 'tw-flex-1' : ''",
+      "(compact && !fitContent) || fixedWidth ? 'tw:flex-1' : ''",
     )
     expect(timezoneSelectorSource).toContain(
-      ".compact-inline-select:not(.timeful-solo-field) :deep(.v-field__input) {\n  flex-wrap: nowrap !important;\n  min-width: 0 !important;",
+      ".compact-inline-select:not(.timeful-solo-field) :deep(.v-field__input) {\n  flex-wrap: nowrap;\n  min-width: 0;",
     )
     expect(timezoneSelectorSource).toContain(
-      ".compact-inline-select :deep(.v-select__selection) {\n  display: block !important;",
+      ".compact-inline-select :deep(.v-select__selection) {\n  display: block;",
     )
   })
 
@@ -467,7 +467,7 @@ describe("TimezoneSelector", () => {
     expect(timezoneSelectorSource).toContain('size="32"')
     expect(timezoneSelectorSource).toContain('variant="outlined"')
     expect(timezoneSelectorSource).toContain(
-      ".timezone-select__reset-button--right {\n  border-color: var(--timeful-outline-neutral) !important;\n  border-radius: 0.375rem;\n  color: rgb(0, 0, 0);\n  height: 32px;",
+      ".timezone-select__reset-button--right {\n  border-color: var(--timeful-outline-neutral);\n  border-radius: 0.375rem;\n  color: rgb(0, 0, 0);\n  height: 32px;",
     )
     expect(timezoneSelectorSource).not.toContain(
       ".compact-inline-select :deep(.v-field__outline) {\n  display: none;",
@@ -476,10 +476,10 @@ describe("TimezoneSelector", () => {
 
   it("keeps the toolbar button as short as the time-format switch", () => {
     expect(timezoneSelectorSource).toContain(
-      ".timezone-select--compact-button :deep(.v-field) {\n  min-height: 32px !important;\n  height: 32px !important;\n  filter: none !important;\n  box-shadow: none !important;\n  border: 1px solid var(--timeful-outline-neutral) !important;",
+      ".timezone-select--compact-button :deep(.v-field) {\n  min-height: 32px;\n  height: 32px;\n  filter: none;\n  box-shadow: none;\n  border: 1px solid var(--timeful-outline-neutral);",
     )
     expect(timezoneSelectorSource).toContain(
-      ".timezone-select--compact-button :deep(.v-field__input) {\n  align-items: center !important;\n  min-height: 32px !important;\n  padding-top: 0 !important;\n  padding-bottom: 0 !important;\n  font-size: 0.875rem;\n  font-weight: 500;",
+      ".timezone-select--compact-button :deep(.v-field__input) {\n  align-items: center;\n  min-height: 32px;\n  padding-top: 0;\n  padding-bottom: 0;\n  font-size: 0.875rem;\n  font-weight: 500;",
     )
     expect(timezoneSelectorSource).toContain(
       ".timezone-select--compact-button :deep(.v-select__selection-text) {\n  color: rgb(0, 0, 0);\n  font-family: inherit;\n  font-size: 0.875rem;\n  font-weight: 500;",
@@ -497,19 +497,19 @@ describe("TimezoneSelector", () => {
 
   it("expands the compact selector across its available row", () => {
     expect(timezoneSelectorSource).toContain(
-      "compact && !fitContent && 'tw-w-full'",
+      "compact && !fitContent && 'tw:w-full'",
     )
     expect(timezoneSelectorSource).toContain(
-      "(compact && !fitContent) || fixedWidth ? 'tw-flex-1' : ''",
+      "(compact && !fitContent) || fixedWidth ? 'tw:flex-1' : ''",
     )
     expect(timezoneSelectorSource).toContain(
-      "(compact && !fitContent) || fixedWidth\n            ? 'tw-w-full tw-flex-1'\n            : fitContent\n              ? 'tw-w-auto tw-flex-initial'\n              : 'tw-w-40 sm:tw-w-44 md:tw-w-64'",
+      "(compact && !fitContent) || fixedWidth\n            ? 'tw:w-full tw:flex-1'\n            : fitContent\n              ? 'tw:w-auto tw:flex-initial'\n              : 'tw:w-40 tw:sm:w-44 tw:md:w-64'",
     )
   })
 
   it("keeps a fixed compact selector width so the reset button fits without resizing", () => {
-    expect(timezoneSelectorSource).toContain("fixedWidth && 'tw-w-28'")
-    expect(timezoneSelectorSource).toContain("fitContent && 'tw-max-w-full'")
+    expect(timezoneSelectorSource).toContain("fixedWidth && 'tw:w-28'")
+    expect(timezoneSelectorSource).toContain("fitContent && 'tw:max-w-full'")
 
     const wrapper = shallowMount(TimezoneSelector, {
       props: {
@@ -535,10 +535,10 @@ describe("TimezoneSelector", () => {
     })
 
     const container = wrapper.get("#timezone-select-container")
-    expect(String(container.attributes("class"))).toContain("tw-w-28")
+    expect(String(container.attributes("class"))).toContain("tw:w-28")
     const select = wrapper.getComponent(VSelectStub)
-    expect(String(select.props("class"))).toContain("tw-w-full")
-    expect(String(select.props("class"))).toContain("tw-flex-1")
+    expect(String(select.props("class"))).toContain("tw:w-full")
+    expect(String(select.props("class"))).toContain("tw:flex-1")
   })
 
   it("fills the fixed-width container so the timezone button is a full 112px", () => {
@@ -565,13 +565,13 @@ describe("TimezoneSelector", () => {
     })
 
     const container = wrapper.get("#timezone-select-container")
-    expect(String(container.attributes("class"))).toContain("tw-w-28")
+    expect(String(container.attributes("class"))).toContain("tw:w-28")
     const select = wrapper.getComponent(VSelectStub)
     expect(String(select.props("class"))).not.toContain(
       "timezone-select--compact",
     )
-    expect(String(select.props("class"))).toContain("tw-w-full")
-    expect(String(select.props("class"))).toContain("tw-flex-1")
+    expect(String(select.props("class"))).toContain("tw:w-full")
+    expect(String(select.props("class"))).toContain("tw:flex-1")
   })
 
   it("renders no label inside the selector so the form owns the label", () => {
@@ -582,9 +582,9 @@ describe("TimezoneSelector", () => {
   })
 
   it("shrinks the compact selector to its content when fit-content is set", () => {
-    expect(timezoneSelectorSource).toContain("fitContent && 'tw-max-w-full'")
+    expect(timezoneSelectorSource).toContain("fitContent && 'tw:max-w-full'")
     expect(timezoneSelectorSource).toContain(
-      "fitContent\n              ? 'tw-w-auto tw-flex-initial'",
+      "fitContent\n              ? 'tw:w-auto tw:flex-initial'",
     )
     expect(timezoneSelectorSource).toContain(
       "compact && !fixedWidth && 'timezone-select--compact'",
@@ -613,9 +613,9 @@ describe("TimezoneSelector", () => {
     })
 
     const select = wrapper.getComponent(VSelectStub)
-    expect(String(select.props("class"))).toContain("tw-w-auto")
-    expect(String(select.props("class"))).toContain("tw-flex-initial")
-    expect(String(select.props("class"))).not.toContain("tw-w-full")
+    expect(String(select.props("class"))).toContain("tw:w-auto")
+    expect(String(select.props("class"))).toContain("tw:flex-initial")
+    expect(String(select.props("class"))).not.toContain("tw:w-full")
   })
 
   it("does not restore the old field-level compact flex overrides", () => {
@@ -623,10 +623,10 @@ describe("TimezoneSelector", () => {
       ".compact-inline-select :deep(.v-input__control),\n.compact-inline-select :deep(.v-field__field)",
     )
     expect(timezoneSelectorSource).not.toContain(
-      ".compact-inline-select :deep(.v-field__input) {\n  align-items: center !important;",
+      ".compact-inline-select :deep(.v-field__input) {\n  align-items: center;",
     )
     expect(timezoneSelectorSource).not.toContain(
-      ".compact-inline-select :deep(.v-field) {\n  background: transparent;\n  border: 0;\n  border-radius: 0;\n  height: 26px !important;",
+      ".compact-inline-select :deep(.v-field) {\n  background: transparent;\n  border: 0;\n  border-radius: 0;\n  height: 26px;",
     )
   })
 

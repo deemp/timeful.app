@@ -7,7 +7,7 @@
     <div class="gsi-material-button-content-wrapper">
       <div class="gsi-material-button-icon">
         <svg
-          class="tw-block"
+          class="tw:block"
           version="1.1"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 48 48"
@@ -33,7 +33,7 @@
         </svg>
       </div>
       <span class="gsi-material-button-contents">{{ text }}</span>
-      <span class="tw-hidden">{{ text }}</span>
+      <span class="tw:hidden">{{ text }}</span>
     </div>
   </v-btn>
 </template>
@@ -63,10 +63,10 @@ const emit = defineEmits<{
   color: #1f1f1f;
   cursor: pointer;
   font-size: 14px;
-  height: 40px !important;
+  height: 40px;
   outline: none;
   overflow: hidden;
-  padding: 0 18px !important;
+  padding: 0 18px;
   position: relative;
   text-align: center;
   vertical-align: middle;
@@ -74,9 +74,9 @@ const emit = defineEmits<{
   width: auto;
   max-width: 400px;
   min-width: min-content;
-  -webkit-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25) !important;
-  -moz-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25) !important;
-  box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25) !important;
+  -webkit-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25);
+  -moz-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25);
+  box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.25);
 }
 
 .gsi-material-button .gsi-material-button-icon {

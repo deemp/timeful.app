@@ -1,20 +1,20 @@
 <template>
   <div
-    class="tw-flex tw-w-full tw-cursor-pointer tw-flex-col tw-overflow-hidden tw-rounded-md tw-border-[1px] tw-bg-white tw-p-4 tw-text-left tw-shadow-sm tw-transition-all sm:tw-p-6"
+    class="tw:flex tw:w-full tw:cursor-pointer tw:flex-col tw:overflow-hidden tw:rounded-md tw:border tw:bg-white tw:p-4 tw:text-left tw:shadow-xs tw:transition-all tw:sm:p-6"
     :class="{
-      'tw-border-green': toggled,
-      'tw-border-outline-neutral': !toggled,
+      'tw:border-green': toggled,
+      'tw:border-outline-neutral': !toggled,
     }"
     @click="toggled = !toggled"
   >
     <div
-      class="tw-flex tw-flex-row tw-content-center tw-justify-between tw-text-base"
+      class="tw:flex tw:flex-row tw:content-center tw:justify-between tw:text-base"
     >
-      <div class="tw-mr-4 tw-font-medium">{{ question }}</div>
+      <div class="tw:mr-4 tw:font-medium">{{ question }}</div>
       <v-icon
         size="x-large"
         :class="`${
-          toggled ? 'tw-rotate-45 tw-text-green' : 'tw-rotate-0 tw-text-gray'
+          toggled ? 'tw:rotate-45 tw:text-green' : 'tw:rotate-0 tw:text-gray'
         }`"
         >mdi-plus</v-icon
       >
@@ -22,22 +22,22 @@
 
     <v-expand-transition>
       <div v-if="toggled">
-        <div class="tw-pt-4 tw-text-sm sm:tw-pt-6">
+        <div class="tw:pt-4 tw:text-sm tw:sm:pt-6">
           <p
             v-for="(paragraph, index) in answerParagraphs"
             :key="index"
-            class="tw-mb-4 last:tw-mb-0"
+            class="tw:mb-4 tw:last:mb-0"
           >
             {{ paragraph }}
           </p>
-          <div class="tw-flex tw-flex-col tw-gap-2">
+          <div class="tw:flex tw:flex-col tw:gap-2">
             <div
               v-for="(point, index) in points"
               :key="index"
-              class="tw-flex tw-items-center"
+              class="tw:flex tw:items-center"
             >
               <div
-                class="tw-mr-2 tw-flex tw-h-5 tw-w-5 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-full tw-bg-green tw-text-white"
+                class="tw:mr-2 tw:flex tw:h-5 tw:w-5 tw:shrink-0 tw:items-center tw:justify-center tw:rounded-full tw:bg-green tw:text-white"
               >
                 {{ index + 1 }}
               </div>
@@ -46,11 +46,11 @@
           </div>
           <div
             v-if="authRequired"
-            class="tw-mt-6 tw-text-sm tw-font-medium tw-text-dark-gray"
+            class="tw:mt-6 tw:text-sm tw:font-medium tw:text-dark-gray"
           >
             <template v-if="signInEnabled">
               *
-              <a class="tw-text-green tw-underline" @click.stop="emit('signIn')"
+              <a class="tw:text-green tw:underline" @click.stop="emit('signIn')"
                 >Sign in</a
               >
               to use this feature

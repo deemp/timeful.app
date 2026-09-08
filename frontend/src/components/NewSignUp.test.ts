@@ -195,8 +195,8 @@ describe("NewSignUp", () => {
     })
 
     const timeRangeRow = wrapper.get(".time-range-row")
-    expect(timeRangeRow.classes()).toContain("tw-justify-between")
-    expect(timeRangeRow.classes()).toContain("tw-gap-x-2")
+    expect(timeRangeRow.classes()).toContain("tw:justify-between")
+    expect(timeRangeRow.classes()).toContain("tw:gap-x-2")
     expect(
       timeRangeRow.findComponent({ name: "TimeFormatToggle" }).exists(),
     ).toBe(true)

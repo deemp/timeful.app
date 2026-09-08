@@ -1,19 +1,19 @@
 <template>
-  <div class="tw-flex tw-flex-col tw-gap-6">
-    <div class="tw-flex tw-flex-col tw-gap-3">
+  <div class="tw:flex tw:flex-col tw:gap-6">
+    <div class="tw:flex tw:flex-col tw:gap-3">
       <div
-        class="tw-text-md tw-flex tw-flex-row tw-items-center tw-justify-start tw-gap-2 tw-font-medium"
+        class="tw:text-md tw:flex tw:flex-row tw:items-center tw:justify-start tw:gap-2 tw:font-medium"
       >
         Connect an ICS calendar feed
       </div>
-      <div class="tw-flex tw-flex-col tw-gap-2">
-        <div class="tw-text-sm tw-text-very-dark-gray">
+      <div class="tw:flex tw:flex-col tw:gap-2">
+        <div class="tw:text-sm tw:text-very-dark-gray">
           Paste the ICS feed URL from your calendar provider. This is usually
           found in your calendar's sharing or export settings.
         </div>
       </div>
     </div>
-    <div class="tw-flex tw-flex-col tw-gap-3">
+    <div class="tw:flex tw:flex-col tw:gap-3">
       <v-text-field
         v-model="feedUrl"
         class="timeful-solo-field timeful-invalid-field"
@@ -29,12 +29,12 @@
         placeholder="Label"
         hide-details
       />
-      <div class="tw-flex tw-items-center tw-gap-2">
-        <v-btn variant="text" class="tw-grow" @click="emit('back')">Back</v-btn>
+      <div class="tw:flex tw:items-center tw:gap-2">
+        <v-btn variant="text" class="tw:grow" @click="emit('back')">Back</v-btn>
         <v-btn
           :disabled="!enableSubmit"
           color="primary"
-          class="timeful-elevated-button tw-grow"
+          class="timeful-elevated-button tw:grow"
           :loading="loading"
           @click="submit"
           >Submit</v-btn

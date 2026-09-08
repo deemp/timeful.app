@@ -45,7 +45,7 @@ describe("EditorDialogHeader", () => {
     })
 
     expect(wrapper.text()).toContain("New event")
-    expect(wrapper.find(".tw-items-center").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:items-center").exists()).toBe(true)
     expect(wrapper.find("button").attributes("data-variant")).toBe("text")
     expect(wrapper.find("i").attributes("data-color")).toBe("#4F4F4F")
   })
@@ -71,6 +71,6 @@ describe("EditorDialogHeader", () => {
       },
     })
 
-    expect(wrapper.find(".tw-items-start").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:items-start").exists()).toBe(true)
   })
 })

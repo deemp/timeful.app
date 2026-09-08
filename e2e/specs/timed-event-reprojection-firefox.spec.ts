@@ -165,15 +165,15 @@ test("reprojects a canonical timed event with the same slot window after reload"
   // Spot-check the timezone-projected cell states; the full class-to-state
   // mapping is unit-locked in scheduleOverlapRendering.test.ts.
   expect((await readGridCellState(page, 0, 0)).className).toContain(
-    "tw-bg-light-gray-stroke",
+    "tw:bg-light-gray-stroke",
   )
   expect((await readGridCellState(page, 36, 0)).className).toContain(
-    "tw-bg-white",
+    "tw:bg-white",
   )
   expect((await readGridCellState(page, 67, 1)).className).toContain(
-    "tw-bg-white",
+    "tw:bg-white",
   )
-  expect(await countGridCellsByClass(page, "tw-bg-white")).toBeGreaterThan(0)
+  expect(await countGridCellsByClass(page, "tw:bg-white")).toBeGreaterThan(0)
 })
 
 test("preserves timed instants when the event timezone changes and shifts projected local days", async ({

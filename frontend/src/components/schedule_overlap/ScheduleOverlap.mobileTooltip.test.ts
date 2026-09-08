@@ -49,10 +49,12 @@ describe("ScheduleOverlap mobile tooltip", () => {
     }
 
     vm.getTimeslotVon(1, 0).mouseover()
-    await wrapper.get(".tw-relative").trigger("mouseenter")
+    await wrapper.get(".tw\\:relative").trigger("mouseenter")
     await nextTick()
 
-    expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:fixed.timeful-tooltip-layer").exists()).toBe(
+      true,
+    )
   })
 
   it("shows the mobile tooltip after selecting a timeslot by click", async () => {
@@ -96,7 +98,9 @@ describe("ScheduleOverlap mobile tooltip", () => {
     await nextTick()
 
     expect(vm.selectedTooltipSlot).toEqual({ row: 1, col: 0 })
-    expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:fixed.timeful-tooltip-layer").exists()).toBe(
+      true,
+    )
 
     wrapper.unmount()
     dragSection.remove()
@@ -141,13 +145,17 @@ describe("ScheduleOverlap mobile tooltip", () => {
 
     vm.getTimeslotVon(1, 0).click()
     await nextTick()
-    expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:fixed.timeful-tooltip-layer").exists()).toBe(
+      true,
+    )
 
     document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     await nextTick()
 
     expect(vm.selectedTooltipSlot).toBeNull()
-    expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(false)
+    expect(wrapper.find(".tw\\:fixed.timeful-tooltip-layer").exists()).toBe(
+      false,
+    )
 
     wrapper.unmount()
     dragSection.remove()
@@ -179,15 +187,15 @@ describe("ScheduleOverlap mobile tooltip", () => {
     }
 
     vm.getTimeslotVon(1, 0).mouseover()
-    await wrapper.get(".tw-relative").trigger("mouseenter")
+    await wrapper.get(".tw\\:relative").trigger("mouseenter")
     await nextTick()
 
-    const tooltip = wrapper.get(".tw-fixed.timeful-tooltip-layer")
+    const tooltip = wrapper.get(".tw\\:fixed.timeful-tooltip-layer")
     expect(tooltip.classes()).not.toContain("timeful-bottom-overlay-layer")
 
     const overlayRoot = wrapper.get(".schedule-overlap-mobile-overlay")
     expect(overlayRoot.classes()).toContain("timeful-bottom-overlay-layer")
-    expect(overlayRoot.classes()).toContain("tw-isolate")
+    expect(overlayRoot.classes()).toContain("tw:isolate")
 
     wrapper.unmount()
   })
@@ -224,13 +232,17 @@ describe("ScheduleOverlap mobile tooltip", () => {
     await nextTick()
 
     expect(vm.curTimeslot).toEqual({ row: 0, col: 0 })
-    expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:fixed.timeful-tooltip-layer").exists()).toBe(
+      true,
+    )
 
     vm.getTimeslotVon(1, 0).click()
     await nextTick()
 
     expect(vm.curTimeslot).toEqual({ row: -1, col: -1 })
-    expect(wrapper.find(".tw-fixed.timeful-tooltip-layer").exists()).toBe(false)
+    expect(wrapper.find(".tw\\:fixed.timeful-tooltip-layer").exists()).toBe(
+      false,
+    )
 
     wrapper.unmount()
   })

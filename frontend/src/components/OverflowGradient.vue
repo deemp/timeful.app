@@ -1,8 +1,8 @@
 <template>
   <div
     v-if="showGradient"
-    class="tw-pointer-events-none tw-absolute tw-left-0 tw-right-0 tw-z-20 tw-flex tw-h-16 tw-justify-center"
-    :class="isTop ? 'tw-top-0 tw-items-start' : 'tw-bottom-0 tw-items-end'"
+    class="tw:pointer-events-none tw:absolute tw:left-0 tw:right-0 tw:z-20 tw:flex tw:h-16 tw:justify-center"
+    :class="isTop ? 'tw:top-0 tw:items-start' : 'tw:bottom-0 tw:items-end'"
     :style="{
       background: isTop
         ? 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)'
@@ -13,7 +13,7 @@
       v-if="showArrow"
       icon
       size="x-small"
-      class="tw-pointer-events-auto tw-transform"
+      class="tw:pointer-events-auto tw:transform"
       @click="scrollToBottom"
     >
       <v-icon>mdi-chevron-down</v-icon>

@@ -2,30 +2,30 @@
   <v-dialog
     :model-value="modelValue"
     max-width="400px"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
     <v-card>
       <v-card-title>
-        <span class="tw-text-xl tw-font-medium">Oops! Feature Not Ready</span>
+        <span class="tw:text-xl tw:font-medium">Oops! Feature Not Ready</span>
         <v-spacer />
         <v-btn
           absolute
           icon
-          class="tw-right-0 tw-mr-2 tw-self-center"
+          class="tw:right-0 tw:mr-2 tw:self-center"
           @click="emit('update:modelValue', false)"
         >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      <v-card-text class="tw-text-very-dark-gray">
+      <v-card-text class="tw:text-very-dark-gray">
         You've caught us a bit early! We're considering adding folders to
         Timeful, and will do so once we get enough demand from users.
         <v-textarea
           v-model="folderUsageFeedback"
           label="What would you like to use folders for?"
           rows="3"
-          class="tw-mt-4"
+          class="tw:mt-4"
           variant="outlined"
           density="compact"
         ></v-textarea>

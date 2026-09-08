@@ -8,7 +8,7 @@
       :items="searchedContacts"
       item-title="queryString"
       item-value="queryString"
-      class="timeful-solo-field timeful-invalid-field tw-mt-2 tw-text-sm"
+      class="timeful-solo-field timeful-invalid-field tw:mt-2 tw:text-sm"
       placeholder="Type an email address and press enter..."
       multiple
       append-icon=""
@@ -17,43 +17,44 @@
     >
       <template #selection="{ item }">
         <UserChip
-          :user="item.raw"
+          :user="item"
           :removable="true"
           :remove-email="removeEmail"
         ></UserChip>
       </template>
-      <template #item="{ item, props: itemProps }">
+      <template #item="{ item: internalItem, props: itemProps }">
         <v-list-item v-bind="itemProps">
           <template #prepend>
             <img
-              v-if="item.raw.picture.length > 0"
-              :src="item.raw.picture"
+              v-if="internalItem.picture.length > 0"
+              :src="internalItem.picture"
               referrerpolicy="no-referrer"
             />
             <v-icon v-else>mdi-account</v-icon>
           </template>
           <v-list-item-title
-            >{{ item.raw.firstName }} {{ item.raw.lastName }}</v-list-item-title
+            >{{ internalItem.firstName }}
+            {{ internalItem.lastName }}</v-list-item-title
           >
-          <v-list-item-subtitle>{{ item.raw.email }}</v-list-item-subtitle>
+          <v-list-item-subtitle>{{ internalItem.email }}</v-list-item-subtitle>
         </v-list-item>
       </template>
     </v-combobox>
 
     <div
-      class="tw-relative tw-transition-all"
-      :class="emailsAreValid ? '-tw-mt-5' : ''"
+      class="tw:relative tw:transition-all"
+      :class="emailsAreValid ? 'tw:-mt-5' : ''"
     >
       <v-expand-transition>
         <template v-if="signInEnabled">
-          <div v-if="!hasContactsAccess" class="tw-text-xs tw-text-dark-gray">
-            <a class="tw-underline" @click="requestContactsAccess"
+          <div v-if="!hasContactsAccess" class="tw:text-xs tw:text-dark-gray">
+            <a class="tw:underline" @click="requestContactsAccess"
               >Enable contacts access</a
             >
             for email auto-suggestions.
           </div>
         </template>
-        <div v-else class="tw-text-xs tw-text-dark-gray">
+        <div v-else class="tw:text-xs tw:text-dark-gray">
           Requires sign-in, which is disabled in this build
         </div>
       </v-expand-transition>

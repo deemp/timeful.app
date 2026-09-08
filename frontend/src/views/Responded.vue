@@ -1,19 +1,19 @@
 <template>
   <div
-    class="tw-mx-auto tw-mt-4 tw-flex tw-h-full tw-max-w-5xl tw-flex-col tw-items-center tw-justify-center"
+    class="tw:mx-auto tw:mt-4 tw:flex tw:h-full tw:max-w-5xl tw:flex-col tw:items-center tw:justify-center"
   >
-    <h2 v-if="state === states.CONFIRMING" class="tw-px-4 tw-text-2xl">
+    <h2 v-if="state === states.CONFIRMING" class="tw:px-4 tw:text-2xl">
       Confirming response...
     </h2>
     <h2
       v-else-if="state === states.CONFIRMED"
-      class="tw-px-4 tw-text-base sm:tw-text-lg"
+      class="tw:px-4 tw:text-base tw:sm:text-lg"
     >
       Your response has been confirmed! Feel free to close this browser tab.
     </h2>
     <h2
       v-else-if="state === states.ERROR"
-      class="tw-px-4 tw-text-base sm:tw-text-lg"
+      class="tw:px-4 tw:text-base tw:sm:text-lg"
     >
       Something went wrong while confirming your response. Refresh the page and
       try again.

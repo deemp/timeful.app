@@ -280,26 +280,26 @@ describe("EditingAvailabilityAs", () => {
     )
 
     const indicator = wrapper.get(".editing-availability-as--chip")
-    expect(indicator.classes()).not.toContain("tw-justify-end")
-    expect(indicator.classes()).toContain("tw-not-italic")
-    expect(indicator.classes()).toContain("tw-flex-wrap")
+    expect(indicator.classes()).not.toContain("tw:justify-end")
+    expect(indicator.classes()).toContain("tw:not-italic")
+    expect(indicator.classes()).toContain("tw:flex-wrap")
 
     const row = wrapper.get(".editing-availability-as__chip-row")
-    expect(row.classes()).not.toContain("tw-justify-end")
-    expect(row.classes()).toContain("tw-flex-wrap")
+    expect(row.classes()).not.toContain("tw:justify-end")
+    expect(row.classes()).toContain("tw:flex-wrap")
     expect(row.text()).toContain("Editing availability as")
 
     const chip = wrapper.get(".editing-availability-as__guest-chip")
     expect(chip.element.tagName).toBe("BUTTON")
-    expect(chip.classes()).toContain("tw-grow")
+    expect(chip.classes()).toContain("tw:grow")
     expect(chip.text()).toContain("John Doe")
     expect(chip.find("v-icon-stub").exists()).toBe(true)
-    expect(chip.classes()).toContain("tw-rounded")
-    expect(chip.classes()).not.toContain("tw-rounded-full")
-    expect(chip.classes()).toContain("tw-text-left")
+    expect(chip.classes()).toContain("tw:rounded")
+    expect(chip.classes()).not.toContain("tw:rounded-full")
+    expect(chip.classes()).toContain("tw:text-left")
     const name = wrapper.get(".editing-availability-as__guest-name")
-    expect(name.classes()).not.toContain("tw-underline")
-    expect(name.classes()).toContain("tw-grow")
+    expect(name.classes()).not.toContain("tw:underline")
+    expect(name.classes()).toContain("tw:grow")
   })
 
   it("emits the open-dialog event when the name chip is clicked", async () => {
@@ -351,16 +351,16 @@ describe("EditingAvailabilityAs", () => {
 
     expect(
       wrapper.get(".editing-availability-as__chip-row").classes(),
-    ).toContain("tw-flex-wrap")
+    ).toContain("tw:flex-wrap")
     expect(
       wrapper.get(".editing-availability-as__guest-chip").classes(),
-    ).toContain("tw-grow")
+    ).toContain("tw:grow")
     expect(
       wrapper.get(".editing-availability-as__guest-chip").classes(),
-    ).toContain("tw-min-w-0")
+    ).toContain("tw:min-w-0")
     const name = wrapper.get(".editing-availability-as__guest-name")
-    expect(name.classes()).toContain("tw-break-words")
-    expect(name.classes()).toContain("tw-grow")
+    expect(name.classes()).toContain("tw:wrap-break-word")
+    expect(name.classes()).toContain("tw:grow")
     expect(name.text()).toContain("Bartholomew Montgomery Fitzwilliam")
   })
 

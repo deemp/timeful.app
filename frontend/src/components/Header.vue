@@ -1,6 +1,6 @@
 <template>
   <div
-    class="tw-mb-4 tw-text-2xl tw-font-medium sm:tw-text-3xl md:tw-mb-8 lg:tw-text-4xl"
+    class="tw:mb-4 tw:text-2xl tw:font-medium tw:sm:text-3xl tw:md:mb-8 tw:lg:text-4xl"
   >
     <slot></slot>
   </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="time-range-picker tw-flex tw-items-center tw-gap-2">
+  <div class="time-range-picker tw:flex tw:items-center tw:gap-2">
     <v-select
       :model-value="start"
       :items="items"
@@ -13,15 +13,16 @@
       variant="solo"
       @update:model-value="(option) => emit('update:start', option)"
     >
-      <template #item="{ item, props: itemProps }">
+      <template #item="{ item: internalItem, props: itemProps }">
         <div
           v-bind="itemProps"
           class="time-range-select-item"
           :class="{
-            'time-range-select-item--active': item.raw.value === start?.value,
+            'time-range-select-item--active':
+              internalItem.value === start?.value,
           }"
         >
-          {{ item.raw.text }}
+          {{ internalItem.text }}
         </div>
       </template>
     </v-select>
@@ -39,15 +40,15 @@
       variant="solo"
       @update:model-value="(option) => emit('update:end', option)"
     >
-      <template #item="{ item, props: itemProps }">
+      <template #item="{ item: internalItem, props: itemProps }">
         <div
           v-bind="itemProps"
           class="time-range-select-item"
           :class="{
-            'time-range-select-item--active': item.raw.value === end?.value,
+            'time-range-select-item--active': internalItem.value === end?.value,
           }"
         >
-          {{ item.raw.text }}
+          {{ internalItem.text }}
         </div>
       </template>
     </v-select>

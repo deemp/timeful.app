@@ -1,31 +1,31 @@
 <template>
-  <div :class="['tw-relative tw-min-h-screen tw-bg-white']">
+  <div :class="['tw:relative tw:min-h-screen tw:bg-white']">
     <div
       v-if="!richLandingEnabled"
       data-test="minimal-viewport-band"
-      class="tw-pointer-events-none tw-fixed tw-bottom-0 tw-left-0 tw-right-0 tw-top-[72vh] tw-bg-green"
+      class="tw:pointer-events-none tw:fixed tw:bottom-0 tw:left-0 tw:right-0 tw:top-[72vh] tw:bg-green"
     ></div>
     <div
-      class="landing-page-shell tw-relative tw-z-10 tw-m-auto tw-mb-12 tw-flex tw-max-w-6xl tw-flex-col tw-px-4 tw-pt-2 sm:tw-mb-20 sm:tw-pt-3"
+      class="landing-page-shell tw:relative tw:z-10 tw:m-auto tw:mb-12 tw:flex tw:max-w-6xl tw:flex-col tw:px-4 tw:pt-2 tw:sm:mb-20 tw:sm:pt-3"
     >
-      <div class="tw-flex tw-flex-col tw-items-center">
-        <div class="landing-hero-copy tw-flex tw-flex-col tw-items-center">
+      <div class="tw:flex tw:flex-col tw:items-center">
+        <div class="landing-hero-copy tw:flex tw:flex-col tw:items-center">
           <div
             id="header"
-            class="landing-hero-heading tw-text-center tw-font-medium"
+            class="landing-hero-heading tw:text-center tw:font-medium"
           >
             <h1 class="landing-hero-heading-text">Find a time to meet</h1>
           </div>
 
           <div
             v-if="landingSignInEnabled"
-            class="landing-hero-subtitle tw-text-center tw-text-very-dark-gray"
+            class="landing-hero-subtitle tw:text-center tw:text-very-dark-gray"
           >
-            <br class="tw-hidden sm:tw-block" />
+            <br class="tw:hidden tw:sm:block" />
             Integrates with your
             <v-tooltip
               top
-              content-class="tw-bg-very-dark-gray tw-shadow-lg tw-opacity-100"
+              content-class="tw:bg-very-dark-gray tw:shadow-lg tw:opacity-100"
             >
               <template #activator="{ props }">
                 <span class="landing-calendar-link" v-bind="props"
@@ -34,7 +34,7 @@
               </template>
               <span
                 >Timeful allows you to autofill your availability from Google
-                Calendar,<br class="tw-hidden sm:tw-block" />
+                Calendar,<br class="tw:hidden tw:sm:block" />
                 Outlook, Apple Calendar, or an ICS feed URL.</span
               >
             </v-tooltip>
@@ -44,7 +44,7 @@
 
         <div class="landing-hero-cta">
           <v-btn
-            class="landing-primary-cta tw-block tw-self-center tw-rounded-lg tw-bg-green tw-text-base tw-text-white"
+            class="landing-primary-cta tw:block tw:self-center tw:rounded-lg tw:bg-green tw:text-base tw:text-white"
             large
             :x-large="display.mdAndUp"
             @click="authUser ? openDashboard() : (newDialog = true)"
@@ -52,22 +52,22 @@
             {{ authUser ? "Open dashboard" : "Create event" }}
           </v-btn>
         </div>
-        <div class="tw-relative tw-w-full">
+        <div class="tw:relative tw:w-full">
           <!-- Green background -->
           <div
             v-if="richLandingEnabled"
             :class="[
-              'tw-absolute tw-left-1/2 tw-w-screen -tw-translate-x-1/2 tw-bg-green',
-              'tw-top-2/3 tw-h-[20vh] sm:tw-h-[75vh]',
+              'tw:absolute tw:left-1/2 tw:w-screen tw:-translate-x-1/2 tw:bg-green',
+              'tw:top-2/3 tw:h-[20vh] tw:sm:h-[75vh]',
             ]"
           ></div>
 
           <!-- Hero image -->
           <div
-            class="tw-relative tw-z-20 tw-w-full tw-rounded-lg tw-border tw-border-outline-neutral tw-bg-white tw-shadow-[0_0_24px_rgba(0,0,0,0.15)] sm:tw-rounded-xl md:tw-mx-auto md:tw-w-fit"
+            class="tw:relative tw:z-20 tw:w-full tw:rounded-lg tw:border tw:border-outline-neutral tw:bg-white tw:shadow-[0_0_24px_rgba(0,0,0,0.15)] tw:sm:rounded-xl tw:md:mx-auto tw:md:w-fit"
           >
-            <div class="tw-mx-4 tw-py-2 md:tw-w-[700px] lg:tw-w-[800px]">
-              <v-img class="tw-size-full" :src="eventImage" contain />
+            <div class="tw:mx-4 tw:py-2 tw:md:w-[700px] tw:lg:w-[800px]">
+              <v-img class="tw:size-full" :src="eventImage" contain />
             </div>
           </div>
         </div>
@@ -77,27 +77,27 @@
     <!-- Reddit Testimonials -->
     <div
       v-if="richLandingEnabled"
-      class="tw-flex tw-justify-center tw-bg-light-gray tw-py-12"
+      class="tw:flex tw:justify-center tw:bg-light-gray tw:py-12"
     >
-      <div class="tw-mx-4 tw-max-w-3xl tw-flex-1 sm:tw-mx-16">
-        <div class="tw-text-center">
+      <div class="tw:mx-4 tw:max-w-3xl tw:flex-1 tw:sm:mx-16">
+        <div class="tw:text-center">
           <Header> People love us on Reddit! </Header>
           <div
-            class="tw-mt-8 tw-grid tw-grid-cols-1 tw-gap-4 sm:tw-grid-cols-2"
+            class="tw:mt-8 tw:grid tw:grid-cols-1 tw:gap-4 tw:sm:grid-cols-2"
           >
             <div
               v-for="(comment, index) in redditComments"
               :key="index"
-              class="tw-flex tw-flex-col tw-rounded-lg tw-bg-white tw-p-4 tw-shadow-md"
+              class="tw:flex tw:flex-col tw:rounded-lg tw:bg-white tw:p-4 tw:shadow-md"
               :class="{
-                'sm:tw-col-span-2 sm:tw-mx-auto sm:tw-max-w-md':
+                'tw:sm:col-span-2 tw:sm:mx-auto tw:sm:max-w-md':
                   redditComments.length % 2 !== 0 &&
                   index === redditComments.length - 1,
               }"
             >
-              <div class="tw-flex tw-flex-1 tw-items-center">
+              <div class="tw:flex tw:flex-1 tw:items-center">
                 <div
-                  class="reddit-comment tw-text-left tw-text-sm tw-text-very-dark-gray"
+                  class="reddit-comment tw:text-left tw:text-sm tw:text-very-dark-gray"
                 >
                   <template
                     v-for="(paragraph, paragraphIndex) in comment.paragraphs"
@@ -105,7 +105,7 @@
                   >
                     <p
                       :class="{
-                        'tw-mb-4':
+                        'tw:mb-4':
                           paragraphIndex < comment.paragraphs.length - 1,
                       }"
                     >
@@ -123,19 +123,19 @@
                 </div>
               </div>
               <div
-                class="tw-my-4 tw-h-px tw-w-full tw-bg-light-gray-stroke"
+                class="tw:my-4 tw:h-px tw:w-full tw:bg-light-gray-stroke"
               ></div>
-              <div class="tw-flex tw-items-center tw-justify-between">
-                <div class="tw-text-right">
+              <div class="tw:flex tw:items-center tw:justify-between">
+                <div class="tw:text-right">
                   <a
                     :href="comment.link"
                     target="_blank"
-                    class="tw-text-sm tw-font-medium tw-text-dark-gray hover:tw-underline"
+                    class="tw:text-sm tw:font-medium tw:text-dark-gray tw:hover:underline"
                   >
                     {{ comment.author }}
                   </a>
                 </div>
-                <div class="tw-flex tw-items-center tw-gap-2">
+                <div class="tw:flex tw:items-center tw:gap-2">
                   <v-avatar size="24">
                     <v-img :src="comment.picture" />
                   </v-avatar>
@@ -148,12 +148,12 @@
     </div>
 
     <!-- FAQ -->
-    <div v-if="richLandingEnabled" class="tw-flex tw-justify-center tw-pt-12">
-      <div class="tw-mx-4 tw-mb-12 tw-max-w-3xl tw-flex-1 sm:tw-mx-16">
-        <div id="faq-section" class="tw-text-center lg:tw-pt-3">
+    <div v-if="richLandingEnabled" class="tw:flex tw:justify-center tw:pt-12">
+      <div class="tw:mx-4 tw:mb-12 tw:max-w-3xl tw:flex-1 tw:sm:mx-16">
+        <div id="faq-section" class="tw:text-center tw:lg:pt-3">
           <Header> Frequently Asked Questions </Header>
           <div
-            class="tw-grid tw-grid-cols-1 tw-gap-3 sm:tw-text-xl lg:tw-text-2xl"
+            class="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:text-xl tw:lg:text-2xl"
           >
             <FAQ
               v-for="faq in faqs"
@@ -513,8 +513,8 @@ watch(
 <style scoped>
 @media screen and (min-width: 375px) and (max-width: 640px) {
   #header {
-    font-size: 1.875rem !important; /* 30px */
-    line-height: 2.25rem !important; /* 36px */
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem; /* 36px */
   }
 }
 </style>

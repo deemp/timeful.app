@@ -118,7 +118,7 @@ async function expectUniformToggle(toggle: Locator): Promise<void> {
   for (let index = 0; index < count; index += 1) {
     const option = options.nth(index)
     const classNames = (await option.getAttribute("class")) ?? ""
-    const isNonSelected = classNames.includes("hover:tw-text-black")
+    const isNonSelected = classNames.includes("tw:hover:text-black")
     const colorBeforeHover = await option.evaluate(
       (element) => getComputedStyle(element).color,
     )

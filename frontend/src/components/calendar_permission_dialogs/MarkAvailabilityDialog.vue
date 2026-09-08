@@ -2,102 +2,102 @@
   <v-dialog
     :model-value="modelValue"
     width="400"
-    content-class="tw-m-0"
+    content-class="tw:m-0"
     @update:model-value="(e) => emit('update:modelValue', e)"
   >
-    <v-card class="tw-p-4 sm:tw-p-6">
+    <v-card class="tw:p-4 tw:sm:p-6">
       <v-expand-transition>
         <div v-show="state === states.CHOICES">
-          <div class="tw-text-md mb-1 tw-text-center">
-            How would you like to add <br class="tw-block sm:tw-hidden" />
+          <div class="tw:text-md mb-1 tw:text-center">
+            How would you like to add <br class="tw:block tw:sm:hidden" />
             your availability?
           </div>
-          <div class="tw-pb-4 tw-text-center tw-text-xs tw-text-dark-gray">
+          <div class="tw:pb-4 tw:text-center tw:text-xs tw:text-dark-gray">
             You can always manually edit after autofilling
           </div>
-          <div class="tw-flex tw-flex-col tw-gap-2">
+          <div class="tw:flex tw:flex-col tw:gap-2">
             <v-btn
               block
-              class="timeful-autofill-provider-button timeful-elevated-button tw-bg-white"
+              class="timeful-autofill-provider-button timeful-elevated-button tw:bg-white"
               @click="autofillWithGcal"
             >
-              <div class="tw-relative tw-w-full">
+              <div class="tw:relative tw:w-full">
                 <span
-                  class="tw-absolute tw-left-0 tw-top-1/2 tw-flex tw-h-5 tw-w-7 -tw-translate-y-1/2 tw-items-center tw-justify-center"
+                  class="tw:absolute tw:left-0 tw:top-1/2 tw:flex tw:h-5 tw:w-7 tw:-translate-y-1/2 tw:items-center tw:justify-center"
                 >
                   <img
                     :src="googleLogoUrl"
                     alt="Google"
-                    class="tw-h-5 tw-w-5 tw-flex-initial"
+                    class="tw:h-5 tw:w-5 tw:flex-initial"
                   />
                 </span>
-                <span class="tw-block tw-w-full tw-px-7 tw-text-center">
+                <span class="tw:block tw:w-full tw:px-7 tw:text-center">
                   Autofill with Google Calendar
                 </span>
               </div>
             </v-btn>
             <v-btn
               block
-              class="timeful-autofill-provider-button timeful-elevated-button tw-bg-white"
+              class="timeful-autofill-provider-button timeful-elevated-button tw:bg-white"
               @click="autofillWithApple"
             >
-              <div class="tw-relative tw-w-full">
+              <div class="tw:relative tw:w-full">
                 <span
-                  class="tw-absolute tw-left-0 tw-top-1/2 tw-flex tw-h-5 tw-w-7 -tw-translate-y-1/2 tw-items-center tw-justify-center"
+                  class="tw:absolute tw:left-0 tw:top-1/2 tw:flex tw:h-5 tw:w-7 tw:-translate-y-1/2 tw:items-center tw:justify-center"
                 >
                   <img
                     :src="appleLogoUrl"
                     alt="Apple"
-                    class="tw-h-5 tw-w-5 tw-flex-initial"
+                    class="tw:h-5 tw:w-5 tw:flex-initial"
                   />
                 </span>
-                <span class="tw-block tw-w-full tw-px-7 tw-text-center">
+                <span class="tw:block tw:w-full tw:px-7 tw:text-center">
                   Autofill with Apple Calendar
                 </span>
               </div>
             </v-btn>
             <v-btn
               block
-              class="timeful-autofill-provider-button timeful-elevated-button tw-bg-white"
+              class="timeful-autofill-provider-button timeful-elevated-button tw:bg-white"
               @click="autofillWithOutlook"
             >
-              <div class="tw-relative tw-w-full">
+              <div class="tw:relative tw:w-full">
                 <span
-                  class="tw-absolute tw-left-0 tw-top-1/2 tw-flex tw-h-5 tw-w-7 -tw-translate-y-1/2 tw-items-center tw-justify-center"
+                  class="tw:absolute tw:left-0 tw:top-1/2 tw:flex tw:h-5 tw:w-7 tw:-translate-y-1/2 tw:items-center tw:justify-center"
                 >
                   <img
                     :src="outlookLogoUrl"
                     alt="Outlook"
-                    class="tw-h-5 tw-w-5 tw-flex-initial"
+                    class="tw:h-5 tw:w-5 tw:flex-initial"
                   />
                 </span>
-                <span class="tw-block tw-w-full tw-px-7 tw-text-center">
+                <span class="tw:block tw:w-full tw:px-7 tw:text-center">
                   Autofill with Outlook Calendar
                 </span>
               </div>
             </v-btn>
             <v-btn
               block
-              class="timeful-autofill-provider-button timeful-elevated-button tw-bg-white"
+              class="timeful-autofill-provider-button timeful-elevated-button tw:bg-white"
               @click="autofillWithICS"
             >
-              <div class="tw-relative tw-w-full">
+              <div class="tw:relative tw:w-full">
                 <span
-                  class="tw-absolute tw-left-0 tw-top-1/2 tw-flex tw-h-5 tw-w-7 -tw-translate-y-1/2 tw-items-center tw-justify-center"
+                  class="tw:absolute tw:left-0 tw:top-1/2 tw:flex tw:h-5 tw:w-7 tw:-translate-y-1/2 tw:items-center tw:justify-center"
                 >
-                  <v-icon class="tw-flex-initial" size="20">
+                  <v-icon class="tw:flex-initial" size="20">
                     mdi-calendar-sync
                   </v-icon>
                 </span>
-                <span class="tw-block tw-w-full tw-px-7 tw-text-center">
+                <span class="tw:block tw:w-full tw:px-7 tw:text-center">
                   Autofill with ICS Calendar Feed
                 </span>
               </div>
             </v-btn>
-            <div class="tw-flex tw-items-center tw-gap-3">
+            <div class="tw:flex tw:items-center tw:gap-3">
               <v-divider />
               <div
-                class="tw-text-center tw-text-xs tw-font-medium tw-text-dark-gray"
+                class="tw:text-center tw:text-xs tw:font-medium tw:text-dark-gray"
               >
                 or
               </div>

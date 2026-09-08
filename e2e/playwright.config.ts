@@ -27,7 +27,8 @@ export default defineConfig({
     actionTimeout: 15_000,
   },
   webServer: {
-    command: webServerCommand,
+    // The styling regression suite also serves production assets from dist.
+    command: `npm run build && ${webServerCommand}`,
     cwd: "../frontend",
     port: webServerPort,
     reuseExistingServer: false,

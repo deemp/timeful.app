@@ -48,7 +48,7 @@ const vSelectItemSlotStub = defineComponent({
     <div class="v-select-stub">
       <slot
         name="item"
-        :item="{ raw: items[0] }"
+        :item="items[0]"
         :props="{ class: 'stub-item-props' }"
       />
     </div>

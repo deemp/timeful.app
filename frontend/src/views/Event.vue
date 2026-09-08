@@ -1,6 +1,6 @@
 <template>
   <span>
-    <div v-if="eventLoadStatus === 'ready' && event" class="tw-mt-8 tw-h-full">
+    <div v-if="eventLoadStatus === 'ready' && event" class="tw:mt-8 tw:h-full">
       <!-- Mark availability option dialog -->
       <MarkAvailabilityDialog
         v-model="choiceDialog"
@@ -63,12 +63,12 @@
       <v-dialog
         v-model="pagesNotVisitedDialog"
         max-width="400"
-        content-class="tw-m-0"
+        content-class="tw:m-0"
       >
         <v-card>
           <v-card-title>Are you sure?</v-card-title>
           <v-card-text
-            ><span class="tw-font-medium"
+            ><span class="tw:font-medium"
               >You're about to add your availability without filling out all
               pages of this Timeful.</span
             >
@@ -103,7 +103,7 @@
       >
         <v-card>
           <v-card-title>Are you sure?</v-card-title>
-          <v-card-text class="tw-text-sm tw-text-dark-gray"
+          <v-card-text class="tw:text-sm tw:text-dark-gray"
             >Are you sure you want to
             {{
               !isGroup
@@ -127,27 +127,27 @@
       </v-dialog>
 
       <div
-        class="tw-mx-auto tw-mt-4 lg:tw-flex lg:tw-items-start lg:tw-justify-center lg:tw-gap-6"
+        class="tw:mx-auto tw:mt-4 tw:lg:flex tw:lg:items-start tw:lg:justify-center tw:lg:gap-6"
       >
-        <div class="tw-mx-auto tw-max-w-5xl tw-flex-1">
-          <div v-if="!isSettingSpecificTimes" class="tw-mx-4">
+        <div class="tw:mx-auto tw:max-w-5xl tw:flex-1">
+          <div v-if="!isSettingSpecificTimes" class="tw:mx-4">
             <!-- Desktop rows pair event details with their related controls. -->
             <div
               id="event-header"
-              class="tw-flex tw-flex-col tw-gap-3 tw-text-black"
+              class="tw:flex tw:flex-col tw:gap-3 tw:text-black"
             >
               <div
-                class="event-header-row tw-flex tw-flex-col tw-gap-3 sm:tw-flex-row sm:tw-items-start sm:tw-gap-4"
+                class="event-header-row tw:flex tw:flex-col tw:gap-3 tw:sm:flex-row tw:sm:items-start tw:sm:gap-4"
               >
-                <div class="tw-min-w-0 tw-flex-1">
+                <div class="tw:min-w-0 tw:flex-1">
                   <div
-                    class="sm:mb-2 tw-flex tw-flex-wrap tw-items-center tw-gap-x-4 tw-gap-y-2"
+                    class="sm:mb-2 tw:flex tw:flex-wrap tw:items-center tw:gap-x-4 tw:gap-y-2"
                   >
                     <div
-                      class="tw-text-xl sm:tw-text-3xl sm:tw-leading-10"
+                      class="tw:text-xl tw:sm:text-3xl tw:sm:leading-10"
                       :class="
                         canEditMetadata &&
-                        '-tw-mx-2 -tw-my-1 tw-cursor-pointer tw-rounded tw-px-2 tw-py-1 tw-transition-all hover:tw-bg-light-gray'
+                        'tw:-mx-2 tw:-my-1 tw:cursor-pointer tw:rounded tw:px-2 tw:py-1 tw:transition-all tw:hover:bg-light-gray'
                       "
                       @click="canEditMetadata && !isScheduling && editEvent()"
                     >
@@ -159,14 +159,14 @@
                       "
                       :href="`https://when2meet.com${event.when2meetHref}`"
                       :small="isPhone"
-                      class="tw-cursor-pointer tw-select-none tw-rounded tw-bg-light-gray tw-px-2 tw-font-medium sm:tw-px-3"
+                      class="tw:cursor-pointer tw:select-none tw:rounded tw:bg-light-gray tw:px-2 tw:font-medium tw:sm:px-3"
                       >Imported from when2meet</v-chip
                     >
                     <template v-if="isGroup">
                       <div class="">
                         <v-chip
                           :small="isPhone"
-                          class="tw-cursor-pointer tw-select-none tw-rounded tw-bg-light-gray tw-px-2 tw-font-medium sm:tw-px-3"
+                          class="tw:cursor-pointer tw:select-none tw:rounded tw:bg-light-gray tw:px-2 tw:font-medium tw:sm:px-3"
                           @click="helpDialog = true"
                           >Availability group</v-chip
                         >
@@ -186,11 +186,11 @@
                   v-if="
                     isGroup || (!isPhone && (!isSignUp || canEditAvailability))
                   "
-                  class="desktop-event-header-actions tw-relative tw-flex tw-min-w-0 tw-flex-col tw-gap-2"
+                  class="desktop-event-header-actions tw:relative tw:flex tw:min-w-0 tw:flex-col tw:gap-2"
                 >
                   <div
                     v-if="isGroup"
-                    class="tw-flex tw-flex-row tw-items-center tw-gap-2.5"
+                    class="tw:flex tw:flex-row tw:items-center tw:gap-2.5"
                   >
                     <v-btn
                       v-if="
@@ -198,31 +198,31 @@
                       "
                       :icon="isPhone"
                       :variant="isPhone ? 'text' : undefined"
-                      class="tw-mr-1 tw-text-very-dark-gray sm:tw-mr-2.5"
+                      class="tw:mr-1 tw:text-very-dark-gray tw:sm:mr-2.5"
                       @click="resetWeekOffset"
                     >
-                      <v-icon class="sm:tw-mr-2">mdi-calendar-today</v-icon>
+                      <v-icon class="tw:sm:mr-2">mdi-calendar-today</v-icon>
                       <span v-if="!isPhone">Today</span>
                     </v-btn>
                     <v-btn
                       :icon="isPhone"
                       :variant="isPhone ? undefined : 'outlined'"
                       :loading="loading"
-                      class="tw-text-green"
+                      class="tw:text-green"
                       @click="refreshCalendar"
                     >
-                      <v-icon v-if="!isPhone" class="tw-mr-1"
+                      <v-icon v-if="!isPhone" class="tw:mr-1"
                         >mdi-refresh</v-icon
                       >
-                      <span v-if="!isPhone" class="tw-mr-2">Refresh</span>
-                      <v-icon v-else class="tw-text-green">mdi-refresh</v-icon>
+                      <span v-if="!isPhone" class="tw:mr-2">Refresh</span>
+                      <v-icon v-else class="tw:text-green">mdi-refresh</v-icon>
                     </v-btn>
                   </div>
                   <div
                     v-else-if="!isPhone && (!isSignUp || canEditAvailability)"
                     id="event-header-actions"
                     ref="desktopGuestEditMenuRoot"
-                    class="tw-w-full"
+                    class="tw:w-full"
                   >
                     <template v-if="!isEditing">
                       <template
@@ -231,30 +231,30 @@
                           !desktopShowInlineOptions
                         "
                       >
-                        <div class="tw-flex tw-w-full tw-items-start tw-gap-2">
-                          <div class="tw-min-w-0 tw-flex-1">
+                        <div class="tw:flex tw:w-full tw:items-start tw:gap-2">
+                          <div class="tw:min-w-0 tw:flex-1">
                             <v-btn
                               v-if="showSecondaryAddAvailabilityAction"
                               id="desktop-secondary-availability-btn"
                               variant="outlined"
                               color="primary"
-                              class="desktop-event-header-control tw-w-full tw-whitespace-nowrap tw-px-3 tw-text-sm tw-text-green"
+                              class="desktop-event-header-control tw:w-full tw:whitespace-nowrap tw:px-3 tw:text-sm tw:text-green"
                               :disabled="isScheduling"
                               @click="triggerSecondaryAddAvailability"
                             >
                               <v-icon>mdi-plus</v-icon>
-                              <span class="tw-ml-1">{{
+                              <span class="tw:ml-1">{{
                                 secondaryAddAvailabilityButtonText
                               }}</span>
                             </v-btn>
                           </div>
-                          <div class="tw-min-w-0 tw-flex-1">
+                          <div class="tw:min-w-0 tw:flex-1">
                             <div
-                              class="desktop-primary-availability-anchor tw-relative tw-min-w-0"
+                              class="desktop-primary-availability-anchor tw:relative tw:min-w-0"
                             >
                               <v-btn
                                 id="desktop-primary-availability-btn"
-                                class="desktop-event-header-control tw-w-full tw-bg-green tw-text-white"
+                                class="desktop-event-header-control tw:w-full tw:bg-green tw:text-white"
                                 :class="desktopPrimaryAvailabilityButtonClass"
                                 :disabled="
                                   isScheduling ||
@@ -271,7 +271,7 @@
                                   >mdi-pencil</v-icon
                                 >
                                 <v-icon v-else>mdi-plus</v-icon>
-                                <span class="tw-ml-1">{{
+                                <span class="tw:ml-1">{{
                                   primaryAvailabilityButtonText
                                 }}</span>
                               </v-btn>
@@ -287,11 +287,11 @@
                                 offset="8"
                               >
                                 <v-card min-width="164">
-                                  <div class="tw-py-1">
+                                  <div class="tw:py-1">
                                     <button
                                       v-for="option in ownedGuestEditOptions"
                                       :key="option.lookupKey"
-                                      class="tw-block tw-w-full tw-px-3 tw-py-2 tw-text-left tw-text-sm hover:tw-bg-off-white"
+                                      class="tw:block tw:w-full tw:px-3 tw:py-2 tw:text-left tw:text-sm tw:hover:bg-off-white"
                                       @click="
                                         editOwnedGuestAvailability(
                                           option.lookupKey,
@@ -308,13 +308,13 @@
                         </div>
                       </template>
                       <template v-else>
-                        <div class="tw-flex tw-justify-end">
+                        <div class="tw:flex tw:justify-end">
                           <div
-                            class="desktop-event-header-single-column desktop-primary-availability-anchor tw-relative tw-min-w-0"
+                            class="desktop-event-header-single-column desktop-primary-availability-anchor tw:relative tw:min-w-0"
                           >
                             <v-btn
                               id="desktop-primary-availability-btn"
-                              class="desktop-event-header-control tw-w-full tw-bg-green tw-text-white"
+                              class="desktop-event-header-control tw:w-full tw:bg-green tw:text-white"
                               :class="desktopPrimaryAvailabilityButtonClass"
                               :disabled="
                                 isScheduling ||
@@ -331,7 +331,7 @@
                                 >mdi-pencil</v-icon
                               >
                               <v-icon v-else>mdi-plus</v-icon>
-                              <span class="tw-ml-1">{{
+                              <span class="tw:ml-1">{{
                                 primaryAvailabilityButtonText
                               }}</span>
                             </v-btn>
@@ -347,11 +347,11 @@
                               offset="8"
                             >
                               <v-card min-width="164">
-                                <div class="tw-py-1">
+                                <div class="tw:py-1">
                                   <button
                                     v-for="option in ownedGuestEditOptions"
                                     :key="option.lookupKey"
-                                    class="tw-block tw-w-full tw-px-3 tw-py-2 tw-text-left tw-text-sm hover:tw-bg-off-white"
+                                    class="tw:block tw:w-full tw:px-3 tw:py-2 tw:text-left tw:text-sm tw:hover:bg-off-white"
                                     @click="
                                       editOwnedGuestAvailability(
                                         option.lookupKey,
@@ -368,18 +368,18 @@
                       </template>
                     </template>
                     <template v-else-if="isEditing">
-                      <div class="tw-flex tw-justify-end">
-                        <div class="tw-flex tw-w-full tw-gap-2">
+                      <div class="tw:flex tw:justify-end">
+                        <div class="tw:flex tw:w-full tw:gap-2">
                           <v-btn
                             variant="outlined"
-                            class="desktop-editing-action-control desktop-editing-cancel-button desktop-event-header-control tw-text-red"
+                            class="desktop-editing-action-control desktop-editing-cancel-button desktop-event-header-control tw:text-red"
                             @click="cancelEditing"
                           >
                             Cancel
                           </v-btn>
                           <v-btn
-                            class="desktop-editing-action-control desktop-editing-save-button desktop-event-header-control tw-text-white"
-                            :class="'tw-bg-green'"
+                            class="desktop-editing-action-control desktop-editing-save-button desktop-event-header-control tw:text-white"
+                            :class="'tw:bg-green'"
                             :disabled="respondentSaveDisabled"
                             @click="saveChanges"
                           >
@@ -394,11 +394,11 @@
 
               <div
                 id="event-header-meta-row"
-                class="event-header-row tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-center sm:tw-gap-4"
+                class="event-header-row tw:flex tw:flex-col tw:gap-2 tw:sm:flex-row tw:sm:items-center tw:sm:gap-4"
               >
                 <div
                   id="event-header-button-row"
-                  class="tw-flex tw-min-w-0 tw-flex-1 tw-flex-wrap tw-items-center tw-gap-2"
+                  class="tw:flex tw:min-w-0 tw:flex-1 tw:flex-wrap tw:items-center tw:gap-2"
                 >
                   <template v-if="canEditMetadata">
                     <v-btn
@@ -409,8 +409,8 @@
                       :disabled="isScheduling"
                       @click="editEvent"
                     >
-                      <v-icon class="tw-text-green">mdi-pencil</v-icon>
-                      <span class="tw-ml-1 tw-text-green"
+                      <v-icon class="tw:text-green">mdi-pencil</v-icon>
+                      <span class="tw:ml-1 tw:text-green"
                         >Edit {{ isGroup ? "group" : "event" }}</span
                       >
                     </v-btn>
@@ -423,8 +423,8 @@
                     class="event-metadata-action-button"
                     @click="copyLink"
                   >
-                    <v-icon class="tw-text-green">mdi-content-copy</v-icon>
-                    <span class="tw-ml-1 tw-text-green">Copy link</span>
+                    <v-icon class="tw:text-green">mdi-content-copy</v-icon>
+                    <span class="tw:ml-1 tw:text-green">Copy link</span>
                   </v-btn>
                 </div>
                 <div
@@ -434,15 +434,15 @@
                     !isEditing &&
                     desktopHasSecondaryOptions
                   "
-                  class="desktop-event-header-actions tw-flex tw-min-w-0 tw-gap-2"
+                  class="desktop-event-header-actions tw:flex tw:min-w-0 tw:gap-2"
                   :class="{
-                    'tw-justify-end': desktopShowInlineStartOnMonday,
+                    'tw:justify-end': desktopShowInlineStartOnMonday,
                   }"
                 >
                   <div
                     v-if="showBestTimesToggle"
                     id="desktop-header-show-best-times"
-                    class="desktop-event-header-options__best-times-slot tw-flex-1"
+                    class="desktop-event-header-options__best-times-slot tw:flex-1"
                   >
                     <v-switch
                       id="show-best-times-header-toggle"
@@ -454,7 +454,7 @@
                     >
                       <template #label>
                         <div
-                          class="tw-whitespace-nowrap tw-text-sm tw-text-black"
+                          class="tw:whitespace-nowrap tw:text-sm tw:text-black"
                         >
                           Show best
                           {{ scheduleOverlapEvent.daysOnly ? "days" : "times" }}
@@ -480,7 +480,7 @@
                     >
                       <template #label>
                         <div
-                          class="tw-whitespace-nowrap tw-text-sm tw-text-black"
+                          class="tw:whitespace-nowrap tw:text-sm tw:text-black"
                         >
                           Start on Monday
                         </div>
@@ -490,7 +490,7 @@
                   <div
                     v-else
                     id="desktop-header-more-options"
-                    class="desktop-event-header-options__menu tw-flex-1"
+                    class="desktop-event-header-options__menu tw:flex-1"
                   >
                     <EventOptions
                       variant="menu"
@@ -503,7 +503,7 @@
                       :num-responses="numResponses"
                       :include-show-best-times="false"
                       menu-button-label="More options"
-                      menu-activator-class="desktop-event-header-control desktop-event-header-options__menu-button tw-justify-between tw-w-full"
+                      menu-activator-class="desktop-event-header-control desktop-event-header-options__menu-button tw:justify-between tw:w-full"
                       @update:hide-if-needed="updateDesktopHideIfNeeded"
                       @update:collapse-disabled-times="
                         updateDesktopCollapseDisabledTimes
@@ -524,19 +524,19 @@
                     !isEditing &&
                     desktopShowInlineOptions
                   "
-                  class="desktop-event-header-actions tw-flex tw-justify-end"
+                  class="desktop-event-header-actions tw:flex tw:justify-end"
                 >
                   <div class="desktop-event-header-single-column">
                     <v-switch
                       id="collapse-disabled-times-toggle"
-                      class="desktop-event-header-control schedule-overlap-compact-switch desktop-event-header-options__collapse-disabled-times-switch tw-w-full"
+                      class="desktop-event-header-control schedule-overlap-compact-switch desktop-event-header-options__collapse-disabled-times-switch tw:w-full"
                       inset
                       :model-value="desktopCollapseDisabledTimes"
                       hide-details
                       @update:model-value="updateDesktopCollapseDisabledTimes"
                     >
                       <template #label>
-                        <div class="tw-text-sm tw-text-black">
+                        <div class="tw:text-sm tw:text-black">
                           Collapse disabled times
                         </div>
                       </template>
@@ -547,15 +547,15 @@
                   v-else-if="!isPhone && !isGroup && isEditing"
                   class="desktop-event-header-actions"
                 >
-                  <div class="tw-flex tw-w-full tw-gap-2">
+                  <div class="tw:flex tw:w-full tw:gap-2">
                     <div
                       v-if="scheduleOverlap?.showOverlayAvailabilityToggle"
                       id="desktop-editing-overlay-availability-slot"
-                      class="tw-flex-1"
+                      class="tw:flex-1"
                     >
                       <v-switch
                         id="overlay-availabilities-toggle"
-                        class="desktop-editing-overlay-availability-toggle desktop-event-header-control schedule-overlap-compact-switch tw-w-full"
+                        class="desktop-editing-overlay-availability-toggle desktop-event-header-control schedule-overlap-compact-switch tw:w-full"
                         inset
                         hide-details
                         :model-value="
@@ -567,7 +567,7 @@
                         "
                       >
                         <template #label>
-                          <div class="tw-text-sm tw-text-black">
+                          <div class="tw:text-sm tw:text-black">
                             Overlay availability
                           </div>
                         </template>
@@ -579,7 +579,7 @@
                         scheduleOverlap?.showOverlayAvailabilityToggle
                       "
                       id="desktop-editing-start-calendar-on-monday"
-                      class="desktop-event-header-options__start-on-monday-slot tw-flex-1"
+                      class="desktop-event-header-options__start-on-monday-slot tw:flex-1"
                     >
                       <v-switch
                         id="desktop-editing-start-calendar-on-monday-toggle"
@@ -594,7 +594,7 @@
                       >
                         <template #label>
                           <div
-                            class="tw-whitespace-nowrap tw-text-sm tw-text-black"
+                            class="tw:whitespace-nowrap tw:text-sm tw:text-black"
                           >
                             Start on Monday
                           </div>
@@ -604,10 +604,10 @@
                     <div
                       v-if="!scheduleOverlapEvent.daysOnly"
                       id="desktop-editing-more-options"
-                      class="desktop-event-header-options__menu tw-flex-1"
+                      class="desktop-event-header-options__menu tw:flex-1"
                     >
                       <EventOptions
-                        class="tw-w-full"
+                        class="tw:w-full"
                         variant="menu"
                         :event="scheduleOverlapEvent"
                         :show-best-times="false"
@@ -619,7 +619,7 @@
                         :include-show-best-times="false"
                         :include-hide-if-needed="false"
                         menu-button-label="More options"
-                        menu-activator-class="desktop-event-header-control desktop-event-header-options__menu-button tw-justify-between tw-w-full"
+                        menu-activator-class="desktop-event-header-control desktop-event-header-options__menu-button tw:justify-between tw:w-full"
                         @update:hide-if-needed="updateDesktopHideIfNeeded"
                         @update:collapse-disabled-times="
                           updateDesktopCollapseDisabledTimes
@@ -632,11 +632,11 @@
 
               <div
                 v-if="!isEditing || showDeleteAvailabilityAction"
-                class="event-header-row tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-start sm:tw-gap-4"
+                class="event-header-row tw:flex tw:flex-col tw:gap-2 tw:sm:flex-row tw:sm:items-start tw:sm:gap-4"
               >
                 <div
                   v-if="!isEditing && event.description?.trim()"
-                  class="tw-min-w-0 tw-flex-1"
+                  class="tw:min-w-0 tw:flex-1"
                 >
                   <EventDescription
                     :event="event"
@@ -650,16 +650,16 @@
                     isEditing &&
                     showDeleteAvailabilityAction
                   "
-                  class="desktop-editing-delete-actions desktop-event-header-actions tw-flex tw-justify-end sm:tw-ml-auto"
+                  class="desktop-editing-delete-actions desktop-event-header-actions tw:flex tw:justify-end tw:sm:ml-auto"
                 >
                   <v-btn
                     id="desktop-delete-availability-btn"
                     variant="outlined"
-                    class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw-normal-case"
+                    class="destructive-outlined-button desktop-editing-delete-button desktop-event-header-control tw:normal-case"
                     @click="deleteAvailabilityDialog = true"
                   >
                     <v-icon>mdi-trash-can-outline</v-icon>
-                    <span class="tw-ml-1">Delete</span>
+                    <span class="tw:ml-1">Delete</span>
                   </v-btn>
                 </div>
                 <div
@@ -670,17 +670,17 @@
                     !isScheduling &&
                     showScheduleEventButton
                   "
-                  class="desktop-event-header-actions tw-flex tw-justify-end sm:tw-ml-auto"
+                  class="desktop-event-header-actions tw:flex tw:justify-end tw:sm:ml-auto"
                 >
                   <v-btn
                     id="desktop-schedule-event-btn"
                     variant="outlined"
-                    class="desktop-event-header-control tw-text-blue"
+                    class="desktop-event-header-control tw:text-blue"
                     :class="desktopScheduleEventButtonClass"
                     @click="scheduleEvent"
                   >
                     <v-icon small>mdi-calendar-check</v-icon>
-                    <span class="tw-ml-2">{{
+                    <span class="tw:ml-2">{{
                       hasSavedTimefulSchedule
                         ? "Reschedule event"
                         : "Schedule event"
@@ -695,11 +695,11 @@
                     isScheduling &&
                     showScheduleEventButton
                   "
-                  class="desktop-event-header-actions tw-flex tw-justify-end tw-gap-2 sm:tw-ml-auto"
+                  class="desktop-event-header-actions tw:flex tw:justify-end tw:gap-2 tw:sm:ml-auto"
                 >
                   <v-btn
                     variant="outlined"
-                    class="desktop-event-header-control tw-flex-1 tw-text-red"
+                    class="desktop-event-header-control tw:flex-1 tw:text-red"
                     @click="cancelScheduleEvent"
                   >
                     Cancel
@@ -707,16 +707,16 @@
                   <v-btn
                     v-if="hasSavedTimefulSchedule"
                     variant="outlined"
-                    class="desktop-event-header-control tw-flex-1 tw-text-red"
+                    class="desktop-event-header-control tw:flex-1 tw:text-red"
                     @click="clearScheduledEvent"
                   >
                     Clear
                   </v-btn>
-                  <v-menu offset-y class="tw-z-20">
+                  <v-menu offset-y class="tw:z-20">
                     <template #activator="{ props: activatorProps }">
                       <v-btn
                         :disabled="!allowScheduleEvent"
-                        class="desktop-event-header-control tw-flex-1 tw-bg-blue tw-text-white"
+                        class="desktop-event-header-control tw:flex-1 tw:bg-blue tw:text-white"
                         flat
                         v-bind="activatorProps"
                       >
@@ -733,7 +733,7 @@
                             src="/favicon-32x32.png"
                             alt=""
                             aria-hidden="true"
-                            class="schedule-event-menu__icon tw-mr-2 tw-flex-none"
+                            class="schedule-event-menu__icon tw:mr-2 tw:flex-none"
                           />
                           <v-list-item-title>Timeful</v-list-item-title>
                         </div>
@@ -747,7 +747,7 @@
                             src="@/assets/gcal_logo.png"
                             alt=""
                             aria-hidden="true"
-                            class="schedule-event-menu__icon tw-mr-2 tw-flex-none"
+                            class="schedule-event-menu__icon tw:mr-2 tw:flex-none"
                           />
                           <v-list-item-title>Google Calendar</v-list-item-title>
                         </div>
@@ -761,7 +761,7 @@
                             src="@/assets/outlook_logo.svg"
                             alt=""
                             aria-hidden="true"
-                            class="schedule-event-menu__icon tw-mr-2 tw-flex-none"
+                            class="schedule-event-menu__icon tw:mr-2 tw:flex-none"
                           />
                           <v-list-item-title>Outlook</v-list-item-title>
                         </div>
@@ -802,17 +802,17 @@
           />
           <div
             v-else
-            class="tw-mx-4 tw-mt-6 tw-h-[28rem] tw-rounded-xl tw-border tw-border-light-gray tw-bg-white"
+            class="tw:mx-4 tw:mt-6 tw:h-112 tw:rounded-xl tw:border tw:border-light-gray tw:bg-white"
           ></div>
         </div>
       </div>
 
       <template v-if="isPhone && privacyPolicyEnabled">
         <div
-          class="tw-w-full tw-border-t tw-border-solid tw-border-outline-neutral"
+          class="tw:w-full tw:border-t tw:border-solid tw:border-outline-neutral"
         ></div>
         <v-btn
-          class="tw-h-16"
+          class="tw:h-16"
           block
           variant="text"
           :to="{ name: 'privacy-policy' }"
@@ -822,18 +822,18 @@
       </template>
 
       <div
-        class="tw-mb-16 tw-hidden tw-flex-col tw-items-center tw-justify-between sm:tw-flex"
+        class="tw:mb-16 tw:hidden tw:flex-col tw:items-center tw:justify-between tw:sm:flex"
       >
         <router-link
           v-if="privacyPolicyEnabled"
-          class="tw-text-xs tw-font-medium tw-text-gray"
+          class="tw:text-xs tw:font-medium tw:text-gray"
           :to="{ name: 'privacy-policy' }"
         >
           Privacy Policy
         </router-link>
       </div>
 
-      <div class="tw-h-8"></div>
+      <div class="tw:h-8"></div>
       <!-- Bottom bar for phones -->
       <div
         v-if="
@@ -842,7 +842,7 @@
           (!isSignUp || canEditAvailability)
         "
         ref="mobileGuestEditMenuRoot"
-        class="timeful-action-bar-layer tw-fixed tw-bottom-0 tw-flex tw-w-full tw-flex-col"
+        class="timeful-action-bar-layer tw:fixed tw:bottom-0 tw:flex tw:w-full tw:flex-col"
       >
         <v-menu
           v-if="showGuestActionButton && hasMultipleOwnedGuestResponses"
@@ -853,11 +853,11 @@
           offset="8"
         >
           <v-card min-width="164">
-            <div class="tw-py-1">
+            <div class="tw:py-1">
               <button
                 v-for="option in ownedGuestEditOptions"
                 :key="option.lookupKey"
-                class="tw-block tw-w-full tw-px-3 tw-py-2 tw-text-left tw-text-sm hover:tw-bg-off-white"
+                class="tw:block tw:w-full tw:px-3 tw:py-2 tw:text-left tw:text-sm tw:hover:bg-off-white"
                 @click="editOwnedGuestAvailability(option.lookupKey)"
               >
                 {{ option.name }}
@@ -866,44 +866,44 @@
           </v-card>
         </v-menu>
         <div
-          class="mobile-event-action-bar timeful-mobile-elevated-panel tw-flex tw-h-[4rem] tw-w-full tw-items-center tw-px-4"
-          :class="isIOS ? 'tw-pb-2' : ''"
+          class="mobile-event-action-bar timeful-mobile-elevated-panel tw:flex tw:h-16 tw:w-full tw:items-center tw:px-4"
+          :class="isIOS ? 'tw:pb-2' : ''"
         >
           <template v-if="!isEditing && !isScheduling">
             <div
               v-if="showScheduleEventButton"
-              class="tw-flex tw-items-center tw-gap-1"
+              class="tw:flex tw:items-center tw:gap-1"
             >
               <v-btn
                 variant="outlined"
-                class="tw-border-blue tw-px-2 tw-text-[13px] tw-text-blue max-sm:tw-px-1 max-sm:tw-text-xs"
+                class="tw:border-blue tw:px-2 tw:text-[13px] tw:text-blue tw:max-sm:px-1 tw:max-sm:text-xs"
                 @click="scheduleEvent"
               >
                 <v-icon>mdi-calendar-check</v-icon>
-                <span class="tw-ml-1">{{
+                <span class="tw:ml-1">{{
                   hasSavedTimefulSchedule ? "Reschedule" : "Schedule"
                 }}</span>
               </v-btn>
             </div>
             <v-spacer />
             <div
-              class="tw-flex tw-min-w-0 tw-items-center tw-gap-2 max-sm:tw-gap-1"
+              class="tw:flex tw:min-w-0 tw:items-center tw:gap-2 tw:max-sm:gap-1"
             >
               <v-btn
                 v-if="showSecondaryAddAvailabilityAction"
                 id="mobile-secondary-availability-btn"
                 variant="outlined"
-                class="tw-min-w-0 tw-whitespace-nowrap tw-border-green tw-px-2 tw-text-[13px] tw-text-green max-sm:tw-px-1 max-sm:tw-text-xs"
+                class="tw:min-w-0 tw:whitespace-nowrap tw:border-green tw:px-2 tw:text-[13px] tw:text-green tw:max-sm:px-1 tw:max-sm:text-xs"
                 @click="triggerSecondaryAddAvailability"
               >
                 <v-icon>mdi-plus</v-icon>
-                <span class="tw-ml-1">{{
+                <span class="tw:ml-1">{{
                   secondaryAddAvailabilityButtonText
                 }}</span>
               </v-btn>
               <v-btn
                 id="mobile-primary-availability-btn"
-                class="mobile-primary-availability-button tw-min-w-0 tw-whitespace-nowrap tw-px-2 tw-text-[13px] tw-transition-opacity max-sm:tw-px-1 max-sm:tw-text-xs"
+                class="mobile-primary-availability-button tw:min-w-0 tw:whitespace-nowrap tw:px-2 tw:text-[13px] tw:transition-opacity tw:max-sm:px-1 tw:max-sm:text-xs"
                 :class="[
                   mobilePrimaryAvailabilityButtonClass,
                   {
@@ -920,7 +920,7 @@
                   >mdi-pencil</v-icon
                 >
                 <v-icon v-else>mdi-plus</v-icon>
-                <span class="tw-ml-1">{{
+                <span class="tw:ml-1">{{
                   mobilePrimaryAvailabilityButtonText
                 }}</span>
               </v-btn>
@@ -930,23 +930,23 @@
             <v-btn
               v-if="showDeleteAvailabilityAction"
               variant="outlined"
-              class="destructive-outlined-button tw-text-sm tw-normal-case"
+              class="destructive-outlined-button tw:text-sm tw:normal-case"
               @click="deleteAvailabilityDialog = true"
             >
               <v-icon>mdi-trash-can-outline</v-icon>
-              <span class="tw-ml-1">Delete</span>
+              <span class="tw:ml-1">Delete</span>
             </v-btn>
             <v-spacer />
-            <div class="tw-flex tw-gap-2">
+            <div class="tw:flex tw:gap-2">
               <v-btn
                 variant="outlined"
-                class="mobile-editing-cancel-button tw-border-red tw-text-red"
+                class="mobile-editing-cancel-button tw:border-red tw:text-red"
                 @click="cancelEditing"
               >
                 Cancel
               </v-btn>
               <v-btn
-                class="mobile-editing-save-button tw-bg-green tw-text-white"
+                class="mobile-editing-save-button tw:bg-green tw:text-white"
                 :disabled="respondentSaveDisabled"
                 @click="saveChanges"
               >
@@ -957,7 +957,7 @@
           <template v-else-if="isScheduling">
             <v-btn
               variant="outlined"
-              class="tw-border-blue tw-text-blue"
+              class="tw:border-blue tw:text-blue"
               @click="cancelScheduleEvent"
             >
               Cancel
@@ -965,7 +965,7 @@
             <v-btn
               v-if="hasSavedTimefulSchedule"
               variant="outlined"
-              class="tw-ml-2 tw-border-blue tw-text-blue"
+              class="tw:ml-2 tw:border-blue tw:text-blue"
               @click="clearScheduledEvent"
             >
               Clear
@@ -976,16 +976,16 @@
                 <v-btn
                   :disabled="!allowScheduleEvent"
                   variant="flat"
-                  class="mobile-schedule-button tw-border"
+                  class="mobile-schedule-button tw:border"
                   :class="
                     allowScheduleEvent
-                      ? 'tw-border-light-blue tw-bg-white tw-text-blue'
-                      : 'mobile-schedule-button--disabled tw-border-scheduled-event tw-bg-scheduled-event tw-text-white'
+                      ? 'tw:border-light-blue tw:bg-white tw:text-blue'
+                      : 'mobile-schedule-button--disabled tw:border-scheduled-event tw:bg-scheduled-event tw:text-white'
                   "
                   v-bind="activatorProps"
                 >
                   <v-icon>mdi-calendar-check</v-icon>
-                  <span class="tw-ml-1">Schedule</span>
+                  <span class="tw:ml-1">Schedule</span>
                 </v-btn>
               </template>
               <v-list density="compact">
@@ -998,7 +998,7 @@
                       src="/favicon-32x32.png"
                       alt=""
                       aria-hidden="true"
-                      class="schedule-event-menu__icon tw-mr-2 tw-flex-none"
+                      class="schedule-event-menu__icon tw:mr-2 tw:flex-none"
                     />
                     <v-list-item-title>Timeful</v-list-item-title>
                   </div>
@@ -1012,7 +1012,7 @@
                       src="@/assets/gcal_logo.png"
                       alt=""
                       aria-hidden="true"
-                      class="schedule-event-menu__icon tw-mr-2 tw-flex-none"
+                      class="schedule-event-menu__icon tw:mr-2 tw:flex-none"
                     />
                     <v-list-item-title>Google Calendar</v-list-item-title>
                   </div>
@@ -1026,7 +1026,7 @@
                       src="@/assets/outlook_logo.svg"
                       alt=""
                       aria-hidden="true"
-                      class="schedule-event-menu__icon tw-mr-2 tw-flex-none"
+                      class="schedule-event-menu__icon tw:mr-2 tw:flex-none"
                     />
                     <v-list-item-title>Outlook</v-list-item-title>
                   </div>
@@ -1039,19 +1039,19 @@
     </div>
     <div
       v-else-if="eventLoadStatus === 'notFound'"
-      class="tw-mx-auto tw-mt-12 tw-max-w-2xl tw-px-4"
+      class="tw:mx-auto tw:mt-12 tw:max-w-2xl tw:px-4"
     >
       <div
-        class="tw-rounded-lg tw-border tw-border-light-gray tw-bg-white tw-p-6 tw-text-center"
+        class="tw:rounded-lg tw:border tw:border-light-gray tw:bg-white tw:p-6 tw:text-center"
       >
-        <h1 class="tw-text-2xl tw-font-medium tw-text-black">
+        <h1 class="tw:text-2xl tw:font-medium tw:text-black">
           Event not found
         </h1>
-        <p class="tw-mt-3 tw-text-base tw-text-very-dark-gray">
+        <p class="tw:mt-3 tw:text-base tw:text-very-dark-gray">
           This event may have been deleted, or the link may be incorrect.
         </p>
         <RouterLink to="/home">
-          <v-btn class="tw-mt-6" color="primary"> Back to home </v-btn>
+          <v-btn class="tw:mt-6" color="primary"> Back to home </v-btn>
         </RouterLink>
       </div>
     </div>
@@ -1342,7 +1342,7 @@ const showScheduleEventButton = computed(
   () => !isEditing.value && !isSignUp.value,
 )
 const desktopScheduleEventButtonClass = computed(() =>
-  numResponses.value > 0 ? "tw-w-full" : "desktop-event-header-single-column",
+  numResponses.value > 0 ? "tw:w-full" : "desktop-event-header-single-column",
 )
 const hasSavedTimefulSchedule = computed(() =>
   Boolean(loader.event.value?.scheduledEvent),
@@ -1384,9 +1384,9 @@ const mobilePrimaryAvailabilityButtonText = computed(() => {
 const mobilePrimaryAvailabilityButtonClass = computed(() => ({
   "mobile-primary-availability-button--edit":
     mobilePrimaryAvailabilityButtonText.value === "Edit availability",
-  "tw-bg-green tw-text-white":
+  "tw:bg-green tw:text-white":
     mobilePrimaryAvailabilityButtonText.value === "Edit availability",
-  "timeful-elevated-button tw-bg-white tw-text-green":
+  "timeful-elevated-button tw:bg-white tw:text-green":
     mobilePrimaryAvailabilityButtonText.value !== "Edit availability",
 }))
 const isIOS = computed(() => isIOSFn())
@@ -2386,8 +2386,8 @@ watch(
 }
 
 .destructive-outlined-button {
-  color: var(--timeful-red-canonical) !important;
-  border: 1px solid var(--timeful-red-canonical) !important;
+  color: var(--timeful-red-canonical);
+  border: 1px solid var(--timeful-red-canonical);
   --v-hover-opacity: 0;
 }
 
@@ -2396,11 +2396,11 @@ watch(
     in srgb,
     var(--timeful-red-canonical) 5%,
     transparent
-  ) !important;
+  );
 }
 
 .event-header-description {
-  margin-top: 0 !important;
+  margin-top: 0;
 }
 
 .event-metadata-action-button {
@@ -2415,19 +2415,19 @@ watch(
 }
 
 .desktop-primary-availability-button {
-  border: 1px solid var(--timeful-primary-action-bg) !important;
+  border: 1px solid var(--timeful-primary-action-bg);
 }
 
 .desktop-primary-availability-button--add {
-  -webkit-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14) !important;
-  -moz-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14) !important;
-  box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14) !important;
+  -webkit-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14);
+  -moz-box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14);
+  box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.14);
 }
 
 .desktop-primary-availability-button--edit {
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 
 .mobile-primary-availability-button {
@@ -2435,10 +2435,10 @@ watch(
 }
 
 .mobile-primary-availability-button--edit {
-  border: 1px solid var(--timeful-primary-action-bg) !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  border: 1px solid var(--timeful-primary-action-bg);
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 
 .mobile-schedule-button .v-btn__content,
@@ -2447,9 +2447,9 @@ watch(
 }
 
 .mobile-schedule-button {
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 
 .mobile-schedule-button--disabled {
@@ -2467,9 +2467,9 @@ watch(
 
 .desktop-editing-save-button,
 .mobile-editing-save-button {
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-  box-shadow: none !important;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
 }
 </style>
 

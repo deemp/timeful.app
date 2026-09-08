@@ -6,24 +6,24 @@
       :force-visible="Boolean(isPhone && selectedTooltipSlot)"
     >
       <div
-        class="tw-select-none"
-        :class="isPhone ? 'tw-py-2' : 'tw-py-4'"
+        class="tw:select-none"
+        :class="isPhone ? 'tw:py-2' : 'tw:py-4'"
         style="-webkit-touch-callout: none"
       >
         <ToolRow
           v-if="isPhone && !calendarOnly"
-          class="tw-px-4"
+          class="tw:px-4"
           :tool-row="toolRowViewModel"
           compact
           mobile-row
         />
 
         <div
-          class="schedule-overlap-layout tw-flex"
-          :class="isPhone ? 'tw-flex-col' : 'tw-flex-row'"
+          class="schedule-overlap-layout tw:flex"
+          :class="isPhone ? 'tw:flex-col' : 'tw:flex-row'"
         >
           <div
-            class="schedule-overlap-layout__grid-pane tw-flex tw-grow tw-px-4"
+            class="schedule-overlap-layout__grid-pane tw:flex tw:grow tw:px-4"
           >
             <ScheduleOverlapDaysOnlyGrid
               v-if="event.daysOnly"

@@ -66,7 +66,7 @@ test.describe("landing hero", () => {
     await expect(heading).toHaveCSS("line-height", "48px")
     await expect(cta).toHaveCSS("color", "rgb(255, 255, 255)")
 
-    const header = page.locator("div.tw-fixed.tw-z-\\[60\\]")
+    const header = page.getByTestId("app-header")
     await expect(header).toBeVisible()
     await expect(header).toHaveCSS("position", "fixed")
     await expect(header).toHaveCSS("height", "64px")
@@ -120,7 +120,7 @@ test.describe("landing hero", () => {
       safeViewportSize.width - 32,
     )
 
-    const header = page.locator("div.tw-fixed.tw-z-\\[60\\]")
+    const header = page.getByTestId("app-header")
     await expect(header).toBeVisible()
     await expect(header).toHaveCSS("position", "fixed")
     const headerBox = assertPresent(

@@ -2,7 +2,11 @@
 
 declare module "*.vue" {
   import type { DefineComponent } from "vue"
-  const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>
+  const component: DefineComponent<
+    Record<string, never>,
+    Record<string, never>,
+    unknown
+  >
   export default component
 }
 
@@ -55,13 +59,21 @@ declare module "color" {
 
 declare module "vue-github-button" {
   import type { DefineComponent } from "vue"
-  const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>
+  const component: DefineComponent<
+    Record<string, never>,
+    Record<string, never>,
+    unknown
+  >
   export default component
 }
 
 declare module "vue-vimeo-player" {
   import type { DefineComponent } from "vue"
-  const VueVimeoPlayer: DefineComponent<Record<string, never>, Record<string, never>, unknown>
+  const VueVimeoPlayer: DefineComponent<
+    Record<string, never>,
+    Record<string, never>,
+    unknown
+  >
   export default VueVimeoPlayer
   export { VueVimeoPlayer as vueVimeoPlayer }
 }

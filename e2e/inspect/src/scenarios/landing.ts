@@ -6,19 +6,19 @@ export const landingScenario = {
     {
       name: "headerRow",
       kind: "selector",
-      selector: ".tw-relative.tw-m-auto.tw-flex.tw-h-full.tw-max-w-5xl",
+      selector: ".tw\\:relative.tw\\:m-auto.tw\\:flex.tw\\:h-full.tw\\:max-w-5xl",
     },
     {
       name: "headerBrand",
       kind: "selector",
       selector:
-        ".tw-relative.tw-m-auto.tw-flex.tw-h-full.tw-max-w-5xl > :first-child",
+        ".tw\\:relative.tw\\:m-auto.tw\\:flex.tw\\:h-full.tw\\:max-w-5xl > :first-child",
     },
     {
       name: "headerActions",
       kind: "selector",
       selector:
-        ".tw-relative.tw-m-auto.tw-flex.tw-h-full.tw-max-w-5xl > :last-child",
+        ".tw\\:relative.tw\\:m-auto.tw\\:flex.tw\\:h-full.tw\\:max-w-5xl > :last-child",
     },
     { name: "heroCopy", kind: "heroCopy" },
     { name: "heroBadge", kind: "selector", selector: ".landing-github-badge" },

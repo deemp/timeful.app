@@ -87,7 +87,7 @@ function getHeaderParts(page: Page) {
     ".schedule-overlap-time-grid__header .schedule-overlap-time-grid__day-column",
   )
 
-  return { dayColumns, dateLabels: dayColumns.locator(".tw-text-\\[12px\\]") }
+  return { dayColumns, dateLabels: dayColumns.locator(".tw\\:text-\\[12px\\]") }
 }
 
 test("event page renders unique projected civil date labels at UTC+6 and UTC+7", async ({

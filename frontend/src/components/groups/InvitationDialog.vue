@@ -1,18 +1,18 @@
 <template>
   <v-dialog
     :model-value="modelValue"
-    content-class="tw-max-w-[35rem] tw-m-0 tw-max-h-full"
+    content-class="tw:max-w-140 tw:m-0 tw:max-h-full"
     :transition="isPhone ? `dialog-bottom-transition` : `dialog-transition`"
     persistent
     @update:model-value="(e) => emit('update:modelValue', e)"
   >
     <v-expand-transition>
       <v-card
-        class="tw-overflow-none tw-relative tw-flex tw-flex-col tw-rounded-lg tw-px-2 tw-py-5 tw-transition-all"
+        class="tw:overflow-none tw:relative tw:flex tw:flex-col tw:rounded-lg tw:px-2 tw:py-5 tw:transition-all"
       >
         <v-card-text>
           <div
-            class="tw-mb-5 tw-text-wrap tw-text-xl tw-font-medium tw-text-black"
+            class="tw:mb-5 tw:text-wrap tw:text-xl tw:font-medium tw:text-black"
           >
             <template v-if="isOwner"> Share calendar availability </template>
             <template v-else>
@@ -32,14 +32,14 @@
                 @toggle-sub-calendar-account="toggleSubCalendarAccount"
               ></CalendarAccounts>
 
-              <div class="tw-mt-5 tw-space-y-4">
-                <div class="tw-font-medium tw-text-black">
+              <div class="tw:mt-5 tw:space-y-4">
+                <div class="tw:font-medium tw:text-black">
                   Your calendar availability from these calendars will be shared
                   with:
                 </div>
                 <div
                   v-if="membersToShareWith.length > 0"
-                  class="tw-flex tw-flex-wrap tw-gap-1"
+                  class="tw:flex tw:flex-wrap tw:gap-1"
                 >
                   <UserChip
                     v-for="user in membersToShareWith"
@@ -47,10 +47,10 @@
                     :user="user"
                   ></UserChip>
                 </div>
-                <div v-else class="tw-flex tw-items-center tw-italic">
+                <div v-else class="tw:flex tw:items-center tw:italic">
                   <div>No members added yet</div>
                 </div>
-                <div class="tw-text-xs tw-text-dark-gray">
+                <div class="tw:text-xs tw:text-dark-gray">
                   Your calendar events will NOT be visible to others
                 </div>
               </div>
@@ -58,7 +58,7 @@
           </v-expand-transition>
 
           <v-expand-transition>
-            <div v-if="!calendarPermissionGranted" class="tw-p-5 tw-text-black">
+            <div v-if="!calendarPermissionGranted" class="tw:p-5 tw:text-black">
               <CalendarPermissionsCard
                 v-show="true"
                 cancel-label=""
@@ -69,12 +69,12 @@
         </v-card-text>
 
         <v-card-actions v-if="isOwner">
-          <v-btn class="tw-px-6" variant="text" @click="goHome">Back</v-btn>
+          <v-btn class="tw:px-6" variant="text" @click="goHome">Back</v-btn>
           <v-spacer />
           <v-btn
             color="primary"
             :disabled="!calendarPermissionGranted"
-            class="timeful-elevated-button tw-px-6"
+            class="timeful-elevated-button tw:px-6"
             @click="acceptInvitation"
             >Share</v-btn
           >
@@ -84,7 +84,7 @@
             <template #activator="{ props: rejectDialogProps }">
               <v-btn
                 variant="text"
-                class="tw-text-dark-gray"
+                class="tw:text-dark-gray"
                 v-bind="rejectDialogProps"
                 >Reject invitation</v-btn
               >
@@ -98,7 +98,7 @@
                 <v-spacer />
                 <v-btn
                   variant="text"
-                  class="tw-text-dark-gray"
+                  class="tw:text-dark-gray"
                   @click="rejectDialog = false"
                   >Cancel</v-btn
                 >
@@ -110,7 +110,7 @@
           </v-dialog>
           <v-spacer />
           <v-btn
-            class="timeful-elevated-button tw-bg-green tw-px-5 tw-text-white tw-transition-opacity"
+            class="timeful-elevated-button tw:bg-green tw:px-5 tw:text-white tw:transition-opacity"
             :disabled="!calendarPermissionGranted"
             @click="acceptInvitation"
             >Accept Invitation</v-btn

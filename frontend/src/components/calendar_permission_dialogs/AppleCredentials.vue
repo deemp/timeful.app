@@ -1,24 +1,24 @@
 <template>
-  <div class="tw-flex tw-flex-col tw-gap-6">
-    <div class="tw-flex tw-flex-col tw-gap-3">
+  <div class="tw:flex tw:flex-col tw:gap-6">
+    <div class="tw:flex tw:flex-col tw:gap-3">
       <div
-        class="tw-text-md tw-flex tw-flex-row tw-items-center tw-justify-start tw-gap-2 tw-font-medium"
+        class="tw:text-md tw:flex tw:flex-row tw:items-center tw:justify-start tw:gap-2 tw:font-medium"
       >
         Connect your
-        <div class="tw-flex tw-items-center tw-gap-1">
+        <div class="tw:flex tw:items-center tw:gap-1">
           <v-img
-            class="-tw-mt-1 tw-flex-initial"
+            class="tw:-mt-1 tw:flex-initial"
             width="15"
             height="15"
             src="@/assets/apple_logo.svg"
           />
-          <span class="tw-font-medium">Apple Calendar</span>
+          <span class="tw:font-medium">Apple Calendar</span>
         </div>
       </div>
-      <div class="tw-flex tw-flex-col tw-gap-2">
-        <div class="tw-text-sm tw-text-very-dark-gray">
+      <div class="tw:flex tw:flex-col tw:gap-2">
+        <div class="tw:text-sm tw:text-very-dark-gray">
           Generate an
-          <span class="tw-font-medium tw-text-black"
+          <span class="tw:font-medium tw:text-black"
             >app-specific password</span
           >
           to use with Timeful at
@@ -29,12 +29,12 @@
             >https://appleid.apple.com/account/manage</a
           >. Copy and paste the generated app password below.
         </div>
-        <div class="tw-text-sm tw-text-very-dark-gray">
+        <div class="tw:text-sm tw:text-very-dark-gray">
           Your credentials will be stored and encrypted.
         </div>
       </div>
     </div>
-    <div class="tw-flex tw-flex-col tw-gap-3">
+    <div class="tw:flex tw:flex-col tw:gap-3">
       <v-text-field
         v-model="email"
         class="timeful-solo-field"
@@ -50,12 +50,12 @@
         hide-details
         type="password"
       />
-      <div class="tw-flex tw-items-center tw-gap-2">
-        <v-btn variant="text" class="tw-grow" @click="emit('back')">Back</v-btn>
+      <div class="tw:flex tw:items-center tw:gap-2">
+        <v-btn variant="text" class="tw:grow" @click="emit('back')">Back</v-btn>
         <v-btn
           :disabled="!enableSubmit"
           color="primary"
-          class="timeful-elevated-button tw-grow"
+          class="timeful-elevated-button tw:grow"
           :loading="loading"
           @click="submit"
           >Submit</v-btn

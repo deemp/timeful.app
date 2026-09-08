@@ -1,6 +1,6 @@
 <!-- Used to indicate that a schedule overlap component has more to scroll -->
 <template>
-  <div ref="container" class="tw-overflow-hidden">
+  <div ref="container" class="tw:overflow-hidden">
     <div :class="left ? 'line1-left' : 'line1-right'" :style="lineStyle"></div>
     <div :class="left ? 'line2-left' : 'line2-right'" :style="lineStyle"></div>
   </div>

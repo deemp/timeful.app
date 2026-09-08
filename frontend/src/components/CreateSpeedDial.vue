@@ -4,23 +4,23 @@
       v-model="speedDial"
       fixed
       transition="slide-y-reverse-transition"
-      class="tw-bottom-4 tw-left-0 tw-right-0 tw-mx-auto tw-w-fit sm:tw-bottom-8"
+      class="tw:bottom-4 tw:left-0 tw:right-0 tw:mx-auto tw:w-fit tw:sm:bottom-8"
     >
       <template #activator="{ props: activatorProps }">
         <v-btn
           v-bind="activatorProps"
           icon
           color="primary"
-          class="tw-text-white"
+          class="tw:text-white"
         >
           <v-icon v-if="speedDial"> mdi-close </v-icon>
           <v-icon v-else> mdi-plus </v-icon>
         </v-btn>
       </template>
-      <v-btn icon size="small" class="tw-bg-dark-gray tw-text-white">
+      <v-btn icon size="small" class="tw:bg-dark-gray tw:text-white">
         <v-icon small>mdi-account-group</v-icon>
       </v-btn>
-      <v-btn icon size="small" class="tw-bg-dark-gray tw-text-white">
+      <v-btn icon size="small" class="tw:bg-dark-gray tw:text-white">
         <v-icon small>mdi-calendar-cursor</v-icon>
       </v-btn>
     </v-speed-dial>

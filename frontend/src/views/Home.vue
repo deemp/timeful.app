@@ -1,10 +1,10 @@
 <template>
   <span>
     <div
-      class="tw-mx-auto tw-mb-24 tw-mt-7 tw-max-w-6xl tw-space-y-4 sm:tw-mb-12"
+      class="tw:mx-auto tw:mb-24 tw:mt-7 tw:max-w-6xl tw:space-y-4 tw:sm:mb-12"
     >
       <!-- Preload images -->
-      <div class="tw-hidden">
+      <div class="tw:hidden">
         <img src="@/assets/doodles/boba/0.jpg" alt="preload" />
         <img src="@/assets/doodles/boba/1.jpg" alt="preload" />
         <img src="@/assets/doodles/boba/2.jpg" alt="preload" />
@@ -16,7 +16,7 @@
       </div>
       <div
         v-if="loading && !eventsNotEmpty"
-        class="tw-flex tw-h-[calc(100vh-10rem)] tw-w-full tw-items-center tw-justify-center"
+        class="tw:flex tw:h-[calc(100vh-10rem)] tw:w-full tw:items-center tw:justify-center"
       >
         <v-progress-circular
           indeterminate
@@ -32,22 +32,22 @@
 
       <div
         v-if="!loading || eventsNotEmpty"
-        class="tw-rounded-md tw-px-6 tw-py-4 sm:tw-mx-4 sm:tw-bg-[#f3f3f366]"
+        class="tw:rounded-md tw:px-6 tw:py-4 tw:sm:mx-4 tw:sm:bg-[#f3f3f366]"
       >
         <div
-          class="tw-mb-3 tw-text-xl tw-font-medium tw-text-dark-green sm:tw-text-2xl"
+          class="tw:mb-3 tw:text-xl tw:font-medium tw:text-dark-green tw:sm:text-2xl"
         >
           Tools
         </div>
-        <div class="tw-flex tw-flex-row tw-items-center tw-gap-2">
+        <div class="tw:flex tw:flex-row tw:items-center tw:gap-2">
           <div
-            class="tw-cursor-pointer tw-text-sm tw-font-normal tw-text-dark-gray tw-underline"
+            class="tw:cursor-pointer tw:text-sm tw:font-normal tw:text-dark-gray tw:underline"
             @click="convertW2M"
           >
             Convert When2meet to Timeful
           </div>
           <div
-            class="tw-cursor-pointer tw-text-sm tw-font-normal tw-text-dark-gray tw-underline"
+            class="tw:cursor-pointer tw:text-sm tw:font-normal tw:text-dark-gray tw:underline"
             @click="importTimeful"
           >
             Import Timeful Event
@@ -55,16 +55,16 @@
         </div>
       </div>
 
-      <div v-if="!loading || eventsNotEmpty" class="tw-flex tw-justify-center">
+      <div v-if="!loading || eventsNotEmpty" class="tw:flex tw:justify-center">
         <div
-          class="animate-boba tw-size-48 tw-bg-contain tw-bg-no-repeat sm:tw-size-48"
+          class="animate-boba tw:size-48 tw:bg-contain tw:bg-no-repeat tw:sm:size-48"
         ></div>
       </div>
 
-      <div class="tw-flex tw-flex-col tw-items-center tw-justify-between">
+      <div class="tw:flex tw:flex-col tw:items-center tw:justify-between">
         <router-link
           v-if="privacyPolicyEnabled"
-          class="tw-text-xs tw-font-medium tw-text-gray"
+          class="tw:text-xs tw:font-medium tw:text-gray"
           :to="{ name: 'privacy-policy' }"
         >
           Privacy Policy

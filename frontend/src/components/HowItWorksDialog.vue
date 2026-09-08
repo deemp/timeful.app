@@ -2,7 +2,7 @@
   <v-dialog
     :model-value="modelValue"
     max-width="800px"
-    content-class="tw-m-0 pa-0"
+    content-class="tw:m-0 pa-0"
     @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
     <div class="video-container">

@@ -168,7 +168,7 @@ export function useTimedGridPresentation(
     if (opts.isSignUp.value) {
       return Array.from(
         { length: opts.grid.days.value.length * opts.grid.times.value.length },
-        () => ({ class: "tw-bg-light-gray ", style: {} }),
+        () => ({ class: "tw:bg-light-gray ", style: {} }),
       )
     }
 

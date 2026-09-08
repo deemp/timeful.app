@@ -74,7 +74,7 @@ export function resolveSnapshotEntries({
     const label = findByText("div, span, button", "Dates and times")
     return (
       label?.closest(
-        ".tw-relative.tw-flex.tw-w-fit.tw-items-center.tw-rounded-md.tw-border.tw-border-outline-neutral",
+        ".tw\\:relative.tw\\:flex.tw\\:w-fit.tw\\:items-center.tw\\:rounded-md.tw\\:border.tw\\:border-outline-neutral",
       ) ?? null
     )
   }
@@ -112,7 +112,7 @@ export function resolveSnapshotEntries({
   function findRespondentRow() {
     const respondentName = findByContainsText("div, span", "khh")
     return (
-      respondentName?.closest(".respondent-row, .tw-group") ??
+      respondentName?.closest(".respondent-row, .tw\\:group") ??
       respondentName?.parentElement?.parentElement ??
       null
     )
@@ -204,7 +204,7 @@ export function resolveSnapshotEntries({
         return findDaysOnlyToggleRoot()
       case "daysOnlyToggleFrame":
         return findDaysOnlyToggleRoot()?.querySelector(
-          ".tw-absolute.tw-h-full.tw-rounded-md.tw-border.tw-transition-all",
+          ".tw\\:absolute.tw\\:h-full.tw\\:rounded-md.tw\\:border.tw\\:transition-all",
         ) ?? null
       case "daysOnlyToggleActiveLabel":
         return (

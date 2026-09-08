@@ -174,7 +174,7 @@ describe("NewDialog", () => {
 
   it("only renders the wrapper header when tabs are visible and otherwise delegates close actions to child dialogs", () => {
     expect(newDialogSource).toContain(
-      '<div v-if="!_noTabs" class="tw-flex tw-rounded sm:-tw-mt-4 sm:tw-px-8">',
+      '<div v-if="!_noTabs" class="tw:flex tw:rounded tw:sm:-mt-4 tw:sm:px-8">',
     )
     expect(newDialogSource).toContain(':hide-dialog-actions="!_noTabs"')
     expect(newDialogSource).not.toContain(':key="`event-${modelValue}`"')
@@ -183,7 +183,7 @@ describe("NewDialog", () => {
   it("emits close through the dialog model and resets the active child form", async () => {
     const wrapper = mountDialog()
 
-    await wrapper.get(".tw-self-center").trigger("click")
+    await wrapper.get(".tw\\:self-center").trigger("click")
 
     expect(wrapper.emitted("update:modelValue")).toEqual([[false]])
     expect(editableFormState.reset).toHaveBeenCalledTimes(1)
@@ -207,7 +207,7 @@ describe("NewDialog", () => {
 
     const wrapper = mountDialog({ edit: true })
 
-    await wrapper.get(".tw-self-center").trigger("click")
+    await wrapper.get(".tw\\:self-center").trigger("click")
 
     expect(wrapper.emitted("update:modelValue")).toBeUndefined()
     expect(
@@ -222,7 +222,7 @@ describe("NewDialog", () => {
 
     const wrapper = mountDialog({ edit: true })
 
-    await wrapper.get(".tw-self-center").trigger("click")
+    await wrapper.get(".tw\\:self-center").trigger("click")
 
     expect(
       wrapper.get('[data-testid="unsaved-dialog"]').attributes("data-open"),

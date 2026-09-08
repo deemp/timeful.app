@@ -131,7 +131,7 @@ test("Responses panel stacks above an overlapping mobile tooltip", async ({
   await selectedSlot.dispatchEvent("click")
 
   const overlay = page.locator(".schedule-overlap-mobile-overlay")
-  const tooltip = page.locator(".tw-fixed.timeful-tooltip-layer")
+  const tooltip = page.locator(".tw\\:fixed.timeful-tooltip-layer")
   await expect(overlay.getByText("Responses", { exact: true })).toBeVisible()
   await expect(tooltip).toBeVisible()
 
@@ -142,7 +142,7 @@ test("Responses panel stacks above an overlapping mobile tooltip", async ({
           ".schedule-overlap-mobile-overlay",
         )
         const tooltipElement = document.querySelector<HTMLElement>(
-          ".tw-fixed.timeful-tooltip-layer",
+          ".tw\\:fixed.timeful-tooltip-layer",
         )
         if (!overlayElement || !tooltipElement) return false
 
@@ -192,7 +192,7 @@ test("mobile action bar stacks above an overlapping mobile tooltip", async ({
   await selectedSlot.scrollIntoViewIfNeeded()
   await selectedSlot.dispatchEvent("click")
 
-  const tooltip = page.locator(".tw-fixed.timeful-tooltip-layer")
+  const tooltip = page.locator(".tw\\:fixed.timeful-tooltip-layer")
   await expect(tooltip).toBeVisible()
 
   await expect
@@ -202,7 +202,7 @@ test("mobile action bar stacks above an overlapping mobile tooltip", async ({
           ".mobile-event-action-bar",
         )
         const tooltipElement = document.querySelector<HTMLElement>(
-          ".tw-fixed.timeful-tooltip-layer",
+          ".tw\\:fixed.timeful-tooltip-layer",
         )
         if (!actionBarElement || !tooltipElement) return false
 
@@ -246,13 +246,22 @@ test("touching a timeslot keeps its mobile tooltip anchored while scrolling", as
     selectedSlotBox.y + selectedSlotBox.height / 2,
   )
 
-  const tooltip = page.locator(".tw-fixed.timeful-tooltip-layer")
+  const tooltip = page.locator(".tw\\:fixed.timeful-tooltip-layer")
   await expect(tooltip).toBeVisible()
   expect(await tooltip.textContent()).not.toBe("")
+  const selectedContent = await tooltip.textContent()
 
   await page.evaluate(() => {
     window.scrollBy({ top: 50 })
   })
+
+  // Firefox can emit mouseover for a different cell under the resting cursor
+  // after scrolling. Deliver that event explicitly so its timing cannot hide
+  // the regression; selection above still uses a native touchscreen tap.
+  await page
+    .locator('#drag-section .timeslot[data-row="2"][data-col="0"]')
+    .dispatchEvent("mouseover")
+  await expect(tooltip).toHaveText(selectedContent ?? "")
 
   await expect
     .poll(async () => {
@@ -261,14 +270,31 @@ test("touching a timeslot keeps its mobile tooltip anchored while scrolling", as
           '#drag-section .timeslot[data-row="1"][data-col="0"]',
         )
         const tooltipElement = document.querySelector<HTMLElement>(
-          ".tw-fixed.timeful-tooltip-layer",
+          ".tw\\:fixed.timeful-tooltip-layer",
         )
         if (!slot || !tooltipElement) return false
 
         const slotRect = slot.getBoundingClientRect()
+        const tooltipRect = tooltipElement.getBoundingClientRect()
+        // The shared tooltip clamps itself to an 8px viewport margin, so the
+        // anchored slot's center may legally rest at the clamp boundary, and
+        // the written left reflects the width measured at render time. Allow
+        // 1px for that boundary and subpixel jitter; the top check still
+        // rejects any tooltip re-pointed to a different slot.
+        const halfTooltipWidth = tooltipRect.width / 2
+        const clampMin = 8 + halfTooltipWidth
+        const clampMax = Math.max(
+          window.innerWidth - 8 - halfTooltipWidth,
+          clampMin,
+        )
+        const anchoredLeft = Math.min(
+          Math.max(slotRect.left + slotRect.width / 2, clampMin),
+          clampMax,
+        )
         return (
-          Number.parseFloat(tooltipElement.style.left) ===
-            slotRect.left + slotRect.width / 2 &&
+          Math.abs(
+            Number.parseFloat(tooltipElement.style.left) - anchoredLeft,
+          ) <= 1 &&
           Number.parseFloat(tooltipElement.style.top) ===
             (tooltipElement.style.transform.includes("calc")
               ? slotRect.top
@@ -302,12 +328,12 @@ test("mobile grid tooltip stays below the top navbar when scrolled underneath it
     selectedSlotBox.y + selectedSlotBox.height / 2,
   )
 
-  const tooltip = page.locator(".tw-fixed.timeful-tooltip-layer")
+  const tooltip = page.locator(".tw\\:fixed.timeful-tooltip-layer")
   await expect(tooltip).toBeVisible()
 
   await page.evaluate(() => {
     const header = document.querySelector<HTMLElement>(
-      ".tw-fixed.tw-h-14.tw-w-screen",
+      ".tw\\:fixed.tw\\:h-14.tw\\:w-screen",
     )
     const slot = document.querySelector<HTMLElement>(
       '#drag-section .timeslot[data-row="1"][data-col="0"]',
@@ -331,10 +357,10 @@ test("mobile grid tooltip stays below the top navbar when scrolled underneath it
     .poll(() =>
       page.evaluate(() => {
         const header = document.querySelector<HTMLElement>(
-          ".tw-fixed.tw-h-14.tw-w-screen",
+          ".tw\\:fixed.tw\\:h-14.tw\\:w-screen",
         )
         const tooltipElement = document.querySelector<HTMLElement>(
-          ".tw-fixed.timeful-tooltip-layer",
+          ".tw\\:fixed.timeful-tooltip-layer",
         )
         if (!header || !tooltipElement) return false
 

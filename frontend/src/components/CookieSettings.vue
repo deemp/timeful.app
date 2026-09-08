@@ -1,19 +1,19 @@
 <template>
-  <div class="mx-auto tw-w-full tw-px-5 tw-pt-10 md:tw-w-2/3 lg:tw-w-1/2">
-    <h2 class="tw-mb-2.5 tw-text-xl tw-font-semibold">Cookie Preferences</h2>
-    <div class="tw-mb-5 tw-flex tw-flex-col tw-gap-6">
-      <div class="tw-rounded-lg tw-border tw-bg-white tw-p-5">
+  <div class="mx-auto tw:w-full tw:px-5 tw:pt-10 tw:md:w-2/3 tw:lg:w-1/2">
+    <h2 class="tw:mb-2.5 tw:text-xl tw:font-semibold">Cookie Preferences</h2>
+    <div class="tw:mb-5 tw:flex tw:flex-col tw:gap-6">
+      <div class="tw:rounded-lg tw:border tw:bg-white tw:p-5">
         <v-checkbox v-model="preferences.necessary" disabled>
           <template #label>
             <div>
-              <strong class="tw-text-gray-800 tw-text-base tw-font-semibold">
+              <strong class="tw:text-gray-800 tw:text-base tw:font-semibold">
                 Necessary Cookies
               </strong>
             </div>
           </template>
         </v-checkbox>
         <div
-          class="tw-text-gray-600 tw-mt-4 tw-pl-0 tw-text-sm tw-leading-relaxed md:tw-mt-0 md:tw-pl-8"
+          class="tw:text-gray-600 tw:mt-4 tw:pl-0 tw:text-sm tw:leading-relaxed tw:md:mt-0 tw:md:pl-8"
         >
           <p>
             These cookies are essential for the website to function properly.
@@ -23,18 +23,18 @@
         </div>
       </div>
 
-      <div class="tw-rounded-lg tw-border tw-bg-white tw-p-5">
+      <div class="tw:rounded-lg tw:border tw:bg-white tw:p-5">
         <v-checkbox v-model="preferences.analytics">
           <template #label>
             <div>
-              <strong class="tw-text-gray-800 tw-text-base tw-font-semibold">
+              <strong class="tw:text-gray-800 tw:text-base tw:font-semibold">
                 Analytics Cookies
               </strong>
             </div>
           </template>
         </v-checkbox>
         <div
-          class="tw-text-gray-600 tw-mt-4 tw-pl-0 tw-text-sm tw-leading-relaxed md:tw-mt-0 md:tw-pl-8"
+          class="tw:text-gray-600 tw:mt-4 tw:pl-0 tw:text-sm tw:leading-relaxed tw:md:mt-0 tw:md:pl-8"
         >
           <p>
             <strong>Services used:</strong> PostHog Analytics, Google Analytics
@@ -49,21 +49,21 @@
       </div>
     </div>
 
-    <div class="tw-flex tw-flex-wrap tw-gap-2">
+    <div class="tw:flex tw:flex-wrap tw:gap-2">
       <button
-        class="tw-rounded-md tw-bg-blue tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white hover:tw-bg-light-blue"
+        class="tw:rounded-md tw:bg-blue tw:px-4 tw:py-2 tw:text-sm tw:font-medium tw:text-white tw:hover:bg-light-blue"
         @click="savePreferences"
       >
         Save Preferences
       </button>
       <button
-        class="tw-rounded-md tw-bg-green tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white hover:tw-bg-dark-green"
+        class="tw:rounded-md tw:bg-green tw:px-4 tw:py-2 tw:text-sm tw:font-medium tw:text-white tw:hover:bg-dark-green"
         @click="acceptAll"
       >
         Accept All
       </button>
       <button
-        class="tw-rounded-md tw-bg-very-dark-gray tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white"
+        class="tw:rounded-md tw:bg-very-dark-gray tw:px-4 tw:py-2 tw:text-sm tw:font-medium tw:text-white"
         @click="rejectAll"
       >
         Reject All (except necessary)

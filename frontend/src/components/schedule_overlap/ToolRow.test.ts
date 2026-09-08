@@ -95,15 +95,15 @@ const baseToolRow = {
 describe("ToolRow", () => {
   it("places the compact time-format switch and timezone selector on one row", () => {
     expect(toolRowSource).toContain(
-      "compact && 'tool-row--compact tw-min-h-0 tw-justify-start'",
+      "compact && 'tool-row--compact tw:min-h-0 tw:justify-start'",
     )
     expect(toolRowSource).toContain(
-      "compact && !mobileRow\n            ? 'tw-w-full tw-flex-col tw-items-start tw-justify-start tw-gap-0 tw-pb-0 tw-pt-14'\n            : ''",
+      "compact && !mobileRow\n            ? 'tw:w-full tw:flex-col tw:items-start tw:justify-start tw:gap-0 tw:pb-0 tw:pt-14'\n            : ''",
     )
     expect(toolRowSource).toContain(
-      "mobileRow &&\n            'tw-w-full tw-flex-col tw-items-stretch tw-justify-start tw-gap-y-2 tw-py-1'",
+      "mobileRow &&\n            'tw:w-full tw:flex-col tw:items-stretch tw:justify-start tw:gap-y-2 tw:py-1'",
     )
-    expect(toolRowSource).toContain('v-if="isCompact" class="tw-shrink-0"')
+    expect(toolRowSource).toContain('v-if="isCompact" class="tw:shrink-0"')
     expect(toolRowSource).toContain("<TimeFormatToggle")
     expect(toolRowSource).toContain(':model-value="toolRow.timeType"')
     expect(toolRowSource).toContain(
@@ -111,7 +111,7 @@ describe("ToolRow", () => {
     )
     expect(toolRowSource).toContain(':compact="isCompact"')
     expect(toolRowSource).toContain(
-      'v-if="!isCompact"\n              class="tw-order-first tw-text-sm tw-text-black"',
+      'v-if="!isCompact"\n              class="tw:order-first tw:text-sm tw:text-black"',
     )
     expect(toolRowSource).toContain('field-variant="solo"')
     expect(toolRowSource).toContain(':compact-button="true"')
@@ -128,7 +128,7 @@ describe("ToolRow", () => {
     )
     expect(toolRowSource).toContain('v-if="toolRow.showMobileNumDaysSwitch"')
     expect(toolRowSource).toContain(
-      'v-if="!toolRow.event.daysOnly"\n            class="tw-flex tw-w-full tw-flex-row tw-items-center tw-gap-x-2"\n          >',
+      'v-if="!toolRow.event.daysOnly"\n            class="tw:flex tw:w-full tw:flex-row tw:items-center tw:gap-x-2"\n          >',
     )
     expect(toolRowSource).toContain("fit-content")
     expect(toolRowSource).toContain("fixed-width")
@@ -139,11 +139,11 @@ describe("ToolRow", () => {
       'v-if="toolRow.numResponses >= 1 || collapseDisabledTimesDirect"',
     )
     expect(toolRowSource).toContain(
-      'v-if="toolRow.numResponses >= 1 || collapseDisabledTimesDirect"\n            class="tw-flex tw-w-full tw-items-center"',
+      'v-if="toolRow.numResponses >= 1 || collapseDisabledTimesDirect"\n            class="tw:flex tw:w-full tw:items-center"',
     )
     expect(toolRowSource).toContain('id="mobile-show-best-times-toggle"')
     expect(toolRowSource).toContain('v-if="toolRow.numResponses >= 1"')
-    expect(toolRowSource).toContain("schedule-overlap-compact-switch tw-w-full")
+    expect(toolRowSource).toContain("schedule-overlap-compact-switch tw:w-full")
     expect(toolRowSource).toContain(':model-value="toolRow.showBestTimes"')
     expect(toolRowSource).toContain(
       "toolRow.actions.updateShowBestTimes(!!val)",
@@ -152,12 +152,12 @@ describe("ToolRow", () => {
       'Show best {{ toolRow.event.daysOnly ? "days" : "times" }}',
     )
     expect(toolRowSource).toContain(
-      "tw-whitespace-nowrap tw-text-sm tw-text-black",
+      "tw:whitespace-nowrap tw:text-sm tw:text-black",
     )
     expect(toolRowSource).toContain("<!-- Row 3: More options -->")
     expect(toolRowSource).toContain("<EventOptions")
     expect(toolRowSource).toContain('variant="menu"')
-    expect(toolRowSource).toContain('menu-activator-class="tw-w-fit"')
+    expect(toolRowSource).toContain('menu-activator-class="tw:w-fit"')
     expect(toolRowSource).toContain('menu-button-label="More options"')
     expect(toolRowSource).toContain('menu-button-size="32"')
     expect(toolRowSource).toContain(':include-show-best-times="false"')
@@ -533,11 +533,11 @@ describe("ToolRow", () => {
 
     const rowOne = wrapper
       .findAll("div")
-      .find((div) => div.classes().includes("tw-flex-row"))
+      .find((div) => div.classes().includes("tw:flex-row"))
     expect(rowOne).toBeDefined()
-    expect(rowOne?.classes()).toContain("tw-gap-x-2")
-    expect(rowOne?.classes()).not.toContain("tw-justify-between")
-    expect(rowOne?.classes()).not.toContain("tw-justify-center")
+    expect(rowOne?.classes()).toContain("tw:gap-x-2")
+    expect(rowOne?.classes()).not.toContain("tw:justify-between")
+    expect(rowOne?.classes()).not.toContain("tw:justify-center")
 
     isPhoneValue.value = false
   })
@@ -580,11 +580,11 @@ describe("ToolRow", () => {
 
     const rowOne = wrapper
       .findAll("div")
-      .find((div) => div.classes().includes("tw-flex-row"))
+      .find((div) => div.classes().includes("tw:flex-row"))
     expect(rowOne).toBeDefined()
-    expect(rowOne?.classes()).toContain("tw-gap-x-2")
-    expect(rowOne?.classes()).not.toContain("tw-justify-center")
-    expect(rowOne?.classes()).not.toContain("tw-justify-between")
+    expect(rowOne?.classes()).toContain("tw:gap-x-2")
+    expect(rowOne?.classes()).not.toContain("tw:justify-center")
+    expect(rowOne?.classes()).not.toContain("tw:justify-between")
 
     isPhoneValue.value = false
   })

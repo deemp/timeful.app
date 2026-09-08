@@ -1,29 +1,29 @@
 <template>
   <div
-    :class="toggleState ? '' : 'tw-w-fit tw-min-w-[288px] tw-drop-shadow'"
-    class="tw-flex tw-flex-col tw-rounded-lg tw-bg-white tw-text-black tw-transition-all"
+    :class="toggleState ? '' : 'tw:w-fit tw:min-w-[288px] tw:drop-shadow'"
+    class="tw:flex tw:flex-col tw:rounded-lg tw:bg-white tw:text-black tw:transition-all"
   >
     <v-btn
       v-if="toggleState"
-      class="-tw-ml-2 tw-w-[calc(100%+1rem)] tw-justify-between tw-px-2"
+      class="tw:-ml-2 tw:w-[calc(100%+1rem)] tw:justify-between tw:px-2"
       block
       variant="text"
       @click="toggleShowCalendars"
     >
-      <span class="tw-mr-1 tw-text-base tw-font-medium">My calendars</span>
-      <v-icon :class="`tw-rotate-${showCalendars ? '180' : '0'}`"
+      <span class="tw:mr-1 tw:text-base tw:font-medium">My calendars</span>
+      <v-icon :class="`tw:rotate-${showCalendars ? '180' : '0'}`"
         >mdi-chevron-down</v-icon
       ></v-btn
     >
     <div
       v-else
-      class="tw-border-b tw-border-outline-neutral tw-px-4 tw-py-3 tw-font-medium"
+      class="tw:border-b tw:border-outline-neutral tw:px-4 tw:py-3 tw:font-medium"
     >
       My calendars
     </div>
     <v-expand-transition>
       <span v-if="showCalendars || !toggleState">
-        <div :class="toggleState ? '' : 'tw-px-4 tw-py-2'">
+        <div :class="toggleState ? '' : 'tw:px-4 tw:py-2'">
           <CalendarAccount
             v-for="(account, key) in calendarAccounts"
             :key="key"
@@ -50,7 +50,7 @@
               v-if="allowAddCalendarAccount"
               v-model="addCalendarAccountDialog"
               width="400"
-              content-class="tw-m-0"
+              content-class="tw:m-0"
             >
               <template #activator="{ props: activatorProps }">
                 <div>
@@ -59,13 +59,13 @@
                     color="primary"
                     :class="
                       toggleState
-                        ? '-tw-ml-2 tw-mt-0 tw-w-min tw-px-2'
-                        : '-tw-ml-2 tw-w-fit tw-px-2'
+                        ? 'tw:-ml-2 tw:mt-0 tw:w-min tw:px-2'
+                        : 'tw:-ml-2 tw:w-fit tw:px-2'
                     "
                     v-bind="activatorProps"
                     >+ Add calendar</v-btn
                   >
-                  <p class="tw-mb-0 tw-mt-1 tw-text-xs tw-text-dark-gray">
+                  <p class="tw:mb-0 tw:mt-1 tw:text-xs tw:text-dark-gray">
                     Only your available times are shared with respondents. Your
                     personal event details are never shared.
                   </p>
@@ -79,7 +79,7 @@
               />
             </v-dialog>
           </template>
-          <div v-else class="tw-mt-1 tw-text-xs tw-text-dark-gray">
+          <div v-else class="tw:mt-1 tw:text-xs tw:text-dark-gray">
             Requires sign-in, which is disabled in this build
           </div>
         </div>
@@ -88,7 +88,7 @@
     <v-dialog v-model="removeDialog" width="500" persistent>
       <v-card>
         <v-card-title>Are you sure?</v-card-title>
-        <v-card-text class="tw-text-sm tw-text-dark-gray"
+        <v-card-text class="tw:text-sm tw:text-dark-gray"
           >Are you sure you want to remove
           {{ removePayload.email }}?</v-card-text
         >

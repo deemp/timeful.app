@@ -243,10 +243,10 @@ describe("EventItem", () => {
 
   it("uses explicit compact list density and Vuetify 3 list append slots", () => {
     expect(eventItemSource).toContain(
-      '<v-list class="tw-py-1" density="compact">',
+      '<v-list class="tw:py-1" density="compact">',
     )
     expect(eventItemSource).toContain(
-      '<v-list density="compact" class="tw-py-1">',
+      '<v-list density="compact" class="tw:py-1">',
     )
     expect(eventItemSource).toContain("<template #append>")
     expect(eventItemSource).toContain(

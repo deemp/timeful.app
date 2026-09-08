@@ -1,5 +1,5 @@
 <template>
-  <section v-if="hasAnyOption" class="tw-flex tw-flex-col">
+  <section v-if="hasAnyOption" class="tw:flex tw:flex-col">
     <template v-if="variant === 'menu'">
       <v-menu location="bottom end" offset="8" :close-on-content-click="false">
         <template #activator="{ props: activatorProps }">
@@ -9,17 +9,17 @@
             color="primary"
             :size="menuButtonSize"
             :class="[
-              'tw-min-w-0 tw-rounded-md tw-px-3 tw-text-sm tw-text-green',
+              'tw:min-w-0 tw:rounded-md tw:px-3 tw:text-sm tw:text-green',
               menuActivatorClass,
             ]"
             v-bind="activatorProps"
           >
-            <v-icon size="18" class="tw-mr-1">mdi-tune-vertical</v-icon>
+            <v-icon size="18" class="tw:mr-1">mdi-tune-vertical</v-icon>
             {{ menuButtonLabel }}
           </v-btn>
         </template>
         <v-card min-width="260">
-          <v-card-text class="tw-flex tw-flex-col tw-gap-4 tw-p-4">
+          <v-card-text class="tw:flex tw:flex-col tw:gap-4 tw:p-4">
             <v-switch
               v-if="showBestTimesToggle"
               id="show-best-times-toggle"
@@ -32,7 +32,7 @@
               "
             >
               <template #label>
-                <div class="tw-text-sm tw-text-black">
+                <div class="tw:text-sm tw:text-black">
                   Show best {{ event.daysOnly ? "days" : "times" }}
                 </div>
               </template>
@@ -50,7 +50,7 @@
               "
             >
               <template #label>
-                <div class="tw-text-sm tw-text-black">
+                <div class="tw:text-sm tw:text-black">
                   Collapse disabled times
                 </div>
               </template>
@@ -68,7 +68,7 @@
               "
             >
               <template #label>
-                <div class="tw-text-sm tw-text-black">Start on Monday</div>
+                <div class="tw:text-sm tw:text-black">Start on Monday</div>
               </template>
             </v-switch>
             <v-switch
@@ -83,7 +83,7 @@
               "
             >
               <template #label>
-                <div class="tw-text-sm tw-text-black">
+                <div class="tw:text-sm tw:text-black">
                   Hide if needed {{ event.daysOnly ? "days" : "times" }}
                 </div>
               </template>
@@ -101,7 +101,7 @@
               "
             >
               <template #label>
-                <div class="tw-text-sm tw-text-black">
+                <div class="tw:text-sm tw:text-black">
                   Overlay calendar events
                 </div>
               </template>
@@ -111,8 +111,8 @@
       </v-menu>
     </template>
     <template v-else>
-      <div class="tw-text-base tw-font-medium tw-text-black">Options</div>
-      <div class="tw-flex tw-flex-col tw-gap-4 tw-pt-2">
+      <div class="tw:text-base tw:font-medium tw:text-black">Options</div>
+      <div class="tw:flex tw:flex-col tw:gap-4 tw:pt-2">
         <v-switch
           v-if="showBestTimesToggle"
           id="show-best-times-toggle"
@@ -125,7 +125,7 @@
           "
         >
           <template #label>
-            <div class="tw-text-sm tw-text-black">
+            <div class="tw:text-sm tw:text-black">
               Show best {{ event.daysOnly ? "days" : "times" }}
             </div>
           </template>
@@ -142,7 +142,7 @@
           "
         >
           <template #label>
-            <div class="tw-text-sm tw-text-black">
+            <div class="tw:text-sm tw:text-black">
               Hide if needed {{ event.daysOnly ? "days" : "times" }}
             </div>
           </template>
@@ -160,7 +160,7 @@
           "
         >
           <template #label>
-            <div class="tw-text-sm tw-text-black">Collapse disabled times</div>
+            <div class="tw:text-sm tw:text-black">Collapse disabled times</div>
           </template>
         </v-switch>
         <v-switch
@@ -175,7 +175,7 @@
           "
         >
           <template #label>
-            <div class="tw-text-sm tw-text-black">Overlay calendar events</div>
+            <div class="tw:text-sm tw:text-black">Overlay calendar events</div>
           </template>
         </v-switch>
         <v-switch
@@ -191,7 +191,7 @@
           "
         >
           <template #label>
-            <div class="tw-text-sm tw-text-black">Start on Monday</div>
+            <div class="tw:text-sm tw:text-black">Start on Monday</div>
           </template>
         </v-switch>
       </div>

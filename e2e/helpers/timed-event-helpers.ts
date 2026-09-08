@@ -520,7 +520,7 @@ export async function clickDateCell(
   date: string,
 ): Promise<void> {
   await editorCard
-    .locator(`[data-v-date="${date}"]:visible button`)
+    .locator(`[data-v-date="${date}"]:visible`)
     .first()
     .click({ force: true })
 }
@@ -530,11 +530,16 @@ export async function collectDatePickerState(
 ): Promise<DateCellState[]> {
   return editorCard.evaluate((card) =>
     Array.from(card.querySelectorAll("[data-v-date]")).map((element) => {
-      const button = element.querySelector("button")
+      // Vuetify 4 stamps data-v-date on the day button itself; v3 had it on
+      // the wrapper cell with the button inside. Support both shapes.
+      const button = element.matches("button")
+        ? element
+        : element.querySelector("button")
+      const dayCell = element.closest(".v-date-picker-month__day")
       return {
         date: element.getAttribute("data-v-date"),
-        className: element.className,
-        ariaPressed: element.getAttribute("aria-pressed"),
+        className: (dayCell ?? element).className,
+        ariaPressed: button?.getAttribute("aria-pressed") ?? null,
         buttonClassName: button?.className ?? "",
         buttonDisabled: button?.disabled ?? false,
         text: button?.textContent.replace(/\s+/g, " ").trim() ?? "",
@@ -754,7 +759,7 @@ export async function collectGridState(page: Page): Promise<GridState> {
 
     const visibleDateStrings = Array.from(
       document.querySelectorAll<HTMLElement>(
-        ".schedule-overlap-time-grid__header .tw-text-\\[12px\\]",
+        ".schedule-overlap-time-grid__header .tw\\:text-\\[12px\\]",
       ),
     ).map((element) => normalizeText(element.textContent))
 
@@ -820,7 +825,8 @@ export async function countGridCellsByClass(
   page: Page,
   classFragment: string,
 ): Promise<number> {
-  return page.locator(`#drag-section .timeslot.${classFragment}`).count()
+  const escapedFragment = classFragment.replace(/:/g, "\\:")
+  return page.locator(`#drag-section .timeslot.${escapedFragment}`).count()
 }
 
 export function rowIndexForTime(
@@ -875,6 +881,96 @@ function getActiveTimezoneOptions(page: Page): Locator {
 
 function getAnyVisibleTimezoneOptions(page: Page): Locator {
   return page.locator('[data-testid="timezone-select-option"]:visible')
+}
+
+// Vuetify 4 renders v-select menu items through a renderless virtual scroll,
+// so only a window of the ~400 timezone options exists in the DOM. Scroll the
+// active menu's list until the requested option renders; resolves immediately
+// when the option is already rendered or no menu/list is present.
+async function scrollActiveTimezoneMenuToOption(
+  page: Page,
+  target: { optionValue?: string; optionLabelPattern?: RegExp },
+): Promise<void> {
+  if (!target.optionValue && !target.optionLabelPattern) {
+    return
+  }
+  const menu = page.locator(".v-overlay--active.v-menu").first()
+  if ((await menu.count()) === 0) {
+    return
+  }
+  await menu.evaluate(
+    (overlay, target) =>
+      new Promise<boolean>((resolve) => {
+        const list = overlay.querySelector(".v-list")
+        if (!list) {
+          resolve(false)
+          return
+        }
+        const matcher = target.optionLabelPattern
+          ? new RegExp(
+              target.optionLabelPattern.source,
+              target.optionLabelPattern.flags,
+            )
+          : null
+        const matches = () => {
+          for (const item of list.querySelectorAll(
+            '[data-testid="timezone-select-option"]',
+          )) {
+            if (
+              target.optionValue &&
+              item.getAttribute("data-timezone-value") === target.optionValue
+            ) {
+              return true
+            }
+            if (matcher) {
+              const title =
+                item.querySelector(".timezone-select__item-title")
+                  ?.textContent ?? ""
+              if (matcher.test(title)) {
+                return true
+              }
+            }
+          }
+          return false
+        }
+        if (matches()) {
+          resolve(true)
+          return
+        }
+        // The menu opens scrolled to the selected item, which may sit below
+        // the requested option; scan from the top of the list downward.
+        list.scrollTop = 0
+        let previousScrollTop = -1
+        const step = () => {
+          if (matches()) {
+            resolve(true)
+            return
+          }
+          const atEnd =
+            list.scrollTop + list.clientHeight >= list.scrollHeight - 1
+          if (atEnd || list.scrollTop === previousScrollTop) {
+            resolve(false)
+            return
+          }
+          previousScrollTop = list.scrollTop
+          list.scrollTop = Math.min(
+            list.scrollTop + list.clientHeight * 0.8,
+            list.scrollHeight,
+          )
+          requestAnimationFrame(step)
+        }
+        step()
+      }),
+    {
+      optionValue: target.optionValue,
+      optionLabelPattern: target.optionLabelPattern
+        ? {
+            source: target.optionLabelPattern.source,
+            flags: target.optionLabelPattern.flags,
+          }
+        : undefined,
+    },
+  )
 }
 
 export async function changeTimezone(
@@ -934,6 +1030,7 @@ export async function changeTimezone(
       { timeout: 15000 },
     )
     .toBeGreaterThan(0)
+  await scrollActiveTimezoneMenuToOption(page, normalizedOptions)
   const timezoneItems =
     (await getActiveTimezoneOptions(page).count()) > 0
       ? getActiveTimezoneOptions(page)
@@ -1125,6 +1222,7 @@ export async function changeDisplayTimezone(
       { timeout: 15000 },
     )
     .toBeGreaterThan(0)
+  await scrollActiveTimezoneMenuToOption(page, options)
   const timezoneItems =
     (await getActiveTimezoneOptions(page).count()) > 0
       ? getActiveTimezoneOptions(page)
@@ -1208,7 +1306,7 @@ export async function readTimeGridHeaderGeometry(
         htmlChild.classList.contains("schedule-overlap-time-grid__day-column")
       ) {
         const dateElement = htmlChild.querySelector<HTMLElement>(
-          ".tw-text-\\[12px\\]",
+          ".tw\\:text-\\[12px\\]",
         )
         columns.push({
           label: normalizeText(htmlChild.textContent),

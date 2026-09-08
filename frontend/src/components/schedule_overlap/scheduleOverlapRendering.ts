@@ -183,7 +183,7 @@ export const getBaseTimeslotClassStyle = ({
           parsedResponses[respondentId].ifNeeded &&
           zdtSetHas(parsedResponses[respondentId].ifNeeded, date)
         ) {
-          c += "tw-bg-yellow "
+          c += "tw:bg-yellow "
         } else {
           s.backgroundColor = "#00994C88"
         }
@@ -225,7 +225,7 @@ export const getBaseTimeslotClassStyle = ({
       const selected = inDragRange(row, col)
         ? dragType === DRAG_TYPES.ADD
         : zdtSetHas(tempTimes, date)
-      c += selected ? "tw-bg-white " : "tw-bg-light-gray-stroke "
+      c += selected ? "tw:bg-white " : "tw:bg-light-gray-stroke "
     } else {
       s.backgroundColor = UNAVAILABLE_BG
       const inRange = inDragRange(row, col)
@@ -234,13 +234,13 @@ export const getBaseTimeslotClassStyle = ({
           if (availabilityType === availabilityTypes.AVAILABLE) {
             s.backgroundColor = "#00994C77"
           } else {
-            c += "tw-bg-yellow "
+            c += "tw:bg-yellow "
           }
         }
       } else if (zdtSetHas(availability, date)) {
         s.backgroundColor = "#00994C77"
       } else if (zdtSetHas(ifNeeded, date)) {
-        c += "tw-bg-yellow "
+        c += "tw:bg-yellow "
       }
     }
   }
@@ -251,7 +251,7 @@ export const getBaseTimeslotClassStyle = ({
         parsedResponses[curRespondent].ifNeeded &&
         zdtSetHas(parsedResponses[curRespondent].ifNeeded, date)
       ) {
-        c += "tw-bg-yellow "
+        c += "tw:bg-yellow "
       } else {
         s.backgroundColor = "#00994C77"
       }
@@ -350,7 +350,7 @@ export const getTimeGridTimeslotClassStyle = ({
     curTimeslot.col === baseArgs.col &&
     !isDisabled
   ) {
-    cs.class += "tw-relative schedule-overlap-time-grid__selected-timeslot "
+    cs.class += "tw:relative schedule-overlap-time-grid__selected-timeslot "
   } else {
     const splitStartOffsetMinutes = splitStartHoursOffset?.total("minutes")
     const offsetMinutes = timeHoursOffset?.total("minutes")
@@ -369,45 +369,45 @@ export const getTimeGridTimeslotClassStyle = ({
               .minute
           : null
     if (isFirstSplit && baseArgs.row === 0) {
-      cs.class += "tw-border-t "
+      cs.class += "tw:border-t "
       cs.style.borderTopStyle = "solid"
       cs.style.borderTopWidth = GRID_LINE_WIDTH
       cs.style.borderTopColor = GRID_LINE_COLOR
     } else if (localMinute === 0) {
-      cs.class += "tw-border-t "
+      cs.class += "tw:border-t "
       cs.style.borderTopStyle = "solid"
       cs.style.borderTopWidth = GRID_LINE_WIDTH
       cs.style.borderTopColor = GRID_LINE_COLOR
     } else if (localMinute === 30) {
-      cs.class += "tw-border-t "
+      cs.class += "tw:border-t "
       cs.style.borderTopStyle = "dashed"
       cs.style.borderTopWidth = GRID_LINE_WIDTH
       cs.style.borderTopColor = GRID_LINE_COLOR
     }
 
-    cs.class += "tw-border-r "
+    cs.class += "tw:border-r "
     cs.style.borderRightStyle = "solid"
     cs.style.borderRightWidth = GRID_LINE_WIDTH
     if (isLeftDateBoundary) {
-      cs.class += "tw-border-l "
+      cs.class += "tw:border-l "
       cs.style.borderLeftStyle = "solid"
       cs.style.borderLeftWidth = GRID_LINE_WIDTH
     }
     if (isRightDateBoundary) {
-      cs.class += "tw-border-r "
+      cs.class += "tw:border-r "
     }
     if (!isFirstSplit && baseArgs.row === baseArgs.firstSplitLength) {
-      cs.class += "tw-border-t "
+      cs.class += "tw:border-t "
       cs.style.borderTopStyle = "solid"
       cs.style.borderTopWidth = GRID_LINE_WIDTH
     }
     if (isFirstSplit && baseArgs.row === baseArgs.firstSplitLength - 1) {
-      cs.class += "tw-border-b "
+      cs.class += "tw:border-b "
       cs.style.borderBottomStyle = "solid"
       cs.style.borderBottomWidth = GRID_LINE_WIDTH
     }
     if (!isFirstSplit && baseArgs.row === baseArgs.lastRow) {
-      cs.class += "tw-border-b "
+      cs.class += "tw:border-b "
       cs.style.borderBottomStyle = "solid"
       cs.style.borderBottomWidth = GRID_LINE_WIDTH
     }
@@ -417,7 +417,7 @@ export const getTimeGridTimeslotClassStyle = ({
   }
 
   if (isDisabled) {
-    cs.class += "tw-bg-gray "
+    cs.class += "tw:bg-gray "
   }
   if (cs.style.backgroundColor === UNAVAILABLE_BG) {
     cs.style.backgroundColor = UNAVAILABLE_BG_TIME_GRID
@@ -456,10 +456,10 @@ export const buildTimeGridTimeslotClassStyles = ({
         isDisabled: !enabledDate,
       })
       if (cellState === "outside_range") {
-        classStyle.class += "tw-bg-gray "
+        classStyle.class += "tw:bg-gray "
       }
       if (!date && enabledDate) {
-        classStyle.class += "tw-bg-light-gray-stroke "
+        classStyle.class += "tw:bg-light-gray-stroke "
       }
       out.push(classStyle)
     }
@@ -485,10 +485,10 @@ export const buildTimeGridTimeslotClassStyles = ({
         isDisabled: !enabledDate,
       })
       if (cellState === "outside_range") {
-        classStyle.class += "tw-bg-gray "
+        classStyle.class += "tw:bg-gray "
       }
       if (!date && enabledDate) {
-        classStyle.class += "tw-bg-light-gray-stroke "
+        classStyle.class += "tw:bg-light-gray-stroke "
       }
       out.push(classStyle)
     }
@@ -522,16 +522,16 @@ export const getDayGridTimeslotClassStyle = ({
       state,
     })
     if (state === states.EDIT_AVAILABILITY) {
-      cs.class += "tw-cursor-pointer "
+      cs.class += "tw:cursor-pointer "
     }
     const bg = cs.style.backgroundColor
     if (typeof bg === "string" && bg.startsWith("#")) {
       if (lightOrDark(removeTransparencyFromHex(bg)) === "dark") {
-        cs.class += "tw-text-white "
+        cs.class += "tw:text-white "
       }
     }
   } else {
-    cs = { class: "tw-bg-gray tw-text-dark-gray ", style: {} }
+    cs = { class: "tw:bg-gray tw:text-dark-gray ", style: {} }
   }
 
   if (cs.style.backgroundColor === UNAVAILABLE_BG) {
@@ -545,26 +545,26 @@ export const getDayGridTimeslotClassStyle = ({
     zdtMapGet(monthDayIncluded, baseArgs.date)
   ) {
     cs.class +=
-      "tw-relative schedule-overlap-days-only-grid__selected-timeslot "
+      "tw:relative schedule-overlap-days-only-grid__selected-timeslot "
   }
 
   if (baseArgs.col === 0) {
-    cs.class += "tw-border-l "
+    cs.class += "tw:border-l "
     cs.style.borderLeftStyle = "solid"
     cs.style.borderLeftWidth = GRID_LINE_WIDTH
     cs.style.borderLeftColor = GRID_LINE_COLOR
   }
-  cs.class += "tw-border-r "
+  cs.class += "tw:border-r "
   cs.style.borderRightWidth = GRID_LINE_WIDTH
   cs.style.borderRightStyle = baseArgs.col !== 6 ? "dashed" : "solid"
   cs.style.borderRightColor = GRID_LINE_COLOR
   if (baseArgs.row === 0) {
-    cs.class += "tw-border-t "
+    cs.class += "tw:border-t "
     cs.style.borderTopStyle = "solid"
     cs.style.borderTopWidth = GRID_LINE_WIDTH
     cs.style.borderTopColor = GRID_LINE_COLOR
   }
-  cs.class += "tw-border-b "
+  cs.class += "tw:border-b "
   cs.style.borderBottomWidth = GRID_LINE_WIDTH
   cs.style.borderBottomStyle =
     baseArgs.row !== baseArgs.lastMonthRow ? "dashed" : "solid"

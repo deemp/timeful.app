@@ -27,7 +27,7 @@ describe("Tooltip", () => {
       },
     })
 
-    const trigger = wrapper.get("div.tw-relative")
+    const trigger = wrapper.get("div.tw\\:relative")
 
     await trigger.trigger("mouseenter")
     expect(wrapper.text()).not.toContain("Hello")
@@ -39,13 +39,13 @@ describe("Tooltip", () => {
 
     await trigger.trigger("mousemove", { clientX: 100, clientY: 200 })
 
-    const tooltip = wrapper.get(".tw-fixed")
+    const tooltip = wrapper.get(".tw\\:fixed")
     expect(tooltip.attributes("style")).toContain("left: 100px;")
     expect(tooltip.attributes("style")).toContain("top: 172px;")
     expect(tooltip.attributes("style")).toContain("translate(-50%, -50%)")
 
     await trigger.trigger("mouseleave")
-    expect(wrapper.find(".tw-fixed").exists()).toBe(false)
+    expect(wrapper.find(".tw\\:fixed").exists()).toBe(false)
   })
 
   it("keeps an overridden position when the pointer moves", async () => {
@@ -57,13 +57,13 @@ describe("Tooltip", () => {
         default: "<button>Trigger</button>",
       },
     })
-    const trigger = wrapper.get("div.tw-relative")
+    const trigger = wrapper.get("div.tw\\:relative")
 
     await trigger.trigger("mouseenter")
     await wrapper.setProps({ positionOverride: { x: 40, y: 200 } })
     await trigger.trigger("mousemove", { clientX: 900, clientY: 700 })
 
-    const tooltip = wrapper.get(".tw-fixed")
+    const tooltip = wrapper.get(".tw\\:fixed")
     expect(tooltip.attributes("style")).toContain("left: 40px;")
     expect(tooltip.attributes("style")).toContain("top: 172px;")
   })
@@ -81,7 +81,7 @@ describe("Tooltip", () => {
 
     await wrapper.vm.$nextTick()
 
-    const tooltip = wrapper.get(".tw-fixed")
+    const tooltip = wrapper.get(".tw\\:fixed")
     expect(tooltip.attributes("style")).toContain("left: 40px;")
     expect(tooltip.attributes("style")).toContain("top: 200px;")
     expect(tooltip.attributes("style")).toContain(
@@ -109,7 +109,7 @@ describe("Tooltip", () => {
 
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find(".tw-fixed").exists()).toBe(true)
+    expect(wrapper.find(".tw\\:fixed").exists()).toBe(true)
   })
 
   it("clamps the horizontal anchor so the tooltip stays fully on screen", async () => {
@@ -126,7 +126,7 @@ describe("Tooltip", () => {
     })
     await wrapper.vm.$nextTick()
 
-    const tooltip = wrapper.get(".tw-fixed")
+    const tooltip = wrapper.get(".tw\\:fixed")
     const tooltipEl = tooltip.element as HTMLElement
     tooltipEl.getBoundingClientRect = () =>
       ({
@@ -179,10 +179,10 @@ describe("Tooltip", () => {
       },
     })
 
-    const tooltip = wrapper.get(".tw-fixed")
-    expect(tooltip.classes()).not.toContain("tw-font-mono")
+    const tooltip = wrapper.get(".tw\\:fixed")
+    expect(tooltip.classes()).not.toContain("tw:font-mono")
 
-    const monoSpans = tooltip.findAll("span.tw-font-mono")
+    const monoSpans = tooltip.findAll("span.tw\\:font-mono")
     expect(monoSpans.map((span) => span.text()).join(" ")).toBe("04:30 04:45")
     expect(tooltip.text()).toContain("Fri, Aug 7, 2026")
     expect(monoSpans.map((span) => span.text())).not.toContain(

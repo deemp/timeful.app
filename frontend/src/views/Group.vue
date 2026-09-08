@@ -1,5 +1,5 @@
 <template>
-  <div v-if="event" class="tw-h-full">
+  <div v-if="event" class="tw:h-full">
     <NotSignedIn v-if="showSignedOutInviteGate" :event="event" :owner="owner" />
     <AccessDenied v-else-if="authUser && accessDenied" />
     <Event

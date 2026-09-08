@@ -121,16 +121,16 @@ describe("useRespondentsListState respondentSlotStatus", () => {
   })
 
   it("maps statuses to their legend tailwind classes", () => {
-    expect(respondentStatusClass("available")).toBe("tw-bg-[#00994C77]")
-    expect(respondentStatusClass("if-needed")).toBe("tw-bg-yellow")
-    expect(respondentStatusClass("unavailable")).toBe("tw-bg-[#F9CCCC]")
+    expect(respondentStatusClass("available")).toBe("tw:bg-[#00994C77]")
+    expect(respondentStatusClass("if-needed")).toBe("tw:bg-yellow")
+    expect(respondentStatusClass("unavailable")).toBe("tw:bg-[#F9CCCC]")
     expect(respondentStatusClass("disabled-inactive")).toBe(
-      "tw-bg-light-gray-stroke",
+      "tw:bg-light-gray-stroke",
     )
     expect(respondentStatusClass("disabled-collapsed")).toBe(
-      "tw-bg-[var(--timeful-collapsed-hours-bg)] respondent-status--collapsed",
+      "tw:bg-(--timeful-collapsed-hours-bg) respondent-status--collapsed",
     )
-    expect(respondentStatusClass("disabled-out-of-range")).toBe("tw-bg-gray")
+    expect(respondentStatusClass("disabled-out-of-range")).toBe("tw:bg-gray")
     expect(respondentStatusClass(null)).toBe("")
   })
 })

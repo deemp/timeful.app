@@ -2,9 +2,9 @@
   <v-chip
     :key="user.email"
     size="x-small"
-    class="tw-flex tw-w-fit tw-items-center tw-bg-light-gray tw-text-very-dark-gray"
+    class="tw:flex tw:w-fit tw:items-center tw:bg-light-gray tw:text-very-dark-gray"
   >
-    <v-avatar class="bg-accent text-uppercase tw-mr-2" start
+    <v-avatar class="bg-accent text-uppercase tw:mr-2" start
       ><img
         v-if="user.picture"
         :src="user.picture"
@@ -18,7 +18,7 @@
     <v-icon
       v-if="removable"
       small
-      class="tw-ml-1"
+      class="tw:ml-1"
       @click="() => removeEmail(user.email ?? '')"
       >mdi-close</v-icon
     >

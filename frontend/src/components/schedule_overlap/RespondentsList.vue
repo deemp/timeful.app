@@ -3,19 +3,19 @@
     <div
       v-if="event.daysOnly && event.eventTimezone"
       data-testid="event-timezone"
-      class="tw-mb-3 tw-rounded-md tw-border tw-border-outline-neutral tw-bg-light-gray tw-px-2 tw-py-1 tw-text-sm tw-text-dark-gray"
+      class="tw:mb-3 tw:rounded-md tw:border tw:border-outline-neutral tw:bg-light-gray tw:px-2 tw:py-1 tw:text-sm tw:text-dark-gray"
     >
       Timezone: {{ eventTimezoneDisplay }}
     </div>
-    <div class="tw-flex tw-items-center tw-font-medium">
+    <div class="tw:flex tw:items-center tw:font-medium">
       <template v-if="!isOwner && event.blindAvailabilityEnabled">
         Your response
       </template>
       <template v-else>
-        <div class="tw-mr-1 tw-text-lg">
+        <div class="tw:mr-1 tw:text-lg">
           {{ !isGroup ? "Responses" : "Members" }}
         </div>
-        <div class="tw-font-normal">
+        <div class="tw:font-normal">
           <template v-if="curRespondents.length === 0">
             {{
               isCurTimeslotSelected
@@ -39,7 +39,7 @@
                 ><v-icon>mdi-dots-vertical</v-icon></v-btn
               >
             </template>
-            <v-list class="tw-py-1" density="compact">
+            <v-list class="tw:py-1" density="compact">
               <v-dialog v-model="exportCsvDialog.visible" width="400">
                 <template #activator="{ props: activatorProps }">
                   <v-list-item
@@ -53,7 +53,7 @@
                 <v-card>
                   <v-card-title>Export CSV</v-card-title>
                   <v-card-text>
-                    <div class="tw-mb-1">Select CSV format:</div>
+                    <div class="tw:mb-1">Select CSV format:</div>
                     <v-select
                       v-model="exportCsvDialog.type"
                       class="timeful-solo-field"
@@ -89,52 +89,50 @@
     </div>
     <div
       v-if="isOwner && !isPhone && event.blindAvailabilityEnabled"
-      class="tw-mb-2 tw-mt-1 tw-text-xs tw-italic tw-text-very-dark-gray"
+      class="tw:mb-2 tw:mt-1 tw:text-xs tw:italic tw:text-very-dark-gray"
     >
       Responses are only visible to {{ isOwner ? "you" : "event creator" }}
     </div>
     <div
       data-testid="respondents-scrollable-section"
-      class="tw-flex tw-flex-col"
+      class="tw:flex tw:flex-col"
     >
-      <div class="tw-relative tw-overflow-hidden">
+      <div class="tw:relative tw:overflow-hidden">
         <div
           ref="respondentsScrollView"
           data-testid="respondents-scroll-view"
-          class="-tw-ml-2 tw-pl-2 tw-text-sm"
+          class="tw:-ml-2 tw:pl-2 tw:text-sm"
           :class="
             isPhone && !scrollViewMaxHeight
-              ? 'tw-overflow-hidden'
-              : 'tw-overflow-y-auto tw-overflow-x-hidden'
+              ? 'tw:overflow-hidden'
+              : 'tw:overflow-y-auto tw:overflow-x-hidden'
           "
           :style="
-            scrollViewMaxHeight
-              ? `max-height: ${scrollViewMaxHeight}px !important;`
-              : ''
+            scrollViewMaxHeight ? `max-height: ${scrollViewMaxHeight}px;` : ''
           "
         >
           <div
             v-if="respondents.length === 0"
-            :class="event.daysOnly ? 'tw-mb-2' : 'tw-mb-6'"
+            :class="event.daysOnly ? 'tw:mb-2' : 'tw:mb-6'"
           >
             <span
               v-if="!isOwner && event.blindAvailabilityEnabled"
-              class="tw-text-very-dark-gray"
+              class="tw:text-very-dark-gray"
             >
               No response yet!
             </span>
-            <span v-else class="tw-text-very-dark-gray">No responses yet!</span>
+            <span v-else class="tw:text-very-dark-gray">No responses yet!</span>
           </div>
           <template v-else>
             <transition-group
               name="list"
               tag="div"
-              class="tw-grid tw-grid-cols-2 tw-gap-x-2 sm:tw-block"
+              class="tw:grid tw:grid-cols-2 tw:gap-x-2 tw:sm:block"
             >
               <div
                 v-for="user in orderedRespondents"
                 :key="user._id"
-                class="respondent-row tw-group tw-relative tw-flex tw-cursor-pointer tw-items-center tw-py-1 tw-text-sm tw-leading-5"
+                class="respondent-row tw:group tw:relative tw:flex tw:cursor-pointer tw:items-center tw:py-1 tw:text-sm tw:leading-5"
                 @mouseover="
                   (e: MouseEvent) =>
                     $emit('mouseOverRespondent', e, user._id ?? '')
@@ -143,11 +141,11 @@
                 @click="(e: MouseEvent) => clickRespondent(e, user._id ?? '')"
               >
                 <div
-                  class="tw-ml-1 tw-mr-3 tw-flex tw-h-5 tw-w-5 tw-shrink-0 tw-items-center tw-justify-center"
+                  class="tw:ml-1 tw:mr-3 tw:flex tw:h-5 tw:w-5 tw:shrink-0 tw:items-center tw:justify-center"
                 >
                   <button
                     type="button"
-                    class="respondent-control tw-flex tw-h-5 tw-w-5 tw-appearance-none tw-items-center tw-justify-center tw-border-0 tw-bg-transparent tw-p-0 tw-leading-none tw-shadow-none"
+                    class="respondent-control tw:flex tw:h-5 tw:w-5 tw:appearance-none tw:items-center tw:justify-center tw:border-0 tw:bg-transparent tw:p-0 tw:leading-none tw:shadow-none"
                     :aria-pressed="respondentSelected(user._id ?? '')"
                     :aria-label="
                       respondentSelected(user._id ?? '')
@@ -160,24 +158,24 @@
                     "
                   >
                     <span
-                      class="respondent-control__checkbox tw-flex tw-h-4 tw-w-4 tw-items-center tw-justify-center tw-rounded-[2px] tw-border-2 tw-border-solid tw-bg-white"
+                      class="respondent-control__checkbox tw:flex tw:h-4 tw:w-4 tw:items-center tw:justify-center tw:rounded-[2px] tw:border-2 tw:border-solid tw:bg-white"
                       style="border-color: var(--timeful-primary-action-bg)"
                     >
                       <v-icon
                         v-if="respondentSelected(user._id ?? '')"
                         size="12"
                         color="primary"
-                        class="tw-block"
+                        class="tw:block"
                       >
                         mdi-check
                       </v-icon>
                     </span>
                     <span
-                      class="respondent-control__avatar tw-flex tw-h-4 tw-w-4 tw-items-center tw-justify-center"
+                      class="respondent-control__avatar tw:flex tw:h-4 tw:w-4 tw:items-center tw:justify-center"
                     >
                       <div
                         v-if="respondentSlotStatus(user._id ?? '')"
-                        class="tw-h-4 tw-w-4 tw-rounded tw-border tw-border-outline-neutral"
+                        class="tw:h-4 tw:w-4 tw:rounded tw:border tw:border-outline-neutral"
                         :class="
                           respondentStatusClass(
                             respondentSlotStatus(user._id ?? ''),
@@ -198,20 +196,20 @@
                   </button>
                 </div>
                 <div
-                  class="tw-flex tw-min-w-0 tw-flex-1 tw-flex-col tw-justify-center"
+                  class="tw:flex tw:min-w-0 tw:flex-1 tw:flex-col tw:justify-center"
                 >
                   <div
-                    class="tw-flex tw-items-center tw-justify-between tw-gap-2"
+                    class="tw:flex tw:items-center tw:justify-between tw:gap-2"
                   >
                     <div
-                      class="respondent-name-line tw-mr-1 tw-min-w-0 tw-text-sm tw-leading-5 tw-transition-all"
+                      class="respondent-name-line tw:mr-1 tw:min-w-0 tw:text-sm tw:leading-5 tw:transition-all"
                       :class="respondentClass(user._id ?? '')"
                     >
                       {{ formatRespondentName(user) }}
                     </div>
                     <div
-                      class="respondent-row-actions tw-flex tw-shrink-0 tw-items-center tw-gap-1 tw-transition-none group-hover:tw-opacity-100 group-[&:has(.email-hover-target:hover)]:!tw-opacity-0"
-                      :class="isPhone ? 'tw-opacity-100' : 'tw-opacity-0'"
+                      class="respondent-row-actions tw:flex tw:shrink-0 tw:items-center tw:gap-1 tw:transition-none tw:group-hover:opacity-100 tw:group-[&:has(.email-hover-target:hover)]:opacity-0"
+                      :class="isPhone ? 'tw:opacity-100' : 'tw:opacity-0'"
                     >
                       <component
                         :is="
@@ -221,11 +219,11 @@
                         "
                         v-if="respondentEditActionState(user) !== 'none'"
                         type="button"
-                        class="respondent-edit-status tw-flex tw-h-5 tw-w-5 tw-items-center tw-justify-center tw-rounded-full tw-bg-white tw-p-0 tw-text-sm tw-leading-5"
+                        class="respondent-edit-status tw:flex tw:h-5 tw:w-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-white tw:p-0 tw:text-sm tw:leading-5"
                         :class="
                           respondentEditActionState(user) === 'editable'
-                            ? 'tw-cursor-pointer'
-                            : 'tw-cursor-default'
+                            ? 'tw:cursor-pointer'
+                            : 'tw:cursor-default'
                         "
                         :aria-label="
                           respondentEditActionState(user) === 'editable'
@@ -252,9 +250,9 @@
                         v-if="!isPhone && isOwner && !isGroup"
                         icon
                         size="small"
-                        class="tw-bg-white"
+                        class="tw:bg-white"
                         @click="() => showDeleteAvailabilityDialog(user)"
-                        ><v-icon small class="hover:tw-text-red" color="#4F4F4F"
+                        ><v-icon small class="tw:hover:text-red" color="#4F4F4F"
                           >mdi-delete</v-icon
                         ></v-btn
                       >
@@ -262,29 +260,29 @@
                   </div>
                   <div
                     v-if="isOwner && event.collectEmails"
-                    class="email-hover-target tw-flex tw-items-center tw-rounded-sm tw-p-px tw-text-xs tw-text-dark-gray tw-transition-all hover:tw-bg-light-gray"
+                    class="email-hover-target tw:flex tw:items-center tw:rounded-xs tw:p-px tw:text-xs tw:text-dark-gray tw:transition-all tw:hover:bg-light-gray"
                     :class="respondentClass(user._id ?? '')"
                     @mouseover.stop
                     @click.stop="copyEmailToClipboard(user.email)"
                   >
                     {{ user.email }}
-                    <v-icon class="tw-ml-1 tw-text-xs">mdi-content-copy</v-icon>
+                    <v-icon class="tw:ml-1 tw:text-xs">mdi-content-copy</v-icon>
                   </div>
                 </div>
               </div>
             </transition-group>
-            <div :class="event.daysOnly ? 'tw-h-1' : 'tw-h-2'"></div>
+            <div :class="event.daysOnly ? 'tw:h-1' : 'tw:h-2'"></div>
           </template>
         </div>
         <OverflowGradient
           v-if="hasMounted && respondentsScrollView && scrollViewMaxHeight"
-          class="tw-h-16"
+          class="tw:h-16"
           :scroll-container="respondentsScrollView"
           :show-arrow="false"
         />
         <OverflowGradient
           v-if="hasMounted && respondentsScrollView && scrollViewMaxHeight"
-          class="tw-h-16"
+          class="tw:h-16"
           position="top"
           :scroll-container="respondentsScrollView"
           :show-arrow="false"
@@ -293,17 +291,17 @@
 
       <div
         v-if="!maxHeight && pendingUsers.length > 0"
-        class="tw-mb-4 sm:tw-mb-6"
+        class="tw:mb-4 tw:sm:mb-6"
       >
-        <div class="tw-mb-2 tw-flex tw-items-center tw-font-medium">
-          <div class="tw-mr-1 tw-text-lg">Pending</div>
-          <div class="tw-font-normal">({{ pendingUsers.length }})</div>
+        <div class="tw:mb-2 tw:flex tw:items-center tw:font-medium">
+          <div class="tw:mr-1 tw:text-lg">Pending</div>
+          <div class="tw:font-normal">({{ pendingUsers.length }})</div>
         </div>
         <div>
           <div v-for="user in pendingUsers" :key="user.email">
-            <div class="tw-relative tw-flex tw-items-center">
-              <v-icon class="tw-ml-1 tw-mr-3" small>mdi-account</v-icon>
-              <div class="tw-mr-1 tw-text-sm tw-transition-all">
+            <div class="tw:relative tw:flex tw:items-center">
+              <v-icon class="tw:ml-1 tw:mr-3" small>mdi-account</v-icon>
+              <div class="tw:mr-1 tw:text-sm tw:transition-all">
                 {{ user.email }}
               </div>
             </div>
@@ -314,7 +312,7 @@
 
     <div
       v-if="(!isOwner || isPhone) && event.blindAvailabilityEnabled"
-      class="tw-mt-2 tw-text-xs tw-italic tw-text-very-dark-gray"
+      class="tw:mt-2 tw:text-xs tw:italic tw:text-very-dark-gray"
     >
       Responses are only visible to {{ isOwner ? "you" : "event creator" }}
     </div>
@@ -322,7 +320,7 @@
     <v-dialog v-model="deleteAvailabilityDialog" width="500" persistent>
       <v-card>
         <v-card-title>Are you sure?</v-card-title>
-        <v-card-text class="tw-text-sm tw-text-dark-gray"
+        <v-card-text class="tw:text-sm tw:text-dark-gray"
           >Are you sure you want to delete
           <strong>{{ userToDelete?.firstName }}</strong
           >'s availability from this
@@ -350,8 +348,8 @@
 
     <v-switch
       v-if="isGroup && isPhone"
-      :class="maxHeight && 'tw-mt-2'"
-      class="timeful-switch tw-mb-4"
+      :class="maxHeight && 'tw:mt-2'"
+      class="timeful-switch tw:mb-4"
       color="primary"
       inset
       :model-value="showCalendarEvents"
@@ -361,7 +359,7 @@
       "
     >
       <template #label>
-        <div class="tw-text-sm tw-text-black">Overlay calendar events</div>
+        <div class="tw:text-sm tw:text-black">Overlay calendar events</div>
       </template>
     </v-switch>
   </div>

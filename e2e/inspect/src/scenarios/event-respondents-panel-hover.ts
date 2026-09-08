@@ -72,7 +72,7 @@ export const eventRespondentsPanelHoverScenario = {
         )[0]
 
       const row =
-        respondentName?.closest(".respondent-row, .tw-group") ??
+        respondentName?.closest(".respondent-row, .tw\\:group") ??
         respondentName?.parentElement?.parentElement ??
         null
 

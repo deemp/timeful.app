@@ -38,14 +38,14 @@ describe("SlideToggle", () => {
   it("outlines the track with the shared neutral border token", () => {
     const wrapper = mountSlideToggle()
 
-    expect(wrapper.classes()).toContain("tw-border-outline-neutral")
-    expect(wrapper.classes()).not.toContain("tw-border-light-gray-stroke")
+    expect(wrapper.classes()).toContain("tw:border-outline-neutral")
+    expect(wrapper.classes()).not.toContain("tw:border-light-gray-stroke")
   })
 
   it("derives the active option from modelValue changes without mirrored local state", async () => {
     const wrapper = mountSlideToggle("second")
 
-    const tabs = wrapper.findAll(".tw-cursor-pointer")
+    const tabs = wrapper.findAll(".tw\\:cursor-pointer")
     expect(tabs[1].classes()).toContain("active-second")
 
     const indicator = wrapper.get(".slide-toggle__indicator")
@@ -72,7 +72,7 @@ describe("SlideToggle", () => {
   it("falls back to the first option when modelValue is not present", () => {
     const wrapper = mountSlideToggle("missing")
 
-    expect(wrapper.findAll(".tw-cursor-pointer")[0].classes()).toContain(
+    expect(wrapper.findAll(".tw\\:cursor-pointer")[0].classes()).toContain(
       "active-first",
     )
     expect(
@@ -83,7 +83,7 @@ describe("SlideToggle", () => {
   it("keeps emitting the clicked option value", async () => {
     const wrapper = mountSlideToggle("first")
 
-    await wrapper.findAll(".tw-cursor-pointer")[1].trigger("click")
+    await wrapper.findAll(".tw\\:cursor-pointer")[1].trigger("click")
 
     expect(wrapper.emitted("update:modelValue")).toEqual([[options[1].value]])
   })
@@ -92,22 +92,22 @@ describe("SlideToggle", () => {
     const wrapper = mountSlideToggle()
 
     const box = wrapper.get(".slide-toggle")
-    expect(box.classes()).toContain("tw-h-9")
-    expect(box.classes()).toContain("tw-rounded-md")
-    expect(box.classes()).toContain("tw-bg-white")
+    expect(box.classes()).toContain("tw:h-9")
+    expect(box.classes()).toContain("tw:rounded-md")
+    expect(box.classes()).toContain("tw:bg-white")
 
     const indicator = wrapper.get(".slide-toggle__indicator")
-    expect(indicator.classes()).toContain("tw-rounded-[5px]")
+    expect(indicator.classes()).toContain("tw:rounded-[5px]")
     const style = indicator.element.getAttribute("style") ?? ""
     expect(style).toContain("top: 3px")
     expect(style).toContain("bottom: 3px")
     expect(style).toContain("left: 3px")
     expect(style).not.toContain("box-shadow")
 
-    const cells = wrapper.findAll(".tw-cursor-pointer")
+    const cells = wrapper.findAll(".tw\\:cursor-pointer")
     for (const cell of cells) {
-      expect(cell.classes()).not.toContain("tw-py-2.5")
-      expect(cell.classes()).not.toContain("tw-bg-off-white")
+      expect(cell.classes()).not.toContain("tw:py-2.5")
+      expect(cell.classes()).not.toContain("tw:bg-off-white")
     }
   })
 
@@ -119,32 +119,32 @@ describe("SlideToggle", () => {
       },
     })
 
-    const cell = wrapper.get(".tw-cursor-pointer")
-    expect(cell.classes()).toContain("tw-text-green")
+    const cell = wrapper.get(".tw\\:cursor-pointer")
+    expect(cell.classes()).toContain("tw:text-green")
 
     const indicator = wrapper.get(".slide-toggle__indicator")
-    expect(indicator.classes()).toContain("tw-bg-green/10")
-    expect(indicator.classes()).toContain("tw-border-green")
+    expect(indicator.classes()).toContain("tw:bg-green/10")
+    expect(indicator.classes()).toContain("tw:border-green")
   })
 
   it("renders active option text above the solid indicator and lets clicks reach the cells", () => {
     const wrapper = mountSlideToggle()
 
     const indicator = wrapper.get(".slide-toggle__indicator")
-    expect(indicator.classes()).toContain("tw-pointer-events-none")
+    expect(indicator.classes()).toContain("tw:pointer-events-none")
 
     const cells = wrapper.findAll(".slide-toggle__option")
     expect(cells).toHaveLength(2)
     for (const cell of cells) {
-      expect(cell.classes()).toContain("tw-relative")
+      expect(cell.classes()).toContain("tw:relative")
     }
   })
 
   it("styles inactive options dark-gray with a hover brightening to black", () => {
     const wrapper = mountSlideToggle("first")
 
-    const inactiveCell = wrapper.findAll(".tw-cursor-pointer")[1]
-    expect(inactiveCell.classes()).toContain("tw-text-dark-gray")
-    expect(inactiveCell.classes()).toContain("hover:tw-text-black")
+    const inactiveCell = wrapper.findAll(".tw\\:cursor-pointer")[1]
+    expect(inactiveCell.classes()).toContain("tw:text-dark-gray")
+    expect(inactiveCell.classes()).toContain("tw:hover:text-black")
   })
 })

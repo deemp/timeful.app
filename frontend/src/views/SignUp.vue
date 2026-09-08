@@ -1,5 +1,5 @@
 <template>
-  <div v-if="event" class="tw-h-full">
+  <div v-if="event" class="tw:h-full">
     <Event
       :event-id="signUpId"
       :from-sign-in="fromSignIn"

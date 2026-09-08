@@ -3,7 +3,7 @@
     <v-btn
       icon
       fixed
-      class="timeful-elevated-button tw-bottom-4 tw-left-0 tw-right-0 tw-mx-auto tw-bg-green tw-text-white sm:tw-bottom-8"
+      class="timeful-elevated-button tw:bottom-4 tw:left-0 tw:right-0 tw:mx-auto tw:bg-green tw:text-white tw:sm:bottom-8"
       v-bind="$attrs"
       @click="emit('click', $event)"
     >

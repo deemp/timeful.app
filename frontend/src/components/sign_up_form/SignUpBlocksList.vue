@@ -1,26 +1,26 @@
 <template>
   <div
     ref="scrollableSection"
-    class="tw-flex tw-flex-col"
+    class="tw:flex tw:flex-col"
     :style="containerStyle"
   >
     <div
       ref="signUpBlocksScrollView"
       :class="
         isPhone
-          ? 'tw-overflow-hidden'
-          : 'tw-overflow-y-auto tw-overflow-x-hidden'
+          ? 'tw:overflow-hidden'
+          : 'tw:overflow-y-auto tw:overflow-x-hidden'
       "
     >
       <div
         v-if="
           isOwner && signUpBlocks.length === 0 && signUpBlocksToAdd.length === 0
         "
-        class="tw-text-sm tw-italic tw-text-dark-gray"
+        class="tw:text-sm tw:italic tw:text-dark-gray"
       >
         Click and drag on the grid to create a slot
       </div>
-      <div class="tw-flex tw-flex-col tw-gap-3">
+      <div class="tw:flex tw:flex-col tw:gap-3">
         <SignUpBlock
           v-for="signUpBlock in signUpBlocksToAdd"
           :key="signUpBlock._id as PropertyKey"
@@ -47,10 +47,10 @@
       </div>
     </div>
 
-    <div class="tw-relative">
+    <div class="tw:relative">
       <OverflowGradient
         v-if="hasMounted && desktopScrollContainer"
-        class="tw-h-16"
+        class="tw:h-16"
         :scroll-container="desktopScrollContainer"
         :show-arrow="false"
       />

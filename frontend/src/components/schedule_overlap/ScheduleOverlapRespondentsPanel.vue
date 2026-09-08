@@ -2,7 +2,7 @@
   <div ref="panelEl">
     <div
       v-if="panel.allAvailableNote"
-      class="tw-mb-2 tw-text-sm tw-text-dark-gray"
+      class="tw:mb-2 tw:text-sm tw:text-dark-gray"
       data-testid="all-available-note"
     >
       {{ panel.allAvailableNote }}
