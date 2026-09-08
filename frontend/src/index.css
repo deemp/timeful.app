@@ -144,6 +144,20 @@
   --timeful-mobile-action-bar-shadow: rgba(0, 0, 0, 0.18);
 }
 
+/* Root-level font defaults replace the former universal `* { font-family }`
+   rule: unlayered declarations there outranked layered tw: font utilities.
+   These defaults only act through inheritance, so direct declarations from
+   utilities and Vuetify classes always win regardless of cascade layers.
+   Vuetify typography resolves through --v-font-body (--v-font-heading falls
+   back to it). */
+:root {
+  --v-font-body: "DM Sans", sans-serif;
+}
+
+html {
+  font-family: "DM Sans", sans-serif;
+}
+
 .timeful-bottom-overlay-layer {
   z-index: 60;
 }

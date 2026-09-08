@@ -354,11 +354,6 @@ html {
   scroll-behavior: smooth;
 }
 
-* {
-  font-family: "DM Sans", sans-serif;
-  /* touch-action: manipulation; */
-}
-
 .v-messages__message {
   font-size: 0.813rem;
   line-height: 1rem;
