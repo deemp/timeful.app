@@ -1,11 +1,11 @@
 ---
 id: TASK-0172
 title: Remove !important from frontend styling (Tailwind v4 cascade cleanup)
-status: In Progress
+status: Done
 assignee:
   - Codex
 created_date: '2026-09-07 16:53'
-updated_date: '2026-09-08 08:57'
+updated_date: '2026-09-08 11:58'
 labels:
   - frontend
   - tailwind
@@ -38,20 +38,20 @@ Execution is deferred until TASK-0171 and TASK-0173 land (0171 owns the index.cs
 - [x] #1 Zero !important declarations remain in frontend/src hand-written CSS: index.css, all Vue style blocks, ScheduleOverlapCompactSwitch.css, and inline styles
 - [x] #2 No important flag anywhere in our pipeline: the tailwind config carries none and the tailwind/vuetify imports in index.css use no important param
 - [x] #3 Vuetify v4 styles are delivered in the default cascade layers (vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, vuetify-final) with the official Tailwind layer-order declaration loaded before vuetify/styles, and tw: theme/utilities are imported into tailwind layers with no important param, so layered tw: utilities beat vuetify component styles without importance
-- [ ] #4 Unlayered override classes (timeful-elevated-button, timeful-switch, timeful-solo-field, schedule-overlap-compact-switch, timezone-select--compact-button, destructive-outlined-button, gated-feature-checkbox and peers) still render identically; the remaining ~30 third-party !important declarations in vuetify 4.2.0 are verified not to collide with our overrides
-- [ ] #5 Layered tw: utilities no longer carry !important; no appearance regression where utilities beat Vuetify styles or unlayered overrides
+- [x] #4 Unlayered override classes (timeful-elevated-button, timeful-switch, timeful-solo-field, schedule-overlap-compact-switch, timezone-select--compact-button, destructive-outlined-button, gated-feature-checkbox and peers) still render identically; the remaining ~30 third-party !important declarations in vuetify 4.2.0 are verified not to collide with our overrides
+- [x] #5 Layered tw: utilities no longer carry !important; no appearance regression where utilities beat Vuetify styles or unlayered overrides
 - [x] #6 CSS-text unit test assertions (NewEvent.test.ts, TimezoneSelector.test.ts, Event.test.ts, RespondentsList.test.ts, GuestDialog.test.ts) assert the new selector/declaration forms
 - [x] #7 Grep gate: rg '!important' frontend/src returns no matches
-- [ ] #8 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit; firefox e2e suite passes from e2e/; bundle-size delta from full-stylesheet delivery is recorded in the task
+- [x] #8 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit; firefox e2e suite passes from e2e/; bundle-size delta from full-stylesheet delivery is recorded in the task
 - [x] #9 TASK-0171 remains annotated that its utilities-with-important parity decision (AC #2/#6) is superseded by this task (annotation added 2026-09-07)
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
-- [ ] #4 Changed Markdown files are formatted with npm run format:markdown
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -84,6 +84,8 @@ Frontend lint (two existing warnings), formatting, typecheck, build and 1036 uni
 Final current-state Firefox desktop verification: 28 passed, 2 intentional skips (4.8m), log /tmp/timeful-171-firefox-desktop.log. All authorized styling fixes and their checks are complete; task remains In Progress because Firefox touch still has the pre-existing tooltip scrolling failure. The user scope question (include its fix in 0173 versus a separate task) remains unanswered. No commit created.
 
 2026-09-08 user decision: keep the existing Firefox touch tooltip failure in a separate follow-up. TASK-0134 already covers the exact bug and now contains the current diagnosis, baseline comparison, artifacts and regression criteria. This supersedes the pending scope-approval question; tooltip implementation is not part of these migration changes. The failed touch acceptance evidence remains recorded; no failing check is marked as passing.
+
+Finalization verification on HEAD dfefc63e (2026-09-08): grep gate re-run clean - rg '!important' frontend/src returns no matches, and no important: param in vite.config.ts or index.css. Required frontend checks all pass (lint 0 errors with 2 pre-existing warnings, fmt:check, typecheck, build, 1038 unit tests). AC #4 evidence: rendered styling browser checks recorded (11 passed, 1 intentional mobile-hover skip) covering the unlayered override classes; production CSS carries exactly 31 third-party !important declarations (30 Vuetify main-stylesheet helpers + forced-colors VHighlight), none targeting classes our overrides use. AC #5 evidence: fresh dist inspection shows zero app-generated or utility importance - all 31 declarations are third-party. AC #8 evidence: same-day required checks pass and Firefox desktop e2e from e2e/ on current HEAD passes (28 passed, 2 intentional skips, 4.8m); bundle-size delta recorded: index CSS 631695 B, total 723518 B including the 146 B public layer stylesheet, vs v3 baseline 679494 B / 764857 B (savings 47799 B / 41339 B). Post-note commits b5f2530b, 8c66f9c9, 5f541696 and dfefc63e landed after the earlier run; today's rerun covers them. DoD #4 vacuously satisfied: no hand-written Markdown changed (backlog files are MCP-managed).
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -105,3 +107,9 @@ created: 2026-09-07 17:34
 Re-scope after the vuetify v4 investigation (2026-09-07): vuetify 4.2.0 makes cascade layers default and drops its compiled stylesheet from ~1800 to exactly 30 !important declarations (all deliberate helper/a11y semantics: .hidden-print-only, responsive d-*-none display helpers, .pointer-events-*, .d-sr-only*, one transition rule); .elevation-* is no longer !important, dissolving the former AC #4 elevation collision audit (.timeful-elevated-button vs .elevation-N). Vuetify now documents an official TailwindCSS v4 integration (layer-order file loaded before import 'vuetify/styles'; tailwind theme/utilities imported into tailwind layers; no styles:"none" hack needed). User-approved decisions: the vuetify v4 upgrade is tracked separately as TASK-0173 (dependency added, ordered after TASK-0171), this task is re-scoped to the official layer-order integration, and execution stays deferred until 0171 and 0173 land. Full upgrade findings and codebase audit recorded in TASK-0173's description.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Removed !important from all frontend styling while preserving rendering, using the Vuetify v4 cascade-layer integration: zero !important declarations remain in our source (index.css, all Vue style blocks, ScheduleOverlapCompactSwitch.css, inline styles) and no important flag exists anywhere in the pipeline (no important param in the Tailwind imports, no trailing ! utility modifiers - the last trailing-! respondent opacity utility was removed; its existing :has selector is sufficiently specific, verified by a rendered hover probe showing actions visible over the name and hidden over the email). Styles are delivered via the official Vuetify TailwindCSS guide order: the canonical layer declaration lives in frontend/public/styles/layers.css and is linked first in index.html (the earlier JS-imported declaration was dropped because production bundling omitted it; a new browser regression serving actual production artifacts through the isolated origin failed before the correction and passes after, on Chromium desktop and mobile). index.css imports tailwindcss/theme into layer(tailwind-theme) and tailwindcss/utilities into layer(tailwind-utilities) with prefix(tw), so unlayered hand-written overrides beat layered Vuetify and layered utilities by cascade, and tw: utilities beat Vuetify component styles by layer order with no importance. Remaining importance is exactly 31 third-party declarations in production CSS (30 Vuetify main-stylesheet helper/a11y rules + forced-colors VHighlight), verified non-colliding with our overrides. The five CSS-text assertion suites were updated to the new selector/declaration forms. Bundle impact measured from production output: index CSS 631695 B, total CSS including the 146 B public layer stylesheet 723518 B, savings of 47799 B / 41339 B versus the v3 baseline (679494 B / 764857 B). Verification on HEAD dfefc63e: lint (0 errors, 2 pre-existing warnings), fmt:check, typecheck, build, and 1038 unit tests pass; rendered styling suite 11 passed with 1 intentional mobile-hover skip; Firefox desktop e2e 28 passed, 2 intentional skips (4.8m); grep gate rg '!important' frontend/src returns no matches. The pre-existing Firefox touch tooltip interaction is out of scope and tracked in TASK-0134.
+<!-- SECTION:FINAL_SUMMARY:END -->

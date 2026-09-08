@@ -3,11 +3,11 @@ id: TASK-0171
 title: >-
   Upgrade frontend styling from Tailwind CSS v3 to v4 (keep tw prefix,
   appearance parity)
-status: In Progress
+status: Done
 assignee:
   - Codex
 created_date: '2026-09-07 14:26'
-updated_date: '2026-09-08 08:57'
+updated_date: '2026-09-08 11:57'
 labels:
   - frontend
   - tailwind
@@ -56,21 +56,21 @@ Decisions (user-approved 2026-09-07):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 frontend/package.json declares tailwindcss ^4.3.3 + @tailwindcss/vite, vite.config.ts registers the plugin, and postcss.config.cjs, tailwind.config.cjs and the autoprefixer/postcss devDeps are removed; vite build and dev server work with v4
-- [ ] #2 Built CSS preserves v3 global behavior: utilities carry !important, preflight is absent, only tw:-prefixed classes generate (no unprefixed utilities), and explicit @source globs scan only index.html, public/**/*.html and src (source(none) prevents repo-root scanning of docs/backlog)
-- [ ] #3 Theme is fully CSS-first in index.css @theme with no JS config: --color-*: initial reset, full v3 palette (transparent/current kept, red -> var(--timeful-red-canonical), outline-neutral -> var(--timeful-outline-neutral), unused avail-green dropped), explicit screens (sm/md/mdlg/lg/xl/2xl/publift-s/m/l/xl), --text-xs 0.813rem/1rem, --font-mono Chivo Mono stack
-- [ ] #4 All candidates use v4 syntax: prefix-first (tw:flex, tw:hover:bg-green, tw:md:hidden, variant order preserved), trailing important (tw:opacity-0!), renamed utilities mapped (tw:rounded-sm, tw:rounded-xs, tw:shadow-xs, tw:drop-shadow-sm), index.css override selectors use escaped colons (.tw\:bg-white), and the NewEvent.test.ts red-token assertion reads @theme in index.css; grep gates find zero remaining v3-syntax candidates in frontend/src and e2e
-- [ ] #5 Behavior deltas handled explicitly: v4 native hover recorded as accepted (no sticky hover on touch devices), the 6 space-x/space-y call sites audited against the v4 child-selector change, ring-2/ring-offset-2 verified to generate in v4.3.3, no other renamed/removed utility remains
-- [ ] #6 Appearance parity verified: dist CSS inspection (utilities with !important, no preflight, --tw-color-* theme vars), unlayered index.css overrides still win over layered utilities, visual smoke check via local dev flow plus firefox e2e suite passes
-- [ ] #7 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit
+- [x] #1 frontend/package.json declares tailwindcss ^4.3.3 + @tailwindcss/vite, vite.config.ts registers the plugin, and postcss.config.cjs, tailwind.config.cjs and the autoprefixer/postcss devDeps are removed; vite build and dev server work with v4
+- [x] #2 Built CSS preserves v3 global behavior: utilities carry !important, preflight is absent, only tw:-prefixed classes generate (no unprefixed utilities), and explicit @source globs scan only index.html, public/**/*.html and src (source(none) prevents repo-root scanning of docs/backlog)
+- [x] #3 Theme is fully CSS-first in index.css @theme with no JS config: --color-*: initial reset, full v3 palette (transparent/current kept, red -> var(--timeful-red-canonical), outline-neutral -> var(--timeful-outline-neutral), unused avail-green dropped), explicit screens (sm/md/mdlg/lg/xl/2xl/publift-s/m/l/xl), --text-xs 0.813rem/1rem, --font-mono Chivo Mono stack
+- [x] #4 All candidates use v4 syntax: prefix-first (tw:flex, tw:hover:bg-green, tw:md:hidden, variant order preserved), trailing important (tw:opacity-0!), renamed utilities mapped (tw:rounded-sm, tw:rounded-xs, tw:shadow-xs, tw:drop-shadow-sm), index.css override selectors use escaped colons (.tw\:bg-white), and the NewEvent.test.ts red-token assertion reads @theme in index.css; grep gates find zero remaining v3-syntax candidates in frontend/src and e2e
+- [x] #5 Behavior deltas handled explicitly: v4 native hover recorded as accepted (no sticky hover on touch devices), the 6 space-x/space-y call sites audited against the v4 child-selector change, ring-2/ring-offset-2 verified to generate in v4.3.3, no other renamed/removed utility remains
+- [x] #6 Appearance parity verified: dist CSS inspection (utilities with !important, no preflight, --tw-color-* theme vars), unlayered index.css overrides still win over layered utilities, visual smoke check via local dev flow plus firefox e2e suite passes
+- [x] #7 All required frontend checks pass: lint, fmt:check, typecheck, build, test:unit
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
-- [ ] #4 Changed Markdown files are formatted with npm run format:markdown
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -95,6 +95,8 @@ Implemented the CSS-first Tailwind v4 entry: source-limited theme/utilities impo
 Final current-state Firefox desktop verification: 28 passed, 2 intentional skips (4.8m), log /tmp/timeful-171-firefox-desktop.log. All authorized styling fixes and their checks are complete; task remains In Progress because Firefox touch still has the pre-existing tooltip scrolling failure. The user scope question (include its fix in 0173 versus a separate task) remains unanswered. No commit created.
 
 2026-09-08 user decision: keep the existing Firefox touch tooltip failure in a separate follow-up. TASK-0134 already covers the exact bug and now contains the current diagnosis, baseline comparison, artifacts and regression criteria. This supersedes the pending scope-approval question; tooltip implementation is not part of these migration changes. The failed touch acceptance evidence remains recorded; no failing check is marked as passing.
+
+Finalization verification on HEAD dfefc63e (2026-09-08): frontend lint 0 errors (2 pre-existing vue/one-component-per-file warnings), fmt:check, typecheck and build pass; 1038 unit tests pass (140 files). Grep gates re-run clean: zero v3-syntax tw- candidates in frontend/src and e2e, zero !important in frontend/src, no important: param in vite.config.ts or index.css. Config state verified: tailwindcss ^4.3.3 + @tailwindcss/vite in package.json, tailwindcss() plugin registered in vite.config.ts, tailwind.config.cjs and postcss.config.cjs absent. index.css verified CSS-first: source(none) prefix(tw) theme/utilities imports into tailwind layers, @source globs limited to index.html/public HTML/src, @theme with --color-*: initial. Dist inspection: all canonical layers emitted in order (tailwind-reset absent by design, no preflight), --tw-color-* theme vars present, exactly 31 !important declarations all third-party (30 Vuetify main stylesheet helpers + forced-colors VHighlight), zero app-generated. Firefox desktop e2e from e2e/ on current HEAD: 28 passed, 2 intentional skips (4.8m). DoD #4: no hand-written Markdown files were changed by this task (code-only commits b0c15bd7..dfefc63e; backlog files are MCP-managed), so the format:markdown item is vacuously satisfied. The Firefox touch tooltip interaction remains tracked in TASK-0134 per user decision; tooltip fix dfefc63e landed separately and is not part of this task's scope.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -112,3 +114,9 @@ created: 2026-09-07 19:45
 Execution resumed on the existing Tailwind v4 migration baseline. I will complete TASK-0171 first, then TASK-0173, then TASK-0172 as their declared dependency sequence requires.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Migrated frontend styling from Tailwind CSS v3.4 to v4.3.3 while preserving the tw: prefix and rendered appearance. package.json now declares tailwindcss ^4.3.3 with the @tailwindcss/vite plugin registered in vite.config.ts; tailwind.config.cjs, postcss.config.cjs and the autoprefixer/postcss devDeps are removed. Styling is fully CSS-first in index.css: theme/utilities imports with source(none) prefix(tw), explicit @source globs limited to index.html, public/**/*.html and src, and a CSS-first @theme (--color-*: initial reset, full v3 palette incl. transparent/current and --timeful-* canonical color vars, explicit screens, --text-xs 0.813rem/1rem, Chivo Mono stack). All ~4k tw- candidates across frontend/src, unit-test assertions, escaped override selectors in index.css, and ~10 e2e specs were rewritten to v4 prefix-first syntax with trailing important modifiers and v4 utility renames; grep gates confirm zero remaining v3-syntax candidates in frontend/src and e2e. Behavior deltas were handled explicitly: v4 native hover semantics accepted (no sticky hover on pure touch devices), the 6 space-x/space-y call sites audited against the child-selector change, ring-2/ring-offset-2 verified to generate in 4.3.3. Note: the originally specified utilities-carry-!important parity (AC #2/#6) was superseded by TASK-0172's authorized cascade-layer integration, which removes !important entirely; the final built CSS ships tw: utilities without importance inside tailwind layers ordered above Vuetify layers, with no preflight and only third-party (Vuetify/VHighlight) importance remaining. Verification on HEAD dfefc63e: lint (0 errors, 2 pre-existing warnings), fmt:check, typecheck, build, and 1038 unit tests pass; dist inspection shows all canonical layers emitted (tailwind-theme, vuetify-core/components/overrides/utilities/final, tailwind-utilities) with no preflight and --tw-color-* theme vars; Firefox desktop e2e from e2e/: 28 passed, 2 intentional skips (4.8m). The pre-existing Firefox touch tooltip interaction is out of scope and tracked in TASK-0134.
+<!-- SECTION:FINAL_SUMMARY:END -->
