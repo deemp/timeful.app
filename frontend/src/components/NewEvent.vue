@@ -1152,7 +1152,7 @@ watch(
   color: var(--timeful-selection-fg);
 }
 
-.new-event-dow-toggle :deep(.v-btn) {
+.new-event-dow-toggle .v-btn {
   min-width: 0;
   width: 100%;
   padding-inline: 0;
@@ -1161,7 +1161,7 @@ watch(
   box-shadow: none;
 }
 
-.new-event-dow-toggle :deep(.v-btn__overlay) {
+.new-event-dow-toggle .v-btn__overlay {
   opacity: 0;
 }
 
@@ -1210,15 +1210,15 @@ watch(
   margin-top: 2px;
 }
 
-.compact-switch :deep(.v-selection-control) {
+.compact-switch .v-selection-control {
   align-items: center;
 }
 
-.compact-switch :deep(.v-label) {
+.compact-switch .v-label {
   display: none;
 }
 
-.compact-switch :deep(.v-selection-control__wrapper) {
+.compact-switch .v-selection-control__wrapper {
   margin-top: 0;
 }
 

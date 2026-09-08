@@ -1147,7 +1147,7 @@ describe("NewEvent", () => {
       /\.compact-switch__message\s*\{\s*grid-column:\s*2;\s*grid-row:\s*2;\s*margin-top:\s*2px;/,
     )
     expect(newEventStyleBlock).toMatch(
-      /\.compact-switch :deep\(\.v-label\)\s*\{\s*display:\s*none;/,
+      /\.compact-switch \.v-label\s*\{\s*display:\s*none;/,
     )
   })
 
