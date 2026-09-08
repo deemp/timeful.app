@@ -13,10 +13,6 @@ declare module "*.vue" {
 // Vuetify styles and other CSS imports
 declare module "vuetify/styles" {}
 
-interface Window {
-  __timefulThirdPartyShellEnabled?: boolean
-}
-
 interface ImportMetaEnv {
   readonly VITE_DEV_HOST?: string
   readonly VITE_DEV_PORT?: string
@@ -30,7 +26,6 @@ interface ImportMetaEnv {
   readonly VITE_MICROSOFT_CLIENT_ID: string
   readonly VITE_ENABLE_SIGN_IN?: string
   readonly VITE_ENABLE_RICH_LANDING?: string
-  readonly VITE_ENABLE_THIRD_PARTY_SHELL?: string
   readonly VITE_ENABLE_PRIVACY_POLICY?: string
   readonly VITE_FEEDBACK_URL?: string
   readonly VITE_SUPPORT_EMAIL?: string

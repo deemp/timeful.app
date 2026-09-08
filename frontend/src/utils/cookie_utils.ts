@@ -1,6 +1,5 @@
 // Cookie consent utilities
 import { Temporal } from "temporal-polyfill"
-import type { DataLayerObject } from "@gtm-support/core"
 import { readonly, ref } from "vue"
 import { UTC } from "@/constants"
 
@@ -19,12 +18,6 @@ export interface CookieConsent {
 export const DEFAULT_COOKIE_CONSENT_PREFERENCES: CookieConsentPreferences = {
   necessary: true,
   analytics: true,
-}
-
-declare global {
-  interface Window {
-    dataLayer?: DataLayerObject[]
-  }
 }
 
 const cookieConsentVersionState = ref(0)
@@ -107,22 +100,4 @@ export function hasAnalyticsConsent(): boolean {
 
 export function hasGivenConsent(): boolean {
   return getCookieConsent() !== null
-}
-
-// Initialize Google Tag Manager consent
-export function initializeGTMConsent(): void {
-  window.dataLayer ??= []
-
-  const consent = getCookieConsent()
-  if (consent) {
-    window.dataLayer.push({
-      event: "consent_default",
-      analytics_consent: consent.preferences.analytics ? "granted" : "denied",
-    })
-  } else {
-    window.dataLayer.push({
-      event: "consent_default",
-      analytics_consent: "granted",
-    })
-  }
 }

@@ -13,8 +13,6 @@ export const THIRD_PARTY_BLOCKLIST = [
   "https://btloader.com/",
   "https://securepubads.g.doubleclick.net/",
   "https://pagead2.googlesyndication.com/",
-  "https://www.googletagmanager.com/",
-  "https://www.google-analytics.com/",
   "https://html-load.com/",
   "https://cmp.quantcast.com/",
   "https://quantcast.mgr.consensu.org/",
