@@ -1,38 +1,74 @@
-name: Backend CI
+name: E2E CI
 
 on:
   pull_request:
     paths:
+      - "frontend/**"
       - "server/**"
-      - "postgres/**"
-      - "mongo/**"
+      - "e2e/**"
       - "compose*.yaml"
       - ".env.test.example"
-      - ".github/workflows/backend-ci.yml"
+      - "flake.nix"
+      - "flake.lock"
+      - ".github/workflows/e2e-ci.yml"
   push:
     branches:
       - main
     paths:
+      - "frontend/**"
       - "server/**"
-      - "postgres/**"
-      - "mongo/**"
+      - "e2e/**"
       - "compose*.yaml"
       - ".env.test.example"
-      - ".github/workflows/backend-ci.yml"
+      - "flake.nix"
+      - "flake.lock"
+      - ".github/workflows/e2e-ci.yml"
 
 concurrency:
-  group: backend-ci-${{ github.ref }}
+  group: e2e-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  backend-quality:
+  browser-e2e:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 60
 
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+        with:
+          nix_conf: |
+            keep-env-derivations = true
+            keep-outputs = true
+
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          # restore and save a cache using this key
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until the Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1G = 1073741824
+          gc-max-store-size-linux: 5G
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago
+          purge-created: 0
+          # or last accessed this duration (ISO 8601 duration format)
+          # before the start of the `Post Restore and save Nix store` phase
+          purge-last-accessed: P1DT12H
+          # except any version with the key that is the same as the `primary-key`
+          purge-primary-key: never
 
       - name: Configure isolated test environment
         run: cp .env.test.example .env.test
@@ -41,14 +77,13 @@ jobs:
         run: docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml config --quiet
 
       # Hosted runners are ephemeral, so the default docker-driver BuildKit
-      # cache never persists across runs. Build the server test image once
+      # cache never persists across runs. Keep building the server test image
       # with a docker-container builder backed by the GitHub Actions cache,
-      # tagged with Compose's computed image name (<project>-<service>) so
-      # the later `compose up` and `compose run` steps use it as-is instead
-      # of rebuilding. The testbase target bakes no RUN layer at all (the test
-      # containers mount a cached GOMODCACHE volume instead), so the gha cache
-      # only carries small blobs; buildx gha re-uploads every layer blob on
-      # each run, so large layers would make cache I/O the bottleneck.
+      # sharing this cache scope with Backend CI so both workflows stay warm.
+      # The testbase target bakes no RUN layer at all (the E2E test container
+      # mounts a cached GOMODCACHE volume instead), so the gha cache only
+      # carries small blobs; buildx gha re-uploads every layer blob on each
+      # run, so large layers would make cache I/O the bottleneck.
       - name: Set up Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
@@ -93,8 +128,8 @@ jobs:
 
       # The module cache rides the same restore/save pattern as the Go build
       # cache: exact go.sum key hits skip saving, unlike buildx gha which
-      # re-uploads layer blobs on every run. The test containers mount it at
-      # /go/pkg/mod (see compose.test.yaml).
+      # re-uploads layer blobs on every run. The E2E test container mounts it
+      # at /go/pkg/mod (see compose.test.yaml).
       - name: Restore Go module cache
         id: go-mod-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -103,12 +138,23 @@ jobs:
           key: go-mod-linux-${{ hashFiles('server/go.sum') }}
           restore-keys: go-mod-linux-
 
+      # The E2E steps' `nix run .#e2e` runs `npm ci` in frontend/ and e2e/,
+      # which normally takes ~10s but a slow registry edge was observed taking
+      # 5m. Serve tarballs from a cached npm store instead, using the same
+      # restore/save pattern as the Go build cache above.
+      - name: Restore npm cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json', 'e2e/package-lock.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
       # Compose never creates external volumes, and the Go caches are external so
       # `down -v` retains them. Fresh CI runners have no volumes, so create them
       # (idempotent) before any service that mounts them starts, mirroring the
       # ensureExternalVolume calls in e2e/isolated-test-stack.ts, then
-      # seed them from the restored caches so `go test` compiles incrementally
-      # without re-downloading modules.
+      # seed them from the restored caches so the E2E server's `go run`
+      # compiles incrementally without re-downloading modules.
       - name: Seed external Go cache volumes
         run: |
           docker volume create timeful-test-go-build-cache
@@ -126,25 +172,45 @@ jobs:
               alpine:3.24 sh -c 'cp -a /src/. /tgt/'
           fi
 
-      # No `--build`: both buildable services above already have their Compose
-      # image names present in the docker daemon (loaded from the Buildx and
-      # tarball steps), so Compose uses them as-is.
+      # Pre-start the stack without --build so the one-shot migrate service
+      # completes from the cached migrator image. The E2E global setup then
+      # boots the stack with `up -d --build ... server-test`, and Compose
+      # satisfies its `postgres-test-migrate` completed-successfully
+      # dependency from the already-finished container instead of rebuilding
+      # the goose image. No `--build` here: the buildable services above
+      # already have their Compose image names present in the docker daemon
+      # (loaded from the Buildx and tarball steps), so Compose uses them as-is.
       - name: Start MongoDB and PostgreSQL test services
         run: docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml up -d mongo-test postgres-test postgres-test-bootstrap postgres-test-migrate
 
-      # Migration completion is enforced by server-route-test's depends_on
-      # condition (service_completed_successfully) when compose run starts it.
-      # A separate `docker compose wait` step is racy: compose wait lists only
-      # running containers, so an already-finished one-shot migrate container
-      # makes it fail with "no containers for project".
+      # Playwright writes each run's artifacts (traces, screenshots, videos)
+      # under E2E_ARTIFACTS_DIR (see e2e/config/tooling.ts); the upload step
+      # below collects them after failures.
+      - name: Run Chromium browser E2E suite
+        env:
+          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
+        run: nix run .#e2e -- --project=chromium-desktop --project=chromium-mobile
 
-      - name: Run backend tests
-        run: docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml run --rm server-route-test go test ./... -count=1
+      - name: Run PostgreSQL browser lifecycle test
+        env:
+          E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: "true"
+          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
+        run: nix run .#e2e -- --project=firefox-desktop specs/timed-event-postgres-plugin-firefox.spec.ts
+
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-failure-artifacts
+          path: ${{ runner.temp }}/e2e-artifacts
+          retention-days: 7
+          if-no-files-found: ignore
 
       # Copy the warmed caches back out of the external volumes so the
-      # actions/cache post steps save them for the next run. When the primary
-      # key was restored exactly, the post save is a no-op, so skip the copy
-      # out.
+      # actions/cache post steps save them for the next run. Runs after the
+      # E2E steps so the isolated server's `go run` compile work is captured
+      # too. When the primary key was restored exactly, the post save is a
+      # no-op, so skip the copy out.
       - name: Save Go caches
         if: always()
         run: |
