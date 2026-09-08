@@ -8,7 +8,7 @@ import {
   createFrontendPreviewServerConfig,
   getFrontendEnvDir,
 } from "./config/tooling"
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from "@tailwindcss/vite"
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 

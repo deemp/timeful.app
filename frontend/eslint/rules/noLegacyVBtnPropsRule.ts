@@ -7,8 +7,8 @@ const legacyVBtnPropReplacements = {
   outlined: 'Use `variant="outlined"` on `v-btn`.',
   small: 'Use `size="small"` on `v-btn`.',
   "x-small": 'Use `size="x-small"` on `v-btn`.',
-  dark: 'Use explicit text or background color classes on `v-btn` instead of `dark`.',
-  fab: 'Use explicit `icon`, `size`, and layout classes on `v-btn` instead of `fab`.',
+  dark: "Use explicit text or background color classes on `v-btn` instead of `dark`.",
+  fab: "Use explicit `icon`, `size`, and layout classes on `v-btn` instead of `fab`.",
   depressed:
     'Use an explicit `variant`, such as `variant="flat"`, on `v-btn` instead of `depressed`.',
 } as const
@@ -21,12 +21,12 @@ interface TemplateVisitor {
 
 interface VueTemplateParserServices {
   defineTemplateBodyVisitor(
-    templateBodyVisitor: TemplateVisitor
+    templateBodyVisitor: TemplateVisitor,
   ): Rule.RuleListener
 }
 
 const hasDefineTemplateBodyVisitor = (
-  value: unknown
+  value: unknown,
 ): value is VueTemplateParserServices => {
   if (typeof value !== "object" || value === null) {
     return false

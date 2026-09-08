@@ -37,7 +37,7 @@ describe("no-legacy-v-btn-props lint rule", () => {
         <v-btn text />
         <v-btn depressed />
       </template>`,
-      { filePath: "LegacyButtons.vue" }
+      { filePath: "LegacyButtons.vue" },
     )
 
     expect(result.errorCount).toBe(2)
@@ -49,7 +49,7 @@ describe("no-legacy-v-btn-props lint rule", () => {
       expect.arrayContaining([
         expect.stringContaining("text"),
         expect.stringContaining("depressed"),
-      ])
+      ]),
     )
   })
 
@@ -60,7 +60,7 @@ describe("no-legacy-v-btn-props lint rule", () => {
         <v-btn variant="flat" />
         <v-btn size="small" icon block color="primary" />
       </template>`,
-      { filePath: "ModernButtons.vue" }
+      { filePath: "ModernButtons.vue" },
     )
 
     expect(result.errorCount).toBe(0)

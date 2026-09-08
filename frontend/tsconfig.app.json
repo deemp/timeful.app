@@ -25,5 +25,11 @@
     "checkJs": false,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.js", "env.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/**/*.js",
+    "env.d.ts"
+  ]
 }
