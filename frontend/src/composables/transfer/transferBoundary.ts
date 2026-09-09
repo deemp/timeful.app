@@ -72,25 +72,102 @@ export function matchingRequest(transfer: AccessTransfer, code: string) {
   )
 }
 
-export function savedTransfers(eventId: string): string[] {
+export interface SavedTransfer {
+  id: string
+  number: number
+}
+
+interface TransferStorage {
+  nextNumber: number
+  transfers: SavedTransfer[]
+}
+
+function readTransferStorage(eventId: string): TransferStorage {
   try {
     const value: unknown = JSON.parse(
       localStorage.getItem(`timeful.transfers.${eventId}`) ?? "[]",
     )
-    return Array.isArray(value)
-      ? value.filter((id): id is string => typeof id === "string")
-      : []
+    const legacy = Array.isArray(value)
+    const raw: unknown[] = legacy
+      ? value.map((id: unknown, index) => ({ id, number: index + 1 }))
+      : value &&
+          typeof value === "object" &&
+          "transfers" in value &&
+          Array.isArray(value.transfers)
+        ? value.transfers
+        : []
+    const transfers: SavedTransfer[] = []
+    for (const entry of raw) {
+      if (
+        entry &&
+        typeof entry === "object" &&
+        "id" in entry &&
+        typeof entry.id === "string" &&
+        entry.id &&
+        "number" in entry &&
+        typeof entry.number === "number" &&
+        Number.isSafeInteger(entry.number) &&
+        entry.number > 0 &&
+        !transfers.some(({ id }) => id === entry.id)
+      ) {
+        transfers.push({ id: entry.id, number: entry.number })
+      }
+    }
+    const storedNext =
+      value && typeof value === "object" && "nextNumber" in value
+        ? value.nextNumber
+        : 1
+    const nextNumber =
+      typeof storedNext === "number" &&
+      Number.isSafeInteger(storedNext) &&
+      storedNext > 0
+        ? storedNext
+        : 1
+    return {
+      transfers,
+      nextNumber: transfers.reduce(
+        (next, entry) => Math.max(next, entry.number + 1),
+        nextNumber,
+      ),
+    }
   } catch {
-    return []
+    return { nextNumber: 1, transfers: [] }
   }
 }
-export function rememberTransfer(eventId: string, id: string) {
+function writeTransferStorage(eventId: string, storage: TransferStorage) {
   try {
     localStorage.setItem(
       `timeful.transfers.${eventId}`,
-      JSON.stringify([...savedTransfers(eventId), id]),
+      JSON.stringify(storage),
     )
   } catch {
     /* The current dialog still retains the transfer. */
   }
+}
+
+export function savedTransfers(eventId: string): SavedTransfer[] {
+  return readTransferStorage(eventId).transfers
+}
+
+export function rememberTransfer(eventId: string, id: string): SavedTransfer {
+  const storage = readTransferStorage(eventId)
+  const existing = storage.transfers.find((entry) => entry.id === id)
+  if (existing) return existing
+  const entry = { id, number: storage.nextNumber++ }
+  storage.transfers.push(entry)
+  writeTransferStorage(eventId, storage)
+  return entry
+}
+
+export function forgetTransfer(eventId: string, id: string) {
+  const storage = readTransferStorage(eventId)
+  storage.transfers = storage.transfers.filter((entry) => entry.id !== id)
+  writeTransferStorage(eventId, storage)
+}
+
+export function isTransferUnavailable(error: unknown): boolean {
+  return (
+    error instanceof FetchError &&
+    (error.status === 403 || error.status === 404)
+  )
 }

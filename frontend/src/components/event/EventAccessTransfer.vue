@@ -25,9 +25,7 @@
             <v-btn @click="copy">{{
               copied ? "Copied" : "Copy transfer link"
             }}</v-btn>
-            <p role="status">
-              Transfer status: {{ current?.state ?? "pending" }}
-            </p>
+            <p role="status">Transfer status: {{ statusLabel }}</p>
             <template v-if="current?.state === 'pending'">
               <v-text-field
                 v-model="code"
@@ -41,12 +39,14 @@
             </template>
           </template>
           <div
-            v-for="id in history"
-            :key="id"
+            v-for="entry in history"
+            :key="entry.id"
             class="tw:flex tw:items-center tw:gap-2"
           >
-            <span>Granted access {{ history.indexOf(id) + 1 }}</span>
-            <v-btn :disabled="busy" @click="revoke(id)">Revoke access</v-btn>
+            <span>Granted access {{ entry.number }}</span>
+            <v-btn :disabled="busy" @click="revoke(entry.id)"
+              >Revoke access</v-btn
+            >
           </div>
         </v-card-text>
         <v-card-actions
@@ -66,7 +66,10 @@ import {
   matchingRequest,
   rememberTransfer,
   savedTransfers,
+  forgetTransfer,
+  isTransferUnavailable,
   type AccessTransfer,
+  type SavedTransfer,
 } from "@/composables/transfer/transferBoundary"
 
 const props = defineProps<{ event: Event }>()
@@ -78,67 +81,107 @@ const copied = ref(false)
 const currentId = ref("")
 const current = ref<AccessTransfer>()
 const code = ref("")
-const history = ref<string[]>([])
+const history = ref<SavedTransfer[]>([])
+const tracked = ref<SavedTransfer[]>([])
+const statusLabels: Record<string, string> = {
+  pending: "Waiting for approval",
+  approved: "Approved — waiting for the other browser",
+  redeemed: "Completed",
+  cancelled: "Cancelled",
+  expired: "Expired — create a new link",
+  revoked: "Access revoked",
+  unavailable: "Unavailable — create a new link",
+}
+const statusLabel = computed(
+  () =>
+    statusLabels[current.value?.state ?? "pending"] ??
+    "Unavailable — create a new link",
+)
 const link = computed(
   () =>
     `${window.location.origin}/transfer/${props.event._id}/${currentId.value}`,
 )
 let timer: ReturnType<typeof setInterval> | undefined
 
-async function run(action: () => Promise<void>, clearError = true) {
+async function run(
+  action: () => Promise<void>,
+  failureMessage: string,
+  clearError = true,
+) {
   if (busy.value) return
   busy.value = true
   if (clearError) error.value = ""
   try {
     await action()
   } catch {
-    error.value =
-      "Transfer unavailable, expired, or unauthorized. Check the code or create a new link."
+    if (clearError || !error.value) error.value = failureMessage
   } finally {
     busy.value = false
+  }
+}
+function updateTransfer(entry: SavedTransfer, state: AccessTransfer) {
+  if (entry.id === currentId.value) current.value = state
+  history.value = history.value.filter(({ id }) => id !== entry.id)
+  if (state.revocable) {
+    history.value.push(entry)
+    history.value.sort((a, b) => a.number - b.number)
+  } else if (state.state !== "pending" && state.state !== "approved") {
+    tracked.value = tracked.value.filter(({ id }) => id !== entry.id)
+    if (props.event._id) forgetTransfer(props.event._id, entry.id)
   }
 }
 async function refresh() {
   const eventId = props.event._id
   if (!eventId) return
-  if (currentId.value)
-    current.value = await transferAction(eventId, currentId.value, "status")
-  const ids = savedTransfers(eventId)
-  const states = await Promise.all(
-    ids.map(async (id) => {
+  let failed = false
+  await Promise.all(
+    tracked.value.map(async (entry) => {
       try {
-        return {
-          id,
-          revocable: (await transferAction(eventId, id, "status")).revocable,
+        updateTransfer(entry, await transferAction(eventId, entry.id, "status"))
+      } catch (cause) {
+        if (isTransferUnavailable(cause)) {
+          updateTransfer(entry, {
+            id: entry.id,
+            state: "unavailable",
+            revocable: false,
+            requestId: "",
+            code: "",
+            requests: [],
+            confirmationRequired: false,
+          })
+        } else {
+          failed = true
         }
-      } catch {
-        return { id, revocable: false }
       }
     }),
   )
-  history.value = states
-    .filter(({ revocable }) => revocable)
-    .map(({ id }) => id)
+  if (failed) throw new Error("Status refresh failed")
 }
 function openDialog() {
+  if (props.event._id) {
+    for (const entry of savedTransfers(props.event._id)) {
+      if (!tracked.value.some(({ id }) => id === entry.id))
+        tracked.value.push(entry)
+    }
+  }
   dialog.value = true
-  void run(refresh)
+  void run(refresh, "Could not refresh transfer status. Please try again.")
 }
 async function start() {
   await run(async () => {
     if (!props.event._id) return
     current.value = await createTransfer(props.event._id)
     currentId.value = current.value.id
-    rememberTransfer(props.event._id, currentId.value)
+    tracked.value.push(rememberTransfer(props.event._id, currentId.value))
     code.value = ""
     copied.value = false
-  })
+  }, "Could not create a transfer link. Please try again.")
 }
 async function copy() {
   await run(async () => {
     await navigator.clipboard.writeText(link.value)
     copied.value = true
-  })
+  }, "Could not copy the transfer link. Select the link and copy it manually.")
 }
 async function approve() {
   await run(async () => {
@@ -152,29 +195,42 @@ async function approve() {
       "approve",
       { requestId: request.id, code: request.code },
     )
-  })
+  }, "Could not approve the transfer. Check the code or create a new link.")
 }
 async function cancel() {
   await run(async () => {
     if (props.event._id) {
-      await transferAction(props.event._id, currentId.value, "cancel")
-      await refresh()
+      const entry = tracked.value.find(({ id }) => id === currentId.value)
+      if (entry)
+        updateTransfer(
+          entry,
+          await transferAction(props.event._id, entry.id, "cancel"),
+        )
     }
-  })
+  }, "Could not cancel the transfer. Please try again.")
 }
 async function revoke(id: string) {
   await run(async () => {
     if (props.event._id) {
-      await transferAction(props.event._id, id, "revoke")
-      await refresh()
+      const entry = tracked.value.find((entry) => entry.id === id)
+      if (entry)
+        updateTransfer(
+          entry,
+          await transferAction(props.event._id, id, "revoke"),
+        )
     }
-  })
+  }, "Could not revoke granted access. Please try again.")
 }
 watch(dialog, (open) => {
   if (timer) clearInterval(timer)
   if (open)
     timer = setInterval(() => {
-      if (!busy.value) void run(refresh, false)
+      if (!busy.value)
+        void run(
+          refresh,
+          "Could not refresh transfer status. Please try again.",
+          false,
+        )
     }, 2000)
 })
 onUnmounted(() => {

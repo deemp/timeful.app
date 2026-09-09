@@ -176,7 +176,7 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
           .getByRole("button", { name: "Approve matching code" })
           .click()
         await expect(
-          page.getByText(/Transfer unavailable, expired, or unauthorized/),
+          page.getByText(/Could not approve the transfer. Check the code/),
         ).toBeVisible()
         await page
           .getByLabel("Matching code from other browser")
@@ -184,7 +184,9 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
         await page
           .getByRole("button", { name: "Approve matching code" })
           .click()
-        await expect(page.getByRole("status")).toContainText("approved")
+        await expect(page.getByRole("status")).toContainText(
+          "Approved — waiting for the other browser",
+        )
       })
       await test.step("Reject the other browser and redeem only on the approved target", async () => {
         await otherPage
@@ -309,6 +311,9 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
         await page
           .getByRole("button", { name: "Revoke access", exact: true })
           .click()
+        await expect(
+          page.getByRole("button", { name: "Revoke access", exact: true }),
+        ).toHaveCount(0)
         const revoked = await target.request.get(api)
         const revokedEvent = (await revoked.json()) as {
           responses: Record<string, unknown>
@@ -348,6 +353,19 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
           expect((await target.request.delete(api)).status()).toBe(200)
           expect((await page.request.get(api)).status()).toBe(404)
         }
+      }
+      if (mode !== "owner") {
+        await expect(page.getByRole("status")).toContainText(
+          mode === "signed-in" ? "Completed" : "Access revoked",
+        )
+        const storage = await page.evaluate(
+          (eventId): unknown =>
+            JSON.parse(
+              localStorage.getItem(`timeful.transfers.${eventId}`) ?? "{}",
+            ),
+          eventId,
+        )
+        expect(storage).toEqual(expect.objectContaining({ transfers: [] }))
       }
     } finally {
       await owner.close()

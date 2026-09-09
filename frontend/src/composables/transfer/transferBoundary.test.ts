@@ -5,6 +5,7 @@ import {
   matchingRequest,
   savedTransfers,
   rememberTransfer,
+  forgetTransfer,
   grantAssociation,
   transferAction,
   requiresAccountSwitch,
@@ -106,8 +107,52 @@ describe("access transfer boundary", () => {
   it("retains revocation handles across reloads and tolerates invalid storage", () => {
     rememberTransfer("EVENT123", "first")
     rememberTransfer("EVENT123", "second")
-    expect(savedTransfers("EVENT123")).toEqual(["first", "second"])
+    expect(savedTransfers("EVENT123")).toEqual([
+      { id: "first", number: 1 },
+      { id: "second", number: 2 },
+    ])
     localStorage.setItem("timeful.transfers.EVENT123", "invalid")
     expect(savedTransfers("EVENT123")).toEqual([])
+  })
+  it("deduplicates legacy handles and preserves numbers after pruning and new transfers", () => {
+    localStorage.setItem(
+      "timeful.transfers.EVENT123",
+      JSON.stringify(["first", "second", "first", null]),
+    )
+    forgetTransfer("EVENT123", "first")
+    expect(savedTransfers("EVENT123")).toEqual([{ id: "second", number: 2 }])
+    rememberTransfer("EVENT123", "second")
+    expect(rememberTransfer("EVENT123", "third")).toEqual({
+      id: "third",
+      number: 3,
+    })
+    forgetTransfer("EVENT123", "second")
+    forgetTransfer("EVENT123", "third")
+    expect(savedTransfers("EVENT123")).toEqual([])
+    expect(localStorage.getItem("timeful.transfers.EVENT123")).not.toContain(
+      "third",
+    )
+    expect(rememberTransfer("EVENT123", "fourth").number).toBe(4)
+  })
+  it("tolerates malformed numbered storage and unavailable storage", () => {
+    localStorage.setItem(
+      "timeful.transfers.EVENT123",
+      JSON.stringify({
+        nextNumber: "bad",
+        transfers: [
+          null,
+          { id: "bad", number: -1 },
+          { id: "valid", number: 7 },
+        ],
+      }),
+    )
+    expect(rememberTransfer("EVENT123", "next").number).toBe(8)
+    vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("blocked")
+    })
+    expect(() => {
+      forgetTransfer("EVENT123", "valid")
+    }).not.toThrow()
+    expect(rememberTransfer("EVENT123", "in-memory").id).toBe("in-memory")
   })
 })

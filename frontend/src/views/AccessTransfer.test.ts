@@ -103,6 +103,7 @@ describe("target access transfer", () => {
     mocks.action.mockRejectedValueOnce(new FetchError("Forbidden"))
     await click(wrapper, "Continue after approval")
     expect(wrapper.text()).toContain("Access has not been approved")
+    expect(wrapper.get('[role="alert"]').attributes("type")).toBe("error")
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(mocks.navigate).not.toHaveBeenCalled()
     wrapper.unmount()
@@ -115,6 +116,7 @@ describe("target access transfer", () => {
       "This transfer is expired, cancelled, or unavailable",
     )
     expect(wrapper.find("button").exists()).toBe(false)
+    expect(wrapper.get('[role="alert"]').attributes("type")).toBe("error")
     wrapper.unmount()
   })
 })

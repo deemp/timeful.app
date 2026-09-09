@@ -15,7 +15,7 @@
           {{ code }}
         </p>
         <p v-if="approved" role="status">Approved — you can continue</p>
-        <v-alert v-if="error" type="info">{{ error }}</v-alert>
+        <v-alert v-if="error" type="error">{{ error }}</v-alert>
         <v-btn v-if="code" :loading="busy" @click="finish()"
           >Continue after approval</v-btn
         >
@@ -35,7 +35,7 @@
             account's data and sign-ins on other devices stay intact, and you
             can sign back in.
           </p>
-          <v-alert v-if="error" type="info">{{ error }}</v-alert>
+          <v-alert v-if="error" type="error">{{ error }}</v-alert>
         </v-card-text>
         <v-card-actions>
           <v-btn :disabled="busy" @click="confirmSwitch = false">Cancel</v-btn>
