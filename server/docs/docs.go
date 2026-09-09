@@ -495,6 +495,7 @@ const docTemplate = `{
         },
         "/auth/visitor-identities": {
             "post": {
+                "description": "Source EVCC proof associates response identity; independent Event Owner Edit Token proof associates or moves event ownership without moving responses. Granted EVCC association awaits the transfer confirmation flow.",
                 "consumes": [
                     "application/json"
                 ],
@@ -635,11 +636,14 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "PostgreSQL creation also returns eventVisitorId, the creator's browser Event Visitor Identity public ID, and issues the private EVCC as an HttpOnly cookie",
+                        "description": "PostgreSQL creation returns eventVisitorId and issues separate HttpOnly EVCC and Event Owner Edit Token cookies; MongoDB credentials are unchanged",
                         "schema": {
                             "type": "object",
                             "properties": {
                                 "eventId": {
+                                    "type": "string"
+                                },
+                                "eventVisitorId": {
                                     "type": "string"
                                 }
                             }
@@ -720,14 +724,36 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "PostgreSQL events also return eventVisitorId and canCreateResponse, and each responses entry adds publicId and canEdit",
+                        "description": "PostgreSQL returns server-proven owner capabilities and browser eventVisitorId; response entries add publicId and canEdit. MongoDB payloads are unchanged.",
                         "schema": {
-                            "$ref": "#/definitions/models.Event"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.Event"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "canCreateResponse": {
+                                            "type": "boolean"
+                                        },
+                                        "canEditSettings": {
+                                            "type": "boolean"
+                                        },
+                                        "canManageEvent": {
+                                            "type": "boolean"
+                                        },
+                                        "eventVisitorId": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             },
             "put": {
+                "description": "PostgreSQL requires Event Owner Edit Token proof, the associated Platform Visitor Identity session, or an owner-issued Granted EVCC; base EVCCs never authorize settings edits. Archived PostgreSQL events are read-only. MongoDB authorization is unchanged.",
                 "produces": [
                     "application/json"
                 ],
@@ -818,10 +844,23 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "403": {
+                        "description": "Owner authority required or event archived",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             },
             "delete": {
+                "description": "PostgreSQL requires the same owner credentials as settings edits; deleted events and responses stop resolving. MongoDB requires its legacy authenticated owner.",
                 "produces": [
                     "application/json"
                 ],
@@ -841,12 +880,25 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "403": {
+                        "description": "Owner authority required or event archived",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             }
         },
         "/events/{eventId}/archive": {
             "post": {
+                "description": "PostgreSQL requires the same owner credentials as settings edits; archive makes the event read-only and unarchive restores mutations. MongoDB requires its legacy authenticated owner.",
                 "consumes": [
                     "application/json"
                 ],
@@ -883,6 +935,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "403": {
+                        "description": "Owner authority required or event archived",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             }

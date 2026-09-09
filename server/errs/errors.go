@@ -5,6 +5,9 @@ import (
 	"fmt"
 )
 
+const EventOwnerCredentialRequired = "event-owner-credential-required"
+const EventArchived = "event-archived"
+
 // Errors enum
 // TODO: make these an actual type (i.e. Errors.NotSignedIn)
 const (

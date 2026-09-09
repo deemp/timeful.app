@@ -128,8 +128,10 @@ export function useEventScheduling(opts: UseEventSchedulingOptions) {
     return null
   })
 
-  const allowScheduleEvent = computed(() =>
-    Boolean(curScheduledEvent.value ?? savedScheduledEvent.value),
+  const allowScheduleEvent = computed(
+    () =>
+      !(opts.event.value.eventVisitorId && opts.event.value.isArchived) &&
+      Boolean(curScheduledEvent.value ?? savedScheduledEvent.value),
   )
 
   const scheduledEventStyle = computed<Record<string, string>>(() => {

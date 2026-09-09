@@ -536,7 +536,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Associate browser Event Visitor Identities with the authenticated account */
+        /**
+         * Associate browser Event Visitor Identities with the authenticated account
+         * @description Source EVCC proof associates response identity; independent Event Owner Edit Token proof associates or moves event ownership without moving responses. Granted EVCC association awaits the transfer confirmation flow.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -620,7 +623,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description PostgreSQL creation also returns eventVisitorId, the creator's browser Event Visitor Identity public ID, and issues the private EVCC as an HttpOnly cookie */
+                /** @description PostgreSQL creation returns eventVisitorId and issues separate HttpOnly EVCC and Event Owner Edit Token cookies; MongoDB credentials are unchanged */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -628,6 +631,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             eventId?: string;
+                            eventVisitorId?: string;
                         };
                     };
                 };
@@ -662,18 +666,26 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description PostgreSQL events also return eventVisitorId and canCreateResponse, and each responses entry adds publicId and canEdit */
+                /** @description PostgreSQL returns server-proven owner capabilities and browser eventVisitorId; response entries add publicId and canEdit. MongoDB payloads are unchanged. */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["models.Event"];
+                        "application/json": components["schemas"]["models.Event"] & {
+                            canCreateResponse?: boolean;
+                            canEditSettings?: boolean;
+                            canManageEvent?: boolean;
+                            eventVisitorId?: string;
+                        };
                     };
                 };
             };
         };
-        /** Edits an event based on its id */
+        /**
+         * Edits an event based on its id
+         * @description PostgreSQL requires Event Owner Edit Token proof, the associated Platform Visitor Identity session, or an owner-issued Granted EVCC; base EVCCs never authorize settings edits. Archived PostgreSQL events are read-only. MongoDB authorization is unchanged.
+         */
         put: {
             parameters: {
                 query?: never;
@@ -714,10 +726,31 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Owner authority required or event archived */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
             };
         };
         post?: never;
-        /** Deletes an event based on its id */
+        /**
+         * Deletes an event based on its id
+         * @description PostgreSQL requires the same owner credentials as settings edits; deleted events and responses stop resolving. MongoDB requires its legacy authenticated owner.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -737,6 +770,24 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Owner authority required or event archived */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
             };
         };
         options?: never;
@@ -753,7 +804,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Archive an event */
+        /**
+         * Archive an event
+         * @description PostgreSQL requires the same owner credentials as settings edits; archive makes the event read-only and unarchive restores mutations. MongoDB requires its legacy authenticated owner.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -779,6 +833,24 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Owner authority required or event archived */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
                 };
             };
         };

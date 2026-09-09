@@ -137,7 +137,7 @@ func (r *Repository) GetEventByID(ctx context.Context, id string) (*Event, error
 
 func (r *Repository) getEvent(ctx context.Context, column, value string) (*Event, error) {
 	event := &Event{}
-	err := r.db.QueryRow(ctx, `SELECT id, short_id, owner_event_visitor_identity_id, owner_external_id, name, type, is_archived, is_deleted, num_responses, schedule_version, creator_posthog_id, created_at, updated_at, payload FROM postgres_events WHERE `+column+` = $1`, value).Scan(&event.ID, &event.ShortID, &event.OwnerEventVisitorIdentityID, &event.OwnerExternalID, &event.Name, &event.Type, &event.IsArchived, &event.IsDeleted, &event.NumResponses, &event.ScheduleVersion, &event.CreatorPosthogID, &event.CreatedAt, &event.UpdatedAt, &event.Payload)
+	err := r.db.QueryRow(ctx, `SELECT id, short_id, owner_edit_token_hash, owner_platform_identity_id, owner_event_visitor_identity_id, owner_external_id, name, type, is_archived, is_deleted, num_responses, schedule_version, creator_posthog_id, created_at, updated_at, payload FROM postgres_events WHERE `+column+` = $1`, value).Scan(&event.ID, &event.ShortID, &event.OwnerEditTokenHash, &event.OwnerPlatformIdentityID, &event.OwnerEventVisitorIdentityID, &event.OwnerExternalID, &event.Name, &event.Type, &event.IsArchived, &event.IsDeleted, &event.NumResponses, &event.ScheduleVersion, &event.CreatorPosthogID, &event.CreatedAt, &event.UpdatedAt, &event.Payload)
 	if err != nil {
 		return nil, err
 	}

@@ -77,9 +77,19 @@ func InitEvents(router *gin.RouterGroup) {
 	eventRouter.POST("/:eventId/responded", eventSourceHandler(userResponded, postgresEventRouteUnavailable))
 	eventRouter.POST("/:eventId/decline", middleware.AuthRequired(), eventSourceHandler(declineInvite, postgresEventRouteUnavailable))
 	eventRouter.GET("/:eventId/calendar-availabilities", middleware.AuthRequired(), eventSourceHandler(getCalendarAvailabilities, postgresEventRouteUnavailable))
-	eventRouter.DELETE("/:eventId", middleware.AuthRequired(), eventSourceHandler(deleteEvent, postgresEventRouteUnavailable))
+	eventRouter.DELETE("/:eventId", eventSourceHandler(authenticatedMongoEventHandler(deleteEvent), postgresDeleteEvent))
 	eventRouter.POST("/:eventId/duplicate", middleware.AuthRequired(), eventSourceHandler(duplicateEvent, postgresEventRouteUnavailable))
-	eventRouter.POST("/:eventId/archive", middleware.AuthRequired(), eventSourceHandler(archiveEvent, postgresEventRouteUnavailable))
+	eventRouter.POST("/:eventId/archive", eventSourceHandler(authenticatedMongoEventHandler(archiveEvent), postgresArchiveEvent))
+}
+
+// Keep MongoDB's session and user lookup guard entirely on its storage branch.
+func authenticatedMongoEventHandler(handler gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		middleware.AuthRequired()(c)
+		if !c.IsAborted() {
+			handler(c)
+		}
+	}
 }
 
 // eventSourceHandler keeps existing Mongo handlers unchanged while reserving a
@@ -199,7 +209,7 @@ func normalizeTimedResponseAvailabilitySlots(
 // @Accept json
 // @Produce json
 // @Param payload body object{name=string,description=string,type=models.EventType,isSignUpForm=bool,signUpBlocks=[]models.SignUpBlock,notificationsEnabled=bool,blindAvailabilityEnabled=bool,daysOnly=bool,dates=[]string,remindees=[]string,sendEmailAfterXResponses=int,when2meetHref=string,activeSlots=[]string,eventTimezone=string,slotGeneration=models.SlotGeneration,timedRecurrence=models.TimedRecurrence,attendees=[]string} true "Timed events require the complete canonical slot contract; day-only events require dates"
-// @Success 201 {object} object{eventId=string} "PostgreSQL creation also returns eventVisitorId, the creator's browser Event Visitor Identity public ID, and issues the private EVCC as an HttpOnly cookie"
+// @Success 201 {object} object{eventId=string,eventVisitorId=string} "PostgreSQL creation returns eventVisitorId and issues separate HttpOnly EVCC and Event Owner Edit Token cookies; MongoDB credentials are unchanged"
 // @Router /events [post]
 func createEvent(c *gin.Context) {
 	if err := rejectLegacyTimedScheduleFields(c); err != nil {
@@ -212,11 +222,11 @@ func createEvent(c *gin.Context) {
 	}
 	payload := struct {
 		// Required parameters
-		Name     string               `json:"name" binding:"required"`
-		Description *string           `json:"description"`
-		Duration *float32             `json:"duration"`
-		Dates    []primitive.DateTime `json:"dates"`
-		Type     models.EventType     `json:"type" binding:"required"`
+		Name        string               `json:"name" binding:"required"`
+		Description *string              `json:"description"`
+		Duration    *float32             `json:"duration"`
+		Dates       []primitive.DateTime `json:"dates"`
+		Type        models.EventType     `json:"type" binding:"required"`
 
 		// Only for specific times for specific dates events
 		HasSpecificTimes *bool                `json:"hasSpecificTimes"`
@@ -426,11 +436,14 @@ func createEvent(c *gin.Context) {
 }
 
 // @Summary Edits an event based on its id
+// @Description PostgreSQL requires Event Owner Edit Token proof, the associated Platform Visitor Identity session, or an owner-issued Granted EVCC; base EVCCs never authorize settings edits. Archived PostgreSQL events are read-only. MongoDB authorization is unchanged.
 // @Tags events
 // @Produce json
 // @Param eventId path string true "Event ID"
 // @Param payload body object{name=string,description=string,dates=[]string,type=models.EventType,signUpBlocks=[]models.SignUpBlock,notificationsEnabled=bool,blindAvailabilityEnabled=bool,daysOnly=bool,remindees=[]string,sendEmailAfterXResponses=int,activeSlots=[]string,eventTimezone=string,slotGeneration=models.SlotGeneration,timedRecurrence=models.TimedRecurrence,attendees=[]string} true "Timed events require the complete canonical slot contract; day-only events require dates"
 // @Success 200
+// @Failure 403 {object} responses.Error "Owner authority required or event archived"
+// @Failure 404 {object} responses.Error "Event not found"
 // @Router /events/{eventId} [put]
 func editEvent(c *gin.Context) {
 	if err := rejectLegacyTimedScheduleFields(c); err != nil {
@@ -714,7 +727,7 @@ func getEventIds(c *gin.Context) {
 // @Produce json
 // @Param eventId path string true "Event ID"
 // @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
-// @Success 200 {object} models.Event "PostgreSQL events also return eventVisitorId and canCreateResponse, and each responses entry adds publicId and canEdit"
+// @Success 200 {object} models.Event{eventVisitorId=string,canCreateResponse=bool,canManageEvent=bool,canEditSettings=bool} "PostgreSQL returns server-proven owner capabilities and browser eventVisitorId; response entries add publicId and canEdit. MongoDB payloads are unchanged."
 // @Router /events/{eventId} [get]
 func getEvent(c *gin.Context) {
 	eventId := c.Param("eventId")
@@ -1825,10 +1838,13 @@ func getCalendarAvailabilities(c *gin.Context) {
 }
 
 // @Summary Deletes an event based on its id
+// @Description PostgreSQL requires the same owner credentials as settings edits; deleted events and responses stop resolving. MongoDB requires its legacy authenticated owner.
 // @Tags events
 // @Produce json
 // @Param eventId path string true "Event ID"
 // @Success 200
+// @Failure 403 {object} responses.Error "Owner authority required or event archived"
+// @Failure 404 {object} responses.Error "Event not found"
 // @Router /events/{eventId} [delete]
 func deleteEvent(c *gin.Context) {
 	eventId := c.Param("eventId")
@@ -1973,12 +1989,15 @@ func duplicateEvent(c *gin.Context) {
 }
 
 // @Summary Archive an event
+// @Description PostgreSQL requires the same owner credentials as settings edits; archive makes the event read-only and unarchive restores mutations. MongoDB requires its legacy authenticated owner.
 // @Tags events
 // @Accept json
 // @Produce json
 // @Param eventId path string true "Event ID"
 // @Param payload body object{archive=bool} true "Archive status"
 // @Success 200
+// @Failure 403 {object} responses.Error "Owner authority required or event archived"
+// @Failure 404 {object} responses.Error "Event not found"
 // @Router /events/{eventId}/archive [post]
 func archiveEvent(c *gin.Context) {
 	payload := struct {

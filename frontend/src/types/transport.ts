@@ -53,6 +53,8 @@ export type RawEvent = Omit<
 > & {
   eventVisitorId?: string
   canCreateResponse?: boolean
+  canManageEvent?: boolean
+  canEditSettings?: boolean
   dates?: RawInstantValue[]
   times?: RawInstantValue[]
   enabledSlots?: RawInstantValue[]
@@ -386,6 +388,12 @@ export function fromRawEvent(raw: RawEvent): Event {
 
   return {
     ...raw,
+    canManageEvent: raw.eventVisitorId
+      ? raw.canManageEvent === true
+      : undefined,
+    canEditSettings: raw.eventVisitorId
+      ? raw.canEditSettings === true
+      : undefined,
     type:
       timedContractPayload && raw.type !== eventTypes.GROUP
         ? timedRecurrenceKindToEventType(timedRecurrence?.kind)

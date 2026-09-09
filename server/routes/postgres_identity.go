@@ -20,9 +20,12 @@ type postgresVisitor struct {
 	identity       *pgstore.EventVisitorIdentity
 	externalUserID string
 	authorized     bool
+	granted        bool
+	owner          bool
 }
 
 // @Summary Associate browser Event Visitor Identities with the authenticated account
+// @Description Source EVCC proof associates response identity; independent Event Owner Edit Token proof associates or moves event ownership without moving responses. Granted EVCC association awaits the transfer confirmation flow.
 // @Tags auth
 // @Accept json
 // @Produce json
@@ -62,6 +65,16 @@ func associatePostgresVisitorIdentities(c *gin.Context) {
 			if err != nil {
 				return err
 			}
+			event, err = tx.LockEvent(ctx, event.ID)
+			if err != nil {
+				return err
+			}
+			if event.IsDeleted {
+				continue
+			}
+			if _, err := authorizePostgresOwner(c, tx, event); err != nil {
+				return err
+			}
 			visitor, err := tx.GetEventVisitorIdentity(ctx, event.ID, item.EventVisitorID)
 			if errors.Is(err, pgx.ErrNoRows) {
 				continue
@@ -69,11 +82,11 @@ func associatePostgresVisitorIdentities(c *gin.Context) {
 			if err != nil {
 				return err
 			}
-			valid, err := validPostgresCredential(c, tx, visitor, event.ShortID)
+			credential, err := provenPostgresCredential(c, tx, visitor, event.ShortID)
 			if err != nil {
 				return err
 			}
-			if !valid || visitor.PlatformIdentityID != nil {
+			if credential == nil || credential.Kind != pgstore.CredentialKindBase || visitor.PlatformIdentityID != nil {
 				continue
 			}
 			platform, err := tx.FindOrCreatePlatformIdentity(ctx, externalID)
@@ -117,28 +130,35 @@ func setPostgresCredentialCookie(c *gin.Context, eventID, publicID, credential s
 	})
 }
 
-func validPostgresCredential(c *gin.Context, repo *pgstore.Repository, visitor *pgstore.EventVisitorIdentity, eventID string) (bool, error) {
+func provenPostgresCredential(c *gin.Context, repo *pgstore.Repository, visitor *pgstore.EventVisitorIdentity, eventID string) (*pgstore.EventVisitorCredential, error) {
 	cookie, err := c.Cookie(postgresCredentialCookieName(eventID))
 	if err != nil {
-		return false, nil
+		return nil, nil
 	}
 	parts := strings.Split(cookie, ".")
 	if len(parts) != 3 || parts[0] != visitor.PublicID {
-		return false, nil
+		return nil, nil
 	}
 	credential, err := repo.GetEventVisitorCredential(c.Request.Context(), visitor.ID, parts[1])
 	if errors.Is(err, pgx.ErrNoRows) {
-		return false, nil
+		return nil, nil
 	}
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	hash := sha256.Sum256([]byte(parts[2]))
-	return subtle.ConstantTimeCompare(hash[:], credential.CredentialHash) == 1 && credential.RevokedAt == nil, nil
+	if subtle.ConstantTimeCompare(hash[:], credential.CredentialHash) != 1 || credential.RevokedAt != nil {
+		return nil, nil
+	}
+	return credential, nil
 }
 
 // The public identifier selects a visitor but never proves control of it.
 func resolvePostgresVisitor(c *gin.Context, repo *pgstore.Repository, event *pgstore.Event) (*postgresVisitor, error) {
+	owner, err := resolvePostgresOwner(c, repo, event)
+	if err != nil {
+		return nil, err
+	}
 	externalID, _ := sessions.Default(c).Get("userId").(string)
 	publicID := c.Query("eventVisitorId")
 	if publicID == "" {
@@ -146,17 +166,19 @@ func resolvePostgresVisitor(c *gin.Context, repo *pgstore.Repository, event *pgs
 			publicID = strings.Split(cookie, ".")[0]
 		}
 	}
-	result := &postgresVisitor{externalUserID: externalID}
+	result := &postgresVisitor{externalUserID: externalID, owner: owner}
 	if publicID != "" {
 		visitor, err := repo.GetEventVisitorIdentity(c.Request.Context(), event.ID, publicID)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return nil, err
 		}
 		if err == nil {
-			valid, err := validPostgresCredential(c, repo, visitor, event.ShortID)
+			credential, err := provenPostgresCredential(c, repo, visitor, event.ShortID)
 			if err != nil {
 				return nil, err
 			}
+			valid := credential != nil
+			result.granted = valid && credential.Kind == pgstore.CredentialKindGranted
 			account := false
 			if externalID != "" {
 				account, err = repo.VisitorBelongsToAccount(c.Request.Context(), visitor.ID, externalID)
@@ -194,7 +216,7 @@ func resolvePostgresVisitor(c *gin.Context, repo *pgstore.Repository, event *pgs
 		}
 		setPostgresCredentialCookie(c, event.ShortID, result.identity.PublicID, credential)
 	}
-	if externalID != "" && result.authorized && result.identity.PlatformIdentityID == nil {
+	if externalID != "" && result.authorized && !result.granted && result.identity.PlatformIdentityID == nil {
 		platform, err := repo.FindOrCreatePlatformIdentity(c.Request.Context(), externalID)
 		if err != nil {
 			return nil, err

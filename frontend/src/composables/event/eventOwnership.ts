@@ -1,7 +1,17 @@
 import { guestUserId } from "@/constants"
 import type { Event, User } from "@/types"
 
-type EventOwnerCarrier = Pick<Event, "ownerId"> | null | undefined
+type EventOwnerCarrier =
+  | Pick<
+      Event,
+      | "ownerId"
+      | "eventVisitorId"
+      | "canEditSettings"
+      | "canManageEvent"
+      | "isArchived"
+    >
+  | null
+  | undefined
 type AuthUserCarrier = Pick<User, "_id"> | null | undefined
 
 export function isAnonymousOwnerId(
@@ -42,5 +52,7 @@ export function canEditEventMetadata(
   event: EventOwnerCarrier,
   authUser: AuthUserCarrier,
 ): boolean {
+  if (event?.eventVisitorId)
+    return event.canEditSettings === true && !event.isArchived
   return isAnonymousOwnerEvent(event) || isSignedInOwner(event, authUser)
 }

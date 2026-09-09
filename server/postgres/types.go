@@ -21,6 +21,8 @@ const (
 type Event struct {
 	ID                          string
 	OwnerEventVisitorIdentityID *string
+	OwnerEditTokenHash          []byte
+	OwnerPlatformIdentityID     *string
 	ShortID                     string
 	OwnerExternalID             *string
 	Name                        string
@@ -71,7 +73,14 @@ type EventVisitorIdentity struct {
 	CreatedAt          time.Time
 }
 
+const (
+	CredentialKindBase    = "base"
+	CredentialKindGranted = "granted"
+)
+
 type EventVisitorCredential struct {
+	Kind                   string
+	GrantsOwner            bool
 	ID                     string
 	EventVisitorIdentityID string
 	CredentialHash         []byte

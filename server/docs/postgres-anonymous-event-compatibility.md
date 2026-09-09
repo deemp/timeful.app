@@ -39,7 +39,7 @@ Instants are normalized to millisecond precision before writing JSONB and before
 
 The repository must distinguish absent fields, JSON null, empty arrays/maps, and zero scalar values.
 In particular, an omitted description preserves the existing value, an explicit empty description persists, and a timed edit with an explicit empty `activeSlots` retains the existing slots to match Mongo BSON `omitempty` behavior.
-Public schedule save/replace/clear remains supported.
+Public schedule save/replace/clear remains supported while the event is not archived.
 
 For PostgreSQL, an Event Visitor Control Credential (EVCC) authorizes management of every response owned by its Event Visitor Identity in that event.
 The public `eventVisitorId` is an identifier, not proof.
@@ -63,11 +63,36 @@ PostgreSQL response maps are keyed by the opaque `publicId`, and each entry carr
 Response mutation uses an explicit-selection contract: `createResponse: true` creates a new response for the calling Event Visitor Identity, and every edit, deletion, and rename must carry the target `responseId`; otherwise the route rejects with `select-response-or-explicitly-create`.
 The browser plugin `set-slots` wire contract is unchanged; the frontend maps the plugin's named response onto the explicit-selection contract (existing named response, else selected response, else create) before calling the API, and the respondents-list delete submits the same `responseId` contract.
 
-Event creation binds the creator's Event Visitor Identity as the event's blind-availability owner.
-A non-owner blind-availability read exposes only responses that visitor is authorized to manage and omits other-response counts; the owner sees all responses.
+Event creation records the creator's [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity) separately from the event's ownership association.
+A blind-availability read exposes all responses only with [Event Owner](../../docs/terminology/glossary.md#event-owner) authority; other visitors see only responses they are authorized to manage, with other-response counts omitted.
 
-Matching-code transfers, Granted EVCC issuance, source revocation, and Event Owner powers (owner edit token with FR-018/FR-115/FR-116 enforcement) are deferred to follow-up tasks and are not part of the delivered foundation.
+Matching-code transfers, Granted EVCC issuance, and source revocation flows remain deferred to TASK-0071.02.
 The migration downgrade is intentionally refused because the legacy schema cannot represent multiple responses per Event Visitor Identity.
+
+## Delivered Event Owner Authority
+
+PostgreSQL creation issues a distinct [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token) in an HttpOnly, SameSite=Lax cookie scoped to `/api`, with Secure enabled for HTTPS requests.
+Only its SHA-256 hash is stored; the credential value never reaches application JavaScript.
+The token authorizes [Event Settings](../../docs/terminology/glossary.md#event-settings) edits, archive/unarchive, and deletion, but does not authorize [Event Response](../../docs/terminology/glossary.md#event-response) edits.
+Base [Event Visitor Control Credentials (EVCCs)](../../docs/terminology/glossary.md#event-visitor-control-credential-evcc) never authorize these owner actions, including the creator's credential.
+
+Ownership has its own [Platform Visitor Identity](../../docs/terminology/glossary.md#platform-visitor-identity) association, separate from the creator's [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity) and [Event Responses](../../docs/terminology/glossary.md#event-response).
+An associated account can manage the event without the original cookie.
+Proving the [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token) while signed in associates ownership with that account, replacing any previous ownership association without transferring response ownership.
+Ownership takeover and protected mutations serialize under the event row lock.
+
+Event reads expose server-proven `canEditSettings` and `canManageEvent` capabilities for frontend controls.
+Archived events remain readable and allow authorized unarchive or deletion, but reject settings, response, rename, and selected-schedule mutations.
+Deleted events and their responses stop resolving through event routes.
+MongoDB retains its legacy owner authorization.
+
+The credential schema and validator distinguish a future owner-issued [Granted Event Visitor Control Credential (Granted EVCC)](../../docs/terminology/glossary.md#granted-event-visitor-control-credential-granted-evcc) through explicit credential-kind and owner-grant metadata, and reject revoked grants.
+Repository-seeded regression fixtures verify this foundation; no transfer issuance endpoint, transfer UI, or end-to-end transfer flow is delivered here.
+
+The migration preserves ownership already associated through the creator's [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity).
+Older anonymous events have no recoverable [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token); without an existing ownership association, their settings, archive state, and deletion cannot be managed after this migration.
+Existing base credentials are deliberately not promoted to owner authority.
+PostgreSQL dashboard loading remains outside this foundation.
 
 ## Transactions
 

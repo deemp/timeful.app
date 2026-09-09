@@ -34,7 +34,7 @@ func postgresRepository(c *gin.Context) *pgstore.Repository {
 
 func postgresEvent(c *gin.Context, repository *pgstore.Repository) *pgstore.Event {
 	event, err := repository.GetEventByShortID(c.Request.Context(), c.Param("eventId"))
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && event.IsDeleted) {
 		c.JSON(http.StatusNotFound, responses.Error{Error: errs.EventNotFound})
 		return nil
 	}
@@ -53,6 +53,8 @@ func postgresEventModel(event *pgstore.Event) (models.Event, error) {
 	value.Id = primitive.NilObjectID
 	value.ShortId = &event.ShortID
 	value.OwnerId = primitive.NilObjectID
+	value.IsArchived = &event.IsArchived
+	value.IsDeleted = &event.IsDeleted
 	value.Name = event.Name
 	value.Type = models.EventType(event.Type)
 	value.ScheduleVersion = event.ScheduleVersion
@@ -90,14 +92,7 @@ func postgresResponses(c *gin.Context, repository *pgstore.Repository, event *pg
 	if err != nil {
 		return nil, false, err
 	}
-	owner := false
-	if event.OwnerEventVisitorIdentityID != nil {
-		owner, err = visitor.controls(c.Request.Context(), repository, *event.OwnerEventVisitorIdentityID)
-		if err != nil {
-			return nil, false, err
-		}
-	}
-	filtered := utils.Coalesce(value.BlindAvailabilityEnabled) && !owner
+	filtered := utils.Coalesce(value.BlindAvailabilityEnabled) && !visitor.owner
 	stored, err := repository.ListResponses(c.Request.Context(), event.ID)
 	if err != nil {
 		return nil, false, err
@@ -115,7 +110,7 @@ func postgresResponses(c *gin.Context, repository *pgstore.Repository, event *pg
 		if err != nil {
 			return nil, false, err
 		}
-		result[key] = &postgresPublicResponse{Response: value, PublicID: key, CanEdit: authorized}
+		result[key] = &postgresPublicResponse{Response: value, PublicID: key, CanEdit: authorized && !event.IsArchived}
 	}
 	return result, filtered, nil
 }
@@ -189,7 +184,9 @@ func postgresGetEvent(c *gin.Context) {
 		return
 	}
 	payload["eventVisitorId"] = visitor.identity.PublicID
-	payload["canCreateResponse"] = visitor.authorized
+	payload["canCreateResponse"] = visitor.authorized && !event.IsArchived
+	payload["canManageEvent"] = visitor.owner
+	payload["canEditSettings"] = visitor.owner && !event.IsArchived
 	if filtered {
 		delete(payload, "numResponses")
 		if responseMap == nil {
@@ -283,37 +280,27 @@ func postgresEditEvent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, responses.Error{Error: "days-only-events-require-dates"})
 		return
 	}
-	repository := postgresRepository(c)
-	if repository == nil {
-		return
-	}
-	event := postgresEvent(c, repository)
-	if event == nil {
-		return
-	}
-	current, err := postgresEventModel(event)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-	if _, present := raw["description"]; !present {
-		update.Description = current.Description
-	}
-	if slots, present := raw["activeSlots"]; present && string(slots) == "[]" && len(current.ActiveSlots) > 0 {
-		update.ActiveSlots = current.ActiveSlots
-	}
-	update.Id, update.ShortId, update.OwnerId, update.NumResponses, update.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
-	payload, err := json.Marshal(update)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-	event.Name, event.Type, event.Payload, event.ScheduleVersion = update.Name, string(update.Type), payload, 1
-	if err := repository.UpdateEvent(c.Request.Context(), event); err != nil {
-		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-update-event"})
-		return
-	}
-	c.Status(http.StatusOK)
+	postgresOwnerMutation(c, false, func(ctx context.Context, tx *pgstore.Repository, event *pgstore.Event) error {
+		current, err := postgresEventModel(event)
+		if err != nil {
+			return err
+		}
+		if _, present := raw["description"]; !present {
+			update.Description = current.Description
+		}
+		if slots, present := raw["activeSlots"]; present && string(slots) == "[]" && len(current.ActiveSlots) > 0 {
+			update.ActiveSlots = current.ActiveSlots
+		}
+		update.Id, update.ShortId, update.OwnerId, update.NumResponses, update.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
+		// Lifecycle state is changed only through the dedicated owner actions.
+		update.IsArchived, update.IsDeleted = nil, nil
+		payload, err := json.Marshal(update)
+		if err != nil {
+			return err
+		}
+		event.Name, event.Type, event.Payload, event.ScheduleVersion = update.Name, string(update.Type), payload, 1
+		return tx.UpdateEvent(ctx, event)
+	})
 }
 
 func postgresSaveSchedule(c *gin.Context)  { postgresUpdateSchedule(c, false) }
@@ -328,35 +315,44 @@ func postgresUpdateSchedule(c *gin.Context, clear bool) {
 	if event == nil {
 		return
 	}
-	value, err := postgresEventModel(event)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
+	var input struct {
+		StartDate primitive.DateTime `json:"startDate" binding:"required"`
+		EndDate   primitive.DateTime `json:"endDate" binding:"required"`
 	}
-	if clear {
-		value.ScheduledEvent = nil
-	} else {
-		payload := struct {
-			StartDate primitive.DateTime `json:"startDate" binding:"required"`
-			EndDate   primitive.DateTime `json:"endDate" binding:"required"`
-		}{}
-		if err := c.Bind(&payload); err != nil {
+	if !clear {
+		if err := c.Bind(&input); err != nil {
 			return
 		}
-		if payload.EndDate <= payload.StartDate {
+		if input.EndDate <= input.StartDate {
 			c.JSON(http.StatusBadRequest, responses.Error{Error: "scheduled-event-end-must-follow-start"})
 			return
 		}
-		value.ScheduledEvent = &models.CalendarEvent{Summary: event.Name, StartDate: payload.StartDate, EndDate: payload.EndDate}
 	}
-	value.Id, value.ShortId, value.OwnerId, value.NumResponses, value.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
-	event.Payload, err = json.Marshal(value)
+	err := repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
+		locked, err := tx.LockEvent(ctx, event.ID)
+		if err != nil {
+			return err
+		}
+		if err := postgresWritableEvent(locked); err != nil {
+			return err
+		}
+		value, err := postgresEventModel(locked)
+		if err != nil {
+			return err
+		}
+		value.ScheduledEvent = nil
+		if !clear {
+			value.ScheduledEvent = &models.CalendarEvent{Summary: locked.Name, StartDate: input.StartDate, EndDate: input.EndDate}
+		}
+		value.Id, value.ShortId, value.OwnerId, value.NumResponses, value.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
+		locked.Payload, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		return tx.UpdateEvent(ctx, locked)
+	})
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-	if err := repository.UpdateEvent(c.Request.Context(), event); err != nil {
-		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-save-scheduled-event"})
+		postgresMutationError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)
@@ -410,6 +406,9 @@ func postgresMutateResponse(c *gin.Context, operation string) {
 	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		locked, err := tx.LockEvent(ctx, event.ID)
 		if err != nil {
+			return err
+		}
+		if err := postgresWritableEvent(locked); err != nil {
 			return err
 		}
 		var stored *pgstore.Response
@@ -564,7 +563,7 @@ func postgresCreateEvent(c *gin.Context) {
 	}
 	stored := &pgstore.Event{Name: event.Name, Type: string(event.Type), ScheduleVersion: 1, CreatorPosthogID: event.CreatorPosthogId, Payload: encoded}
 	var visitor *pgstore.EventVisitorIdentity
-	var credential string
+	var credential, ownerToken string
 	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		if err := tx.CreateEvent(ctx, stored); err != nil {
 			return err
@@ -578,6 +577,10 @@ func postgresCreateEvent(c *gin.Context) {
 		if err != nil {
 			return err
 		}
+		ownerToken, err = issuePostgresOwnerToken(ctx, tx, stored)
+		if err != nil {
+			return err
+		}
 		stored.OwnerEventVisitorIdentityID = &visitor.ID
 		return tx.UpdateEvent(ctx, stored)
 	})
@@ -586,5 +589,6 @@ func postgresCreateEvent(c *gin.Context) {
 		return
 	}
 	setPostgresCredentialCookie(c, stored.ShortID, visitor.PublicID, credential)
+	setPostgresOwnerCookie(c, stored.ShortID, ownerToken)
 	c.JSON(http.StatusCreated, gin.H{"eventId": stored.ShortID, "eventVisitorId": visitor.PublicID})
 }

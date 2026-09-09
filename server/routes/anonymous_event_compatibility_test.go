@@ -3,6 +3,9 @@ package routes
 import (
 	"context"
 	"net/http"
+	"net/http/cookiejar"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"sync"
 	"testing"
@@ -266,10 +269,32 @@ func TestAnonymousDatesOnlyEventCompatibilityContract(t *testing.T) {
 	}
 }
 
+// These payload-compatibility checks act as the creating browser, retaining
+// PostgreSQL's owner credential. Authorization rejection has a separate suite.
+func compatibilityOwnerBrowser(router http.Handler) http.Handler {
+	jar, _ := cookiejar.New(nil)
+	origin, _ := url.Parse("http://example.com/api/")
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		for _, cookie := range jar.Cookies(origin) {
+			req.AddCookie(cookie)
+		}
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		jar.SetCookies(origin, recorder.Result().Cookies())
+		for name, values := range recorder.Header() {
+			for _, value := range values {
+				w.Header().Add(name, value)
+			}
+		}
+		w.WriteHeader(recorder.Code)
+		_, _ = w.Write(recorder.Body.Bytes())
+	})
+}
+
 func TestAnonymousEventEditCompatibilityContract(t *testing.T) {
 	for _, store := range anonymousEventContractStores() {
 		t.Run(store.name, func(t *testing.T) {
-			router := store.newRouter(t)
+			router := compatibilityOwnerBrowser(store.newRouter(t))
 			timedID := createAnonymousCompatibilityEvent(t, router, canonicalTimedEventPayload("Original timed event"))
 			t.Cleanup(func() { store.cleanupEvent(t, timedID) })
 
