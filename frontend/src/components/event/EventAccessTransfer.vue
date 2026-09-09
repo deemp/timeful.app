@@ -35,8 +35,15 @@
               <v-btn :disabled="busy || !code" @click="approve"
                 >Approve matching code</v-btn
               >
-              <v-btn :disabled="busy" @click="cancel">Cancel transfer</v-btn>
             </template>
+            <v-btn
+              v-if="
+                current?.state === 'pending' || current?.state === 'approved'
+              "
+              :disabled="busy"
+              @click="cancel"
+              >Cancel transfer</v-btn
+            >
           </template>
           <div
             v-for="entry in history"

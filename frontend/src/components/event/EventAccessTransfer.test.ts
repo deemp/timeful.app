@@ -162,6 +162,29 @@ it("polls the current transfer once and stops after a non-revocable completion",
   wrapper.unmount()
 })
 
+it("allows cancelling an approved transfer and stops tracking it", async () => {
+  const wrapper = render()
+  await click(wrapper, "Continue on another device")
+  await click(wrapper, "Create transfer link")
+  post.mockResolvedValue({ state: "approved" })
+  await vi.advanceTimersByTimeAsync(2000)
+  expect(wrapper.text()).toContain("Approved — waiting for the other browser")
+  expect(wrapper.text()).not.toContain("Approve matching code")
+  post.mockResolvedValue({ state: "cancelled" })
+  await click(wrapper, "Cancel transfer")
+  expect(post).toHaveBeenLastCalledWith(
+    "/events/EVENT123/transfers/transfer/cancel",
+    {},
+  )
+  expect(wrapper.text()).toContain("Transfer status: Cancelled")
+  expect(wrapper.text()).not.toContain("Cancel transfer")
+  expect(savedTransfers("EVENT123")).toEqual([])
+  post.mockClear()
+  await vi.advanceTimersByTimeAsync(4000)
+  expect(post).not.toHaveBeenCalled()
+  wrapper.unmount()
+})
+
 it("retains revocation handles and visible grants on transient status failures", async () => {
   localStorage.setItem("timeful.transfers.EVENT123", JSON.stringify(["grant"]))
   post.mockResolvedValue({ state: "redeemed", revocable: true })

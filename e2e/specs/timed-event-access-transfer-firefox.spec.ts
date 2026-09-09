@@ -517,6 +517,58 @@ for (const mode of ["guest", "account-switch"] as const) {
   })
 }
 
+test("Source cancels approved access before the target redeems", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  const target = await browser.newContext({ baseURL })
+  try {
+    const created = await page.request.post("/api/events", { data: payload })
+    expect(created.status()).toBe(201)
+    const { eventId } = (await created.json()) as { eventId: string }
+    await page.goto(`/e/${eventId}`)
+    await page
+      .getByRole("button", { name: "Continue on another device" })
+      .click()
+    await page.getByRole("button", { name: "Create transfer link" }).click()
+    const linkField = page.getByLabel("Transfer link", { exact: true })
+    await expect(linkField).toHaveValue(/\/transfer\//)
+    const link = await linkField.inputValue()
+    const targetPage = await target.newPage()
+    await targetPage.goto(link)
+    const code = targetPage.getByTestId("matching-code")
+    await expect(code).toHaveText(/^[A-Z0-9]{8}$/)
+    await page
+      .getByLabel("Matching code from other browser")
+      .fill(await code.innerText())
+    await page.getByRole("button", { name: "Approve matching code" }).click()
+    await expect(page.getByRole("status")).toContainText(
+      "Approved — waiting for the other browser",
+    )
+    await page
+      .getByRole("button", { name: "Cancel transfer", exact: true })
+      .click()
+    await expect(page.getByRole("status")).toContainText("Cancelled")
+    await expect(
+      page.getByRole("button", { name: "Cancel transfer", exact: true }),
+    ).toHaveCount(0)
+    await targetPage
+      .getByRole("button", { name: "Continue after approval" })
+      .click()
+    await expect(
+      targetPage.getByText(/Access has not been approved/),
+    ).toBeVisible()
+    expect(
+      (await target.cookies()).some((cookie) =>
+        cookie.name.startsWith("timeful_grant_"),
+      ),
+    ).toBe(false)
+  } finally {
+    await target.close()
+  }
+})
+
 for (const state of ["cancelled", "expired"] as const) {
   test(`A ${state} link cannot grant access`, async ({
     page,
