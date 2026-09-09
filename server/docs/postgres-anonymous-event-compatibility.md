@@ -108,9 +108,10 @@ On a PostgreSQL event page, choose `Continue on another device`, then `Create tr
 Open the copied link in the other browser and enter its matching code on the source browser.
 Choose `Approve matching code` on the source, then `Continue after approval` on the target, within five minutes of creating the link.
 Opening the link alone grants no access, and each browser opening it receives an independent code.
-The source can cancel a pending link or create a new link after expiry.
+The source can cancel a pending or approved-but-unredeemed link or create a new link after expiry.
 
 A signed-in source creates a normal session for the same [Platform Visitor Identity](../../docs/terminology/glossary.md#platform-visitor-identity) on the target.
+Redemption replaces only the target session's identity and preserves its unrelated session keys.
 An anonymous source must prove its [Event Visitor Control Credential (EVCC)](../../docs/terminology/glossary.md#event-visitor-control-credential-evcc); an anonymous [Event Owner](../../docs/terminology/glossary.md#event-owner) must also prove the [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token).
 The target receives a distinct [Granted Event Visitor Control Credential (Granted EVCC)](../../docs/terminology/glossary.md#granted-event-visitor-control-credential-granted-evcc), preserving the source role and ownership while retaining the target's own [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity).
 Owner grants permit settings edits, visibility of all responses, archive/unarchive, and deletion.
@@ -118,6 +119,7 @@ Ordinary grants permit only the source's response authority, including the same 
 
 The source dialog retains revocation handles across reloads and offers `Revoke access` for issued anonymous grants.
 Grants have no fixed server-side expiry; clearing target browser data or source revocation removes that browser's delegated authority.
+Expired pending, approved, and cancelled transfers are pruned automatically together with their requests, while redeemed transfers are retained as revocation anchors.
 Normal signed-in sessions use the ordinary session lifecycle and do not offer grant revocation.
 When the target signs in, the app asks before associating the source [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity) with its [Platform Visitor Identity](../../docs/terminology/glossary.md#platform-visitor-identity), including sign-in from outside the event page.
 `Not now` leaves the grant usable without associating the source; `Confirm association` enables durable response recovery without associating event ownership.
@@ -125,18 +127,18 @@ Explicitly accepted account recovery is independent of later grant revocation.
 
 All paths below are relative to `/api` and resolve PostgreSQL events only; MongoDB persistence and credentials retain their existing behavior.
 
-| Request                                                 | Contract                                                                                                                                                                  |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /events/{eventId}/transfers`                      | Requires source authority and returns `id` and `expiresAt`; stores only hashed source proof.                                                                              |
-| `POST /events/{eventId}/transfers/{transferId}/open`    | Empty JSON object creates or retrieves this browser's independent `requestId` and `code`, without issuing event authority.                                                |
-| `POST /events/{eventId}/transfers/{transferId}/status`  | Source proof returns `state`, `requests`, and `revocable`; target requests cannot inspect source status.                                                                  |
-| `POST /events/{eventId}/transfers/{transferId}/approve` | Source proof plus exact `{requestId, code}` selects one target and consumes the pending state.                                                                            |
-| `POST /events/{eventId}/transfers/{transferId}/redeem`  | Only the approved target proof can redeem once before the original deadline.                                                                                              |
-| `POST /events/{eventId}/transfers/{transferId}/cancel`  | Source proof cancels a pending transfer.                                                                                                                                  |
-| `POST /events/{eventId}/transfers/{transferId}/revoke`  | Source proof revokes the issued grant without a transfer deadline.                                                                                                        |
-| `POST /events/{eventId}/grant-association`              | `{confirm: false}` inspects consent requirements; only explicit `{confirm: true}` with an active grant and authenticated session associates the source response identity. |
+| Request                                                 | Contract                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /events/{eventId}/transfers`                      | Requires source authority and returns `id` and `expiresAt`; stores only hashed source proof.                                                                                                                                                                   |
+| `POST /events/{eventId}/transfers/{transferId}/open`    | Empty JSON object creates or retrieves this browser's independent `requestId` and `code`, without issuing event authority; after approval but before redemption it re-serves the approved request and code to the browser holding that request's target proof. |
+| `POST /events/{eventId}/transfers/{transferId}/status`  | Source proof returns `state`, `requests`, and `revocable`; target requests cannot inspect source status.                                                                                                                                                       |
+| `POST /events/{eventId}/transfers/{transferId}/approve` | Source proof plus exact `{requestId, code}` selects one target and consumes the pending state.                                                                                                                                                                 |
+| `POST /events/{eventId}/transfers/{transferId}/redeem`  | Only the approved target proof can redeem once before the original deadline.                                                                                                                                                                                   |
+| `POST /events/{eventId}/transfers/{transferId}/cancel`  | Source proof cancels a pending or approved-but-unredeemed transfer; cancelled transfers reject approval and redemption.                                                                                                                                        |
+| `POST /events/{eventId}/transfers/{transferId}/revoke`  | Source proof revokes the issued grant without a transfer deadline.                                                                                                                                                                                             |
+| `POST /events/{eventId}/grant-association`              | `{confirm: false}` inspects consent requirements; only explicit `{confirm: true}` with an active grant and authenticated session associates the source response identity.                                                                                      |
 
-Source proofs, target proofs, and anonymous grants use separate HttpOnly, SameSite=Strict cookies scoped to `/api`, with Secure enabled over HTTPS.
+Source proofs, target proofs, and anonymous grants use separate HttpOnly, SameSite=Lax cookies scoped to `/api`, with Secure enabled over HTTPS.
 Raw source credentials and owner tokens are never copied to the target or exposed to JavaScript.
 Lifecycle mutations serialize under event and transfer row locks, preserving single redemption under concurrent requests.
 Session encoding occurs before committing redemption, and failed transactions discard session cookie headers.

@@ -28,7 +28,9 @@ func transferSecret() (string, []byte, error) {
 	return value, hash[:], nil
 }
 func transferCookie(c *gin.Context, name, value string) {
-	http.SetCookie(c.Writer, &http.Cookie{Name: name, Value: value, Path: "/api", MaxAge: 34560000, HttpOnly: true, SameSite: http.SameSiteStrictMode, Secure: c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"})
+	// Attributes match the base EVCC and owner cookies; SameSite=Lax never
+	// sends these cookies on cross-site state-changing requests.
+	http.SetCookie(c.Writer, &http.Cookie{Name: name, Value: value, Path: "/api", MaxAge: 34560000, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"})
 }
 func transferProof(c *gin.Context, name string, hash []byte) bool {
 	value, err := c.Cookie(name)
@@ -75,6 +77,10 @@ func postgresCreateTransfer(c *gin.Context) {
 		if locked.IsDeleted {
 			return pgx.ErrNoRows
 		}
+		// Transfer creation is the automatic sweep point for expired rows.
+		if err := tx.PruneExpiredAccessTransfers(ctx); err != nil {
+			return err
+		}
 		external, _ := sessions.Default(c).Get("userId").(string)
 		if external != "" {
 			transfer.ExternalUserID = &external
@@ -115,7 +121,7 @@ func postgresCreateTransfer(c *gin.Context) {
 }
 
 // @Summary Advance a source-confirmed transfer
-// @Description Actions: open (new target request), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry. Revocation has no time limit.
+// @Description Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.
 // @Tags events
 // @Accept json
 // @Produce json
@@ -198,7 +204,23 @@ func postgresTransferAction(c *gin.Context) {
 		}
 		switch action {
 		case "open":
-			if transfer.State != "pending" || source {
+			if source {
+				return pgx.ErrNoRows
+			}
+			// Reload safety: an approved-but-unredeemed transfer re-serves the
+			// approved request and code to the browser holding its target proof,
+			// still without granting authority before redemption.
+			if transfer.State == "approved" && transfer.ApprovedRequestID != nil {
+				for _, request := range requests {
+					if request.ID == *transfer.ApprovedRequestID && transferProof(c, "timeful_transfer_target_"+transfer.ID, request.TargetHash) {
+						result["requestId"] = request.ID
+						result["code"] = request.Code
+						result["state"] = transfer.State
+						return nil
+					}
+				}
+			}
+			if transfer.State != "pending" {
 				return pgx.ErrNoRows
 			}
 			for _, request := range requests {
@@ -300,7 +322,7 @@ func postgresTransferAction(c *gin.Context) {
 			}
 			transfer.State = "redeemed"
 		case "cancel":
-			if !source || transfer.State != "pending" {
+			if !source || (transfer.State != "pending" && transfer.State != "approved") {
 				return pgx.ErrNoRows
 			}
 			transfer.State = "cancelled"
@@ -313,7 +335,8 @@ func postgresTransferAction(c *gin.Context) {
 		}
 		if externalID != nil {
 			session := sessions.Default(c)
-			session.Clear()
+			// Redemption replaces only the session identity; unrelated session
+			// keys must survive the transfer.
 			session.Set("userId", *externalID)
 			// Cookie-session encoding must succeed before consuming the transfer.
 			// Headers are not sent until the transaction has committed below.

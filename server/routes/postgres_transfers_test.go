@@ -28,12 +28,15 @@ func TestPostgresAccessTransfers(t *testing.T) {
 	router.POST("/test/sign-in/:id", func(c *gin.Context) {
 		s := sessions.Default(c)
 		s.Set("userId", c.Param("id"))
+		s.Set("preference", "dark")
 		if err := s.Save(); err != nil {
 			t.Fatal(err)
 		}
 		c.JSON(200, gin.H{})
 	})
-	router.GET("/test/session", func(c *gin.Context) { c.JSON(200, gin.H{"id": sessions.Default(c).Get("userId")}) })
+	router.GET("/test/session", func(c *gin.Context) {
+		c.JSON(200, gin.H{"id": sessions.Default(c).Get("userId"), "preference": sessions.Default(c).Get("preference")})
+	})
 	router.POST("/api/test/session-failure/:eventId/transfers/:transferId/:action", func(c *gin.Context) {
 		c.Set(sessions.DefaultKey, failingTransferSession{sessions.Default(c)})
 		postgresTransferAction(c)
@@ -135,6 +138,22 @@ func TestPostgresAccessTransfers(t *testing.T) {
 			}
 			request(source, "POST", base+"approve", approval, 200)
 			request(source, "POST", base+"approve", approval, 403)
+			// A target that reloads the link after approval still sees the
+			// approved request and code, while other browsers learn nothing.
+			reopened := request(target, "POST", base+"open", nil, 200)
+			if str(reopened, "requestId") != str(pending, "requestId") || str(reopened, "code") != str(pending, "code") {
+				t.Fatal("approved open lost the approved request")
+			}
+			if str(reopened, "state") != "approved" {
+				t.Fatal("approved open lost the approved state")
+			}
+			request(source, "POST", base+"open", nil, 403)
+			request(attacker, "POST", base+"open", nil, 403)
+			if mode == "session" {
+				// The target already holds a different sign-in; redemption must
+				// replace only the session identity.
+				request(target, "POST", "/test/sign-in/account-other", nil, 200)
+			}
 			request(attacker, "POST", base+"redeem", nil, 403)
 			if mode == "session" {
 				request(target, "POST", "/api/test/session-failure/"+id+"/transfers/"+transfer+"/redeem", nil, 500)
@@ -187,8 +206,12 @@ func TestPostgresAccessTransfers(t *testing.T) {
 				}
 			}
 			if mode == "session" {
-				if str(request(target, "GET", "/test/session", nil, 200), "id") != "account-source" {
+				session := request(target, "GET", "/test/session", nil, 200)
+				if str(session, "id") != "account-source" {
 					t.Fatal("session not transferred")
+				}
+				if str(session, "preference") != "dark" {
+					t.Fatal("unrelated session keys lost")
 				}
 				return
 			}
@@ -239,6 +262,70 @@ func TestPostgresAccessTransfers(t *testing.T) {
 			request(clean, "POST", path+"/archive", map[string]any{"archive": true}, 403)
 			request(clean, "POST", path+"/response", map[string]any{"responseId": responseID, "name": "Revoked edit"}, 403)
 			request(clean, "DELETE", path, nil, 403)
+			// Source cancel also stops an approved-but-unredeemed transfer, and
+			// the cancelled state rejects every later transition.
+			stopped := create()
+			stoppedPath := path + "/transfers/" + stopped + "/"
+			openedStop := request(target, "POST", stoppedPath+"open", nil, 200)
+			stopApproval := map[string]any{"requestId": str(openedStop, "requestId"), "code": str(openedStop, "code")}
+			request(source, "POST", stoppedPath+"approve", stopApproval, 200)
+			request(source, "POST", stoppedPath+"cancel", nil, 200)
+			request(target, "POST", stoppedPath+"open", nil, 403)
+			request(source, "POST", stoppedPath+"approve", stopApproval, 403)
+			request(target, "POST", stoppedPath+"redeem", nil, 403)
+			request(source, "POST", stoppedPath+"cancel", nil, 403)
+			// Expired transfers are pruned with their requests on the next
+			// creation, while redeemed transfers survive past expiry as
+			// revocation anchors and unexpired transfers stay untouched.
+			prunedPending := create()
+			request(target, "POST", path+"/transfers/"+prunedPending+"/open", nil, 200)
+			prunedApproved := create()
+			openedPrune := request(target, "POST", path+"/transfers/"+prunedApproved+"/open", nil, 200)
+			request(source, "POST", path+"/transfers/"+prunedApproved+"/approve", map[string]any{"requestId": str(openedPrune, "requestId"), "code": str(openedPrune, "code")}, 200)
+			prunedCancelled := create()
+			request(source, "POST", path+"/transfers/"+prunedCancelled+"/cancel", nil, 200)
+			anchor := create()
+			anchorPath := path + "/transfers/" + anchor + "/"
+			openedAnchor := request(target, "POST", anchorPath+"open", nil, 200)
+			request(source, "POST", anchorPath+"approve", map[string]any{"requestId": str(openedAnchor, "requestId"), "code": str(openedAnchor, "code")}, 200)
+			request(target, "POST", anchorPath+"redeem", nil, 200)
+			if _, err := pgstore.Pool.Exec(context.Background(), `UPDATE access_transfers SET expires_at=clock_timestamp()-interval '1 second' WHERE id::text=ANY($1)`, []string{prunedPending, prunedApproved, prunedCancelled, anchor}); err != nil {
+				t.Fatal(err)
+			}
+			survivor := create()
+			request(target, "POST", path+"/transfers/"+survivor+"/open", nil, 200)
+			var pruned int
+			if err := pgstore.Pool.QueryRow(context.Background(), `SELECT count(*) FROM access_transfers WHERE id::text=ANY($1)`, []string{prunedPending, prunedApproved, prunedCancelled}).Scan(&pruned); err != nil {
+				t.Fatal(err)
+			}
+			if pruned != 0 {
+				t.Fatalf("expired transfers survived pruning: %d", pruned)
+			}
+			if err := pgstore.Pool.QueryRow(context.Background(), `SELECT count(*) FROM access_transfer_requests WHERE transfer_id::text=ANY($1)`, []string{prunedPending, prunedApproved}).Scan(&pruned); err != nil {
+				t.Fatal(err)
+			}
+			if pruned != 0 {
+				t.Fatalf("pruned transfers kept requests: %d", pruned)
+			}
+			if err := pgstore.Pool.QueryRow(context.Background(), `SELECT count(*) FROM access_transfers WHERE id::text=$1 AND state='redeemed'`, anchor).Scan(&pruned); err != nil {
+				t.Fatal(err)
+			}
+			if pruned != 1 {
+				t.Fatal("redeemed transfer was pruned")
+			}
+			if err := pgstore.Pool.QueryRow(context.Background(), `SELECT count(*) FROM access_transfers WHERE id::text=$1 AND state='pending'`, survivor).Scan(&pruned); err != nil {
+				t.Fatal(err)
+			}
+			if pruned != 1 {
+				t.Fatal("live transfer was pruned")
+			}
+			// approved_request_id references a real request of the same transfer.
+			if _, err := pgstore.Pool.Exec(context.Background(), `UPDATE access_transfers SET approved_request_id=gen_random_uuid() WHERE id::text=$1`, survivor); err == nil {
+				t.Fatal("approved_request_id accepted a foreign request")
+			}
+			if _, err := pgstore.Pool.Exec(context.Background(), `UPDATE access_transfers SET approved_request_id=(SELECT id FROM access_transfer_requests WHERE transfer_id::text=$1 LIMIT 1) WHERE id::text=$1`, survivor); err != nil {
+				t.Fatal(err)
+			}
 			cancelled := create()
 			request(source, "POST", path+"/transfers/"+cancelled+"/cancel", nil, 200)
 			request(target, "POST", path+"/transfers/"+cancelled+"/open", nil, 403)

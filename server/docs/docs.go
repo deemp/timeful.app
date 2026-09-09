@@ -1526,7 +1526,7 @@ const docTemplate = `{
         },
         "/events/{eventId}/transfers/{transferId}/{action}": {
             "post": {
-                "description": "Actions: open (new target request), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry. Revocation has no time limit.",
+                "description": "Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.",
                 "consumes": [
                     "application/json"
                 ],

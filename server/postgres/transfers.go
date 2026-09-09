@@ -45,6 +45,14 @@ func (r *Repository) CreateTransferRequest(ctx context.Context, transferID strin
 	return r.db.QueryRow(ctx, `INSERT INTO access_transfer_requests(transfer_id,target_hash,code) VALUES($1,$2,$3) RETURNING id`, transferID, v.TargetHash, v.Code).Scan(&v.ID)
 }
 
+// PruneExpiredAccessTransfers deletes past-deadline transfers that can no
+// longer progress, together with their cascade-deleted requests. Redeemed
+// transfers are retained so the source can revoke issued grants.
+func (r *Repository) PruneExpiredAccessTransfers(ctx context.Context) error {
+	_, err := r.db.Exec(ctx, `DELETE FROM access_transfers WHERE expires_at < clock_timestamp() AND state IN ('pending','approved','cancelled')`)
+	return err
+}
+
 func (r *Repository) ListTransferRequests(ctx context.Context, transferID string) ([]TransferRequest, error) {
 	rows, err := r.db.Query(ctx, `SELECT id,code,target_hash FROM access_transfer_requests WHERE transfer_id=$1 ORDER BY id`, transferID)
 	if err != nil {

@@ -258,7 +258,7 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
         )
         expect(grant).toMatchObject({
           httpOnly: true,
-          sameSite: "Strict",
+          sameSite: "Lax",
           path: "/api",
         })
         expect(await targetPage.evaluate(() => document.cookie)).not.toContain(

@@ -20,6 +20,8 @@ CREATE TABLE access_transfer_requests (
  code TEXT NOT NULL,
  UNIQUE (transfer_id, code)
 );
+ALTER TABLE access_transfers ADD CONSTRAINT access_transfers_approved_request_fkey FOREIGN KEY (approved_request_id) REFERENCES access_transfer_requests(id);
+-- Redeemed transfers are retained as revocation anchors, so pruning skips them.
+CREATE INDEX access_transfers_prune_idx ON access_transfers(expires_at) WHERE state IN ('pending','approved','cancelled');
 -- +goose Down
-DROP TABLE access_transfer_requests;
-DROP TABLE access_transfers;
+DROP TABLE access_transfers, access_transfer_requests;
