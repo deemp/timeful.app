@@ -111,6 +111,9 @@ test("PostgreSQL owner archives, restores, and deletes an event through the even
   await expect(
     page.getByRole("button", { name: "Edit Ada", exact: true }),
   ).toHaveCount(0)
+  await expect(
+    page.getByRole("button", { name: "Schedule event", exact: true }),
+  ).toHaveCount(0)
   expect(
     (
       await page.request.put(`/api/events/${eventId}`, { data: payload })
@@ -135,6 +138,9 @@ test("PostgreSQL owner archives, restores, and deletes an event through the even
   ).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Edit Ada", exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Schedule event", exact: true }),
   ).toBeVisible()
   await page.getByRole("button", { name: "Delete event", exact: true }).click()
   await page.getByRole("button", { name: "Cancel", exact: true }).click()
