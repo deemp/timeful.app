@@ -1526,7 +1526,7 @@ const docTemplate = `{
         },
         "/events/{eventId}/transfers/{transferId}/{action}": {
             "post": {
-                "description": "Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.",
+                "description": "Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof; replacing a different signed-in account requires confirmAccountSwitch), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1560,7 +1560,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Approval selection or empty object",
+                        "description": "Approval selection, explicit account-switch consent, or empty object",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1569,6 +1569,9 @@ const docTemplate = `{
                             "properties": {
                                 "code": {
                                     "type": "string"
+                                },
+                                "confirmAccountSwitch": {
+                                    "type": "boolean"
                                 },
                                 "requestId": {
                                     "type": "string"
@@ -1614,6 +1617,17 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "409": {
+                        "description": "Explicit consent required to replace a different sign-in",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "accountSwitchRequired": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
                     }
                 }
             }

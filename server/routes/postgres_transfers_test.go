@@ -155,8 +155,23 @@ func TestPostgresAccessTransfers(t *testing.T) {
 				request(target, "POST", "/test/sign-in/account-other", nil, 200)
 			}
 			request(attacker, "POST", base+"redeem", nil, 403)
+			redeemBody := "{}"
 			if mode == "session" {
-				request(target, "POST", "/api/test/session-failure/"+id+"/transfers/"+transfer+"/redeem", nil, 500)
+				for _, body := range []any{nil, map[string]any{"confirmAccountSwitch": false}} {
+					conflict := request(target, "POST", base+"redeem", body, 409)
+					if len(conflict) != 1 || string(conflict["accountSwitchRequired"]) != "true" {
+						t.Fatal("conflict must request consent without leaking account details")
+					}
+					if str(request(source, "POST", base+"status", nil, 200), "state") != "approved" {
+						t.Fatal("confirmation gate consumed transfer")
+					}
+					session := request(target, "GET", "/test/session", nil, 200)
+					if str(session, "id") != "account-other" || str(session, "preference") != "dark" {
+						t.Fatal("confirmation gate changed target session")
+					}
+				}
+				redeemBody = `{"confirmAccountSwitch":true}`
+				request(target, "POST", "/api/test/session-failure/"+id+"/transfers/"+transfer+"/redeem", map[string]any{"confirmAccountSwitch": true}, 500)
 				if str(request(source, "POST", base+"status", nil, 200), "state") != "approved" {
 					t.Fatal("session save failure consumed transfer")
 				}
@@ -164,7 +179,7 @@ func TestPostgresAccessTransfers(t *testing.T) {
 			redemptions := make(chan int, 2)
 			for i := 0; i < 2; i++ {
 				go func() {
-					req, _ := http.NewRequest("POST", server.URL+base+"redeem", strings.NewReader("{}"))
+					req, _ := http.NewRequest("POST", server.URL+base+"redeem", strings.NewReader(redeemBody))
 					req.Header.Set("Content-Type", "application/json")
 					res, err := target.Do(req)
 					if err != nil {
@@ -212,6 +227,21 @@ func TestPostgresAccessTransfers(t *testing.T) {
 				}
 				if str(session, "preference") != "dark" {
 					t.Fatal("unrelated session keys lost")
+				}
+				// Matching accounts and signed-out targets require no switch consent.
+				for _, sameAccount := range []bool{true, false} {
+					ungated := client()
+					if sameAccount {
+						request(ungated, "POST", "/test/sign-in/account-source", nil, 200)
+					}
+					transferID := create()
+					transferPath := path + "/transfers/" + transferID + "/"
+					opened := request(ungated, "POST", transferPath+"open", nil, 200)
+					request(source, "POST", transferPath+"approve", map[string]any{"requestId": str(opened, "requestId"), "code": str(opened, "code")}, 200)
+					request(ungated, "POST", transferPath+"redeem", nil, 200)
+					if str(request(ungated, "GET", "/test/session", nil, 200), "id") != "account-source" {
+						t.Fatal("ungated redemption did not install source session")
+					}
 				}
 				return
 			}

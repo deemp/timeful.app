@@ -121,16 +121,17 @@ func postgresCreateTransfer(c *gin.Context) {
 }
 
 // @Summary Advance a source-confirmed transfer
-// @Description Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.
+// @Description Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof; replacing a different signed-in account requires confirmAccountSwitch), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.
 // @Tags events
 // @Accept json
 // @Produce json
 // @Param eventId path string true "Event ID"
 // @Param transferId path string true "Transfer ID"
 // @Param action path string true "Transfer action"
-// @Param payload body object{requestId=string,code=string} true "Approval selection or empty object"
+// @Param payload body object{requestId=string,code=string,confirmAccountSwitch=bool} true "Approval selection, explicit account-switch consent, or empty object"
 // @Success 200 {object} object{state=string,revocable=bool,requestId=string,code=string,requests=[]object{id=string,code=string}}
 // @Failure 403
+// @Failure 409 {object} object{accountSwitchRequired=bool} "Explicit consent required to replace a different sign-in"
 // @Router /events/{eventId}/transfers/{transferId}/{action} [post]
 func postgresTransferAction(c *gin.Context) {
 	repo := postgresRepository(c)
@@ -142,8 +143,9 @@ func postgresTransferAction(c *gin.Context) {
 		return
 	}
 	var input struct {
-		RequestID string `json:"requestId"`
-		Code      string `json:"code"`
+		RequestID            string `json:"requestId"`
+		Code                 string `json:"code"`
+		ConfirmAccountSwitch bool   `json:"confirmAccountSwitch"`
 	}
 	if err := c.BindJSON(&input); err != nil {
 		return
@@ -152,6 +154,7 @@ func postgresTransferAction(c *gin.Context) {
 	result := gin.H{}
 	var targetSecret, grantValue, grantPublicID string
 	var externalID *string
+	var accountSwitchRequired bool
 	previousCookies := append([]string(nil), c.Writer.Header().Values("Set-Cookie")...)
 	err := repo.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		locked, err := tx.LockEvent(ctx, event.ID)
@@ -303,6 +306,11 @@ func postgresTransferAction(c *gin.Context) {
 			}
 			if transfer.ExternalUserID != nil {
 				externalID = transfer.ExternalUserID
+				current, _ := sessions.Default(c).Get("userId").(string)
+				if current != "" && current != *externalID && !input.ConfirmAccountSwitch {
+					accountSwitchRequired = true
+					return nil
+				}
 			} else {
 				visitor, err := tx.GetTransferSourceVisitor(ctx, sourceCredential.EventVisitorIdentityID)
 				if err != nil {
@@ -350,6 +358,10 @@ func postgresTransferAction(c *gin.Context) {
 			c.Writer.Header().Add("Set-Cookie", cookie)
 		}
 		transferDenied(c, err)
+		return
+	}
+	if accountSwitchRequired {
+		c.JSON(http.StatusConflict, gin.H{"accountSwitchRequired": true})
 		return
 	}
 	if targetSecret != "" {

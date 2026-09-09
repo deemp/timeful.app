@@ -27,7 +27,7 @@ const pending = ref<string[]>([])
 const current = computed(() => pending.value[0])
 const busy = ref(false)
 const error = ref("")
-const dismissed = new Set<string>()
+const inspected = new Set<string>()
 
 watch(
   () => [store.authUser?._id, route.params.eventId],
@@ -38,7 +38,7 @@ watch(
     })
     if (userId !== previous?.[0]) {
       pending.value = []
-      dismissed.clear()
+      inspected.clear()
     }
     if (!userId) return
     const ids = new Set(
@@ -50,7 +50,9 @@ watch(
     )
       ids.add(route.params.eventId)
     for (const id of ids) {
-      if (dismissed.has(id) || pending.value.includes(id)) continue
+      if (stale) return
+      if (inspected.has(id)) continue
+      inspected.add(id)
       try {
         const state = await grantAssociation(id)
         if (stale) return
@@ -63,7 +65,6 @@ watch(
   { immediate: true },
 )
 function dismiss() {
-  if (current.value) dismissed.add(current.value)
   pending.value.shift()
   error.value = ""
 }

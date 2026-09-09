@@ -1417,7 +1417,7 @@ export interface paths {
         put?: never;
         /**
          * Advance a source-confirmed transfer
-         * @description Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.
+         * @description Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof; replacing a different signed-in account requires confirmAccountSwitch), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.
          */
         post: {
             parameters: {
@@ -1433,11 +1433,12 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Approval selection or empty object */
+            /** @description Approval selection, explicit account-switch consent, or empty object */
             requestBody: {
                 content: {
                     "application/json": {
                         code?: string;
+                        confirmAccountSwitch?: boolean;
                         requestId?: string;
                     };
                 };
@@ -1467,6 +1468,17 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Explicit consent required to replace a different sign-in */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            accountSwitchRequired?: boolean;
+                        };
+                    };
                 };
             };
         };

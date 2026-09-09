@@ -1428,10 +1428,10 @@ paths:
       - application/json
       description: 'Actions: open (new target request, or the approved request back
         to its target), status (source lists codes), approve (source supplies requestId
-        and exact code), redeem (target proof), cancel, revoke. Approval is single-use
-        and only the selected target can redeem before expiry; cancel works while
-        the transfer is pending or approved but unredeemed. Revocation has no time
-        limit.'
+        and exact code), redeem (target proof; replacing a different signed-in account
+        requires confirmAccountSwitch), cancel, revoke. Approval is single-use and
+        only the selected target can redeem before expiry; cancel works while the
+        transfer is pending or approved but unredeemed. Revocation has no time limit.'
       parameters:
       - description: Event ID
         in: path
@@ -1448,7 +1448,8 @@ paths:
         name: action
         required: true
         type: string
-      - description: Approval selection or empty object
+      - description: Approval selection, explicit account-switch consent, or empty
+          object
         in: body
         name: payload
         required: true
@@ -1456,6 +1457,8 @@ paths:
           properties:
             code:
               type: string
+            confirmAccountSwitch:
+              type: boolean
             requestId:
               type: string
           type: object
@@ -1486,6 +1489,13 @@ paths:
             type: object
         "403":
           description: Forbidden
+        "409":
+          description: Explicit consent required to replace a different sign-in
+          schema:
+            properties:
+              accountSwitchRequired:
+                type: boolean
+            type: object
       summary: Advance a source-confirmed transfer
       tags:
       - events

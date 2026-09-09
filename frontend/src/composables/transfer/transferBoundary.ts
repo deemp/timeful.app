@@ -1,4 +1,4 @@
-import { post } from "@/utils/fetch_utils"
+import { FetchError, post } from "@/utils/fetch_utils"
 import type { RawAccessTransfer } from "@/types/transport"
 
 export interface AccessTransfer {
@@ -33,13 +33,28 @@ export async function transferAction(
   eventId: string,
   transferId: string,
   action: "open" | "status" | "approve" | "redeem" | "cancel" | "revoke",
-  selection?: { requestId: string; code: string },
+  payload?: {
+    requestId?: string
+    code?: string
+    confirmAccountSwitch?: boolean
+  },
 ) {
   return decodeTransfer(
     await post<RawAccessTransfer>(
       `/events/${eventId}/transfers/${transferId}/${action}`,
-      selection ?? {},
+      payload ?? {},
     ),
+  )
+}
+
+export function requiresAccountSwitch(error: unknown): boolean {
+  return (
+    error instanceof FetchError &&
+    error.status === 409 &&
+    typeof error.parsed === "object" &&
+    error.parsed !== null &&
+    "accountSwitchRequired" in error.parsed &&
+    error.parsed.accountSwitchRequired === true
   )
 }
 

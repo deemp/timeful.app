@@ -357,6 +357,148 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
   })
 }
 
+for (const mode of ["guest", "account-switch"] as const) {
+  test(`Approved ${mode} transfer survives target reload and redeems with required consent`, async ({
+    page,
+    browser,
+    baseURL,
+  }) => {
+    const owner = await browser.newContext({ baseURL })
+    const target = await browser.newContext({ baseURL })
+    try {
+      const { eventId, api, sourceAccount, targetAccount, transferApi, link } =
+        await test.step("Seed source access and create a transfer", async () => {
+          const created = await owner.request.post("/api/events", {
+            data: payload,
+          })
+          expect(created.status()).toBe(201)
+          const { eventId } = (await created.json()) as { eventId: string }
+          const api = `/api/events/${eventId}`
+          expect((await page.request.get(api)).status()).toBe(200)
+          const sourceAccount =
+            mode === "account-switch"
+              ? await signIn(page.request, "reload-source")
+              : undefined
+          const targetAccount =
+            mode === "account-switch"
+              ? await signIn(target.request, "reload-target")
+              : undefined
+          expect(
+            (
+              await page.request.post(`${api}/response`, {
+                data: {
+                  createResponse: true,
+                  name: "Reload source response",
+                  availability: ["2026-10-05T00:00:00Z"],
+                },
+              })
+            ).status(),
+          ).toBe(200)
+          const createdTransfer = await page.request.post(`${api}/transfers`)
+          expect(createdTransfer.status()).toBe(201)
+          const { id } = (await createdTransfer.json()) as { id: string }
+          return {
+            eventId,
+            api,
+            sourceAccount,
+            targetAccount,
+            transferApi: `${api}/transfers/${id}`,
+            link: `/transfer/${eventId}/${id}`,
+          }
+        })
+      const targetPage = await target.newPage()
+      await test.step("Approve the on-page code and restore it after reload", async () => {
+        await targetPage.goto(link)
+        const code = targetPage.getByTestId("matching-code")
+        await expect(code).toHaveText(/^[A-Z0-9]{8}$/)
+        const matchingCode = await code.innerText()
+        const status = await page.request.post(`${transferApi}/status`, {
+          data: {},
+        })
+        expect(status.status()).toBe(200)
+        const { requests } = (await status.json()) as {
+          requests: { id: string; code: string }[]
+        }
+        const selected = requests.find(
+          (request) => request.code === matchingCode,
+        )
+        expect(selected).toBeDefined()
+        expect(
+          (
+            await page.request.post(`${transferApi}/approve`, {
+              data: { requestId: selected?.id, code: matchingCode },
+            })
+          ).status(),
+        ).toBe(200)
+        await targetPage.reload()
+        await expect(code).toHaveText(matchingCode)
+        await expect(targetPage.getByRole("status")).toContainText(
+          "Approved — you can continue",
+        )
+      })
+      await test.step("Redeem only after any required account-switch consent", async () => {
+        await targetPage
+          .getByRole("button", { name: "Continue after approval", exact: true })
+          .click()
+        if (mode === "account-switch") {
+          const dialog = targetPage.getByRole("dialog")
+          await expect(dialog).toContainText("Switch accounts on this device?")
+          await expect(dialog).toContainText("Transfer Test")
+          await expect(dialog).toContainText("replacing your current sign-in")
+          await expect(dialog).toContainText("does not merge accounts")
+          await dialog
+            .getByRole("button", { name: "Cancel", exact: true })
+            .click()
+          await expect(dialog).toBeHidden()
+          await expect(targetPage).toHaveURL(new RegExp(`${link}$`))
+          const profile = (await (
+            await target.request.get("/api/user/profile")
+          ).json()) as { _id: string }
+          expect(profile._id).toBe(targetAccount?._id)
+          const status = (await (
+            await page.request.post(`${transferApi}/status`, { data: {} })
+          ).json()) as { state: string }
+          expect(status.state).toBe("approved")
+          await targetPage
+            .getByRole("button", {
+              name: "Continue after approval",
+              exact: true,
+            })
+            .click()
+          await dialog
+            .getByRole("button", { name: "Switch accounts", exact: true })
+            .click()
+        }
+        await expect(targetPage).toHaveURL(new RegExp(`/e/${eventId}$`))
+        await expect(
+          targetPage.getByRole("button", {
+            name: "Edit Reload source response",
+            exact: true,
+          }),
+        ).toBeVisible()
+        const event = (await (await target.request.get(api)).json()) as {
+          responses: Record<string, { name: string; canEdit: boolean }>
+        }
+        expect(Object.values(event.responses)).toEqual([
+          expect.objectContaining({
+            name: "Reload source response",
+            canEdit: true,
+          }),
+        ])
+        if (sourceAccount) {
+          const profile = (await (
+            await target.request.get("/api/user/profile")
+          ).json()) as { _id: string }
+          expect(profile._id).toBe(sourceAccount._id)
+        }
+      })
+    } finally {
+      await owner.close()
+      await target.close()
+    }
+  })
+}
+
 for (const state of ["cancelled", "expired"] as const) {
   test(`A ${state} link cannot grant access`, async ({
     page,

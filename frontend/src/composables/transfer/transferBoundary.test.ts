@@ -7,14 +7,58 @@ import {
   rememberTransfer,
   grantAssociation,
   transferAction,
+  requiresAccountSwitch,
 } from "./transferBoundary"
+import { FetchError } from "@/utils/fetch_utils"
+import type * as FetchUtils from "@/utils/fetch_utils"
 const post = vi.hoisted(() => vi.fn())
-vi.mock("@/utils/fetch_utils", () => ({ post }))
+vi.mock("@/utils/fetch_utils", async (original) => ({
+  ...(await original<typeof FetchUtils>()),
+  post,
+}))
 beforeEach(() => {
   globalThis.localStorage = createLocalStorageMock()
   post.mockReset()
 })
 describe("access transfer boundary", () => {
+  it("sends account-switch consent only when explicitly requested", async () => {
+    post.mockResolvedValue({ state: "redeemed" })
+    await transferAction("EVENT123", "transfer", "redeem")
+    expect(post).toHaveBeenLastCalledWith(
+      "/events/EVENT123/transfers/transfer/redeem",
+      {},
+    )
+    await transferAction("EVENT123", "transfer", "redeem", {
+      confirmAccountSwitch: true,
+    })
+    expect(post).toHaveBeenLastCalledWith(
+      "/events/EVENT123/transfers/transfer/redeem",
+      { confirmAccountSwitch: true },
+    )
+  })
+  it("recognizes only an explicit account-switch conflict", () => {
+    const error = Object.assign(new FetchError("Conflict"), {
+      status: 409,
+      parsed: { accountSwitchRequired: true },
+    })
+    expect(requiresAccountSwitch(error)).toBe(true)
+    for (const parsed of [
+      undefined,
+      null,
+      {},
+      { accountSwitchRequired: "true" },
+      { accountSwitchRequired: false },
+    ]) {
+      expect(
+        requiresAccountSwitch(
+          Object.assign(new FetchError("Conflict"), { status: 409, parsed }),
+        ),
+      ).toBe(false)
+    }
+    error.status = 403
+    expect(requiresAccountSwitch(error)).toBe(false)
+    expect(requiresAccountSwitch(new Error("unavailable"))).toBe(false)
+  })
   it("offers revocation only when the server reports an active grant", () => {
     expect(decodeTransfer({ state: "redeemed" }).revocable).toBe(false)
     expect(
