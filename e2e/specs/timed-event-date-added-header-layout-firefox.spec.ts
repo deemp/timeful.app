@@ -47,7 +47,6 @@ test.describe.configure({ mode: "serial" })
 
 test("adding a non-consecutive date keeps one column per projected civil date at +02:00", async ({
   page,
-  request,
 }) => {
   // Historical bug (repro-date-added-visual-gap-and-duplicate.ts): after
   // adding a non-consecutive Event Picked Date while viewing at +02:00, the
@@ -79,7 +78,7 @@ test("adding a non-consecutive date keeps one column per projected civil date at
   ]
 
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: "Date-added header layout regression",
       selectedDays: ["2026-06-03", "2026-06-04"],

@@ -12,7 +12,6 @@ test.describe.configure({ mode: "serial" })
 
 test("UTC+4 specific-times edit preserves active slots in grid", async ({
   page,
-  request,
 }) => {
   // Seed: UTC+4 (Asia/Dubai), Jun 24-25, 03:00-05:00 window, 60-min increments
   // 2 slots per day x 2 days = 4 slots total
@@ -24,7 +23,7 @@ test("UTC+4 specific-times edit preserves active slots in grid", async ({
   ]
 
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: "UTC+4 specific-times grid regression",
       selectedDays: ["2026-06-24", "2026-06-25"],

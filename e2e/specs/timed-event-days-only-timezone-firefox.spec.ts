@@ -27,12 +27,11 @@ function compactOffsetForZone(
 
 test("persists a days-only event timezone through save and immediate reopen", async ({
   page,
-  request,
 }) => {
   const today = Temporal.Now.plainDateISO().toString()
   const now = Temporal.Now.instant()
   const savedTimezone = "America/Juneau"
-  const { shortId } = await seedCanonicalTimedEvent(request, {
+  const { shortId } = await seedCanonicalTimedEvent(page.request, {
     name: `Days-only timezone roundtrip ${String(now.epochMilliseconds)}`,
     type: "specific_dates",
     daysOnly: true,

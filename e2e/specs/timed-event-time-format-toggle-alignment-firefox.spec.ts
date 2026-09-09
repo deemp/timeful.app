@@ -134,11 +134,10 @@ async function expectUniformToggle(toggle: Locator): Promise<void> {
 
 test("keeps the toggle indicator uniformly inset in the new event form", async ({
   page,
-  request,
 }) => {
   const today = Temporal.Now.plainDateISO().toString()
   const { shortId } = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: `Toggle alignment ${String(Temporal.Now.instant().epochMilliseconds)}`,
       selectedDays: [today],

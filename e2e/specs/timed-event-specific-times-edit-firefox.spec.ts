@@ -154,7 +154,7 @@ test("enabling specific-times and saving without grid edits preserves canonical 
   request,
 }) => {
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: "Specific-times no-op regression",
       selectedDays: ["2026-05-28", "2026-05-29"],
@@ -215,7 +215,7 @@ test("disabling specific-times restores active slots to the full enabled domain"
   request,
 }) => {
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: "Disable specific-times regression",
       selectedDays: ["2026-05-28", "2026-05-29"],
@@ -248,7 +248,7 @@ test("timed date edits preserve active subsets on add and remove slots on delete
   request,
 }) => {
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: "Date add remove regression",
       selectedDays: ["2026-05-28", "2026-05-29"],
