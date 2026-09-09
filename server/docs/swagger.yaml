@@ -1117,6 +1117,43 @@ paths:
       summary: Duplicate event
       tags:
       - events
+  /events/{eventId}/grant-association:
+    post:
+      consumes:
+      - application/json
+      description: PostgreSQL only. An active Granted EVCC and signed-in session are
+        required. Association preserves source response ownership and does not associate
+        event ownership.
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: string
+      - description: Explicit consent; false only inspects
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            confirm:
+              type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              confirmationRequired:
+                type: boolean
+            type: object
+        "403":
+          description: Forbidden
+      summary: Inspect or explicitly confirm granted response identity association
+      tags:
+      - events
   /events/{eventId}/ids:
     get:
       parameters:
@@ -1356,6 +1393,98 @@ paths:
             type: object
       summary: Gets responses for an event, filtering availability to be within the
         date ranges
+      tags:
+      - events
+  /events/{eventId}/transfers:
+    post:
+      description: PostgreSQL only. Requires a signed-in session or base EVCC; anonymous
+        owners additionally prove their owner token. The link grants no authority.
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              expiresAt:
+                type: string
+              id:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+      summary: Create a five-minute source-confirmed access transfer
+      tags:
+      - events
+  /events/{eventId}/transfers/{transferId}/{action}:
+    post:
+      consumes:
+      - application/json
+      description: 'Actions: open (new target request), status (source lists codes),
+        approve (source supplies requestId and exact code), redeem (target proof),
+        cancel, revoke. Approval is single-use and only the selected target can redeem
+        before expiry. Revocation has no time limit.'
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: string
+      - description: Transfer ID
+        in: path
+        name: transferId
+        required: true
+        type: string
+      - description: Transfer action
+        in: path
+        name: action
+        required: true
+        type: string
+      - description: Approval selection or empty object
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            code:
+              type: string
+            requestId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: string
+              requestId:
+                type: string
+              requests:
+                items:
+                  properties:
+                    code:
+                      type: string
+                    id:
+                      type: string
+                  type: object
+                type: array
+              revocable:
+                type: boolean
+              state:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+      summary: Advance a source-confirmed transfer
       tags:
       - events
   /events/import:

@@ -3,6 +3,7 @@
     <AutoSnackbar color="error" :text="error" />
     <AutoSnackbar color="tw:bg-blue" :text="info" />
     <SignInNotSupportedDialog v-model="webviewDialog" />
+    <GrantedAccessConfirmation />
     <SignInDialog
       v-if="signInEnabled"
       v-model="signInDialog"
@@ -168,6 +169,7 @@ import Logo from "@/components/Logo.vue"
 import NewDialog from "@/components/NewDialog.vue"
 import SignInDialog from "@/components/SignInDialog.vue"
 import SignInNotSupportedDialog from "@/components/SignInNotSupportedDialog.vue"
+import GrantedAccessConfirmation from "@/components/event/GrantedAccessConfirmation.vue"
 import UpvoteRedditSnackbar from "@/components/UpvoteRedditSnackbar.vue"
 
 useHead({ htmlAttrs: { lang: "en-US" } })

@@ -662,3 +662,14 @@ export function toRawAttendee(attendee: Attendee): RawAttendee {
 }
 
 export type { components, paths, operations } from "./api"
+
+export interface RawAccessTransfer {
+  revocable?: boolean
+  id?: string
+  expiresAt?: string
+  state?: string
+  requestId?: string
+  code?: string
+  requests?: { id: string; code: string }[]
+  confirmationRequired?: boolean
+}

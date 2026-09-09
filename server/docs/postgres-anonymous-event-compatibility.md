@@ -66,7 +66,6 @@ The browser plugin `set-slots` wire contract is unchanged; the frontend maps the
 Event creation records the creator's [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity) separately from the event's ownership association.
 A blind-availability read exposes all responses only with [Event Owner](../../docs/terminology/glossary.md#event-owner) authority; other visitors see only responses they are authorized to manage, with other-response counts omitted.
 
-Matching-code transfers, Granted EVCC issuance, and source revocation flows remain deferred to TASK-0071.02.
 The migration downgrade is intentionally refused because the legacy schema cannot represent multiple responses per Event Visitor Identity.
 
 ## Delivered Event Owner Authority
@@ -86,8 +85,8 @@ Archived events remain readable and allow authorized unarchive or deletion, but 
 Deleted events and their responses stop resolving through event routes.
 MongoDB retains its legacy owner authorization.
 
-The credential schema and validator distinguish a future owner-issued [Granted Event Visitor Control Credential (Granted EVCC)](../../docs/terminology/glossary.md#granted-event-visitor-control-credential-granted-evcc) through explicit credential-kind and owner-grant metadata, and reject revoked grants.
-Repository-seeded regression fixtures verify this foundation; no transfer issuance endpoint, transfer UI, or end-to-end transfer flow is delivered here.
+The credential schema and validator distinguish an owner-issued [Granted Event Visitor Control Credential (Granted EVCC)](../../docs/terminology/glossary.md#granted-event-visitor-control-credential-granted-evcc) through explicit credential-kind and owner-grant metadata, and reject revoked grants.
+Repository fixtures and source-confirmed transfer regressions verify this authority.
 
 The migration preserves ownership already associated through the creator's [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity).
 Older anonymous events have no recoverable [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token); without an existing ownership association, their settings, archive state, and deletion cannot be managed after this migration.
@@ -102,3 +101,43 @@ Unique-index conflicts must map to the existing duplicate-name route error.
 Event edit and selected schedule replace/clear write the event aggregate atomically.
 
 Transactions deliberately prevent duplicate response races and response-count drift; reproducing those internal Mongo failure modes is not required for API compatibility.
+
+## Source-Confirmed Access Transfers
+
+On a PostgreSQL event page, choose `Continue on another device`, then `Create transfer link`.
+Open the copied link in the other browser and enter its matching code on the source browser.
+Choose `Approve matching code` on the source, then `Continue after approval` on the target, within five minutes of creating the link.
+Opening the link alone grants no access, and each browser opening it receives an independent code.
+The source can cancel a pending link or create a new link after expiry.
+
+A signed-in source creates a normal session for the same [Platform Visitor Identity](../../docs/terminology/glossary.md#platform-visitor-identity) on the target.
+An anonymous source must prove its [Event Visitor Control Credential (EVCC)](../../docs/terminology/glossary.md#event-visitor-control-credential-evcc); an anonymous [Event Owner](../../docs/terminology/glossary.md#event-owner) must also prove the [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token).
+The target receives a distinct [Granted Event Visitor Control Credential (Granted EVCC)](../../docs/terminology/glossary.md#granted-event-visitor-control-credential-granted-evcc), preserving the source role and ownership while retaining the target's own [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity).
+Owner grants permit settings edits, visibility of all responses, archive/unarchive, and deletion.
+Ordinary grants permit only the source's response authority, including the same privacy restrictions in [Blind Availability Mode](../../docs/terminology/glossary.md#blind-availability-mode).
+
+The source dialog retains revocation handles across reloads and offers `Revoke access` for issued anonymous grants.
+Grants have no fixed server-side expiry; clearing target browser data or source revocation removes that browser's delegated authority.
+Normal signed-in sessions use the ordinary session lifecycle and do not offer grant revocation.
+When the target signs in, the app asks before associating the source [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity) with its [Platform Visitor Identity](../../docs/terminology/glossary.md#platform-visitor-identity), including sign-in from outside the event page.
+`Not now` leaves the grant usable without associating the source; `Confirm association` enables durable response recovery without associating event ownership.
+Explicitly accepted account recovery is independent of later grant revocation.
+
+All paths below are relative to `/api` and resolve PostgreSQL events only; MongoDB persistence and credentials retain their existing behavior.
+
+| Request                                                 | Contract                                                                                                                                                                  |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /events/{eventId}/transfers`                      | Requires source authority and returns `id` and `expiresAt`; stores only hashed source proof.                                                                              |
+| `POST /events/{eventId}/transfers/{transferId}/open`    | Empty JSON object creates or retrieves this browser's independent `requestId` and `code`, without issuing event authority.                                                |
+| `POST /events/{eventId}/transfers/{transferId}/status`  | Source proof returns `state`, `requests`, and `revocable`; target requests cannot inspect source status.                                                                  |
+| `POST /events/{eventId}/transfers/{transferId}/approve` | Source proof plus exact `{requestId, code}` selects one target and consumes the pending state.                                                                            |
+| `POST /events/{eventId}/transfers/{transferId}/redeem`  | Only the approved target proof can redeem once before the original deadline.                                                                                              |
+| `POST /events/{eventId}/transfers/{transferId}/cancel`  | Source proof cancels a pending transfer.                                                                                                                                  |
+| `POST /events/{eventId}/transfers/{transferId}/revoke`  | Source proof revokes the issued grant without a transfer deadline.                                                                                                        |
+| `POST /events/{eventId}/grant-association`              | `{confirm: false}` inspects consent requirements; only explicit `{confirm: true}` with an active grant and authenticated session associates the source response identity. |
+
+Source proofs, target proofs, and anonymous grants use separate HttpOnly, SameSite=Strict cookies scoped to `/api`, with Secure enabled over HTTPS.
+Raw source credentials and owner tokens are never copied to the target or exposed to JavaScript.
+Lifecycle mutations serialize under event and transfer row locks, preserving single redemption under concurrent requests.
+Session encoding occurs before committing redemption, and failed transactions discard session cookie headers.
+Expired, cancelled, mismatched, unapproved, reused, cross-event, unauthorized, and revoked credentials or transfers are rejected.

@@ -17,11 +17,12 @@ import (
 )
 
 type postgresVisitor struct {
-	identity       *pgstore.EventVisitorIdentity
-	externalUserID string
-	authorized     bool
-	granted        bool
-	owner          bool
+	identity         *pgstore.EventVisitorIdentity
+	externalUserID   string
+	authorized       bool
+	granted          bool
+	owner            bool
+	grantedVisitorID string
 }
 
 // @Summary Associate browser Event Visitor Identities with the authenticated account
@@ -131,7 +132,11 @@ func setPostgresCredentialCookie(c *gin.Context, eventID, publicID, credential s
 }
 
 func provenPostgresCredential(c *gin.Context, repo *pgstore.Repository, visitor *pgstore.EventVisitorIdentity, eventID string) (*pgstore.EventVisitorCredential, error) {
-	cookie, err := c.Cookie(postgresCredentialCookieName(eventID))
+	return provenPostgresCredentialCookie(c, repo, visitor, postgresCredentialCookieName(eventID))
+}
+
+func provenPostgresCredentialCookie(c *gin.Context, repo *pgstore.Repository, visitor *pgstore.EventVisitorIdentity, name string) (*pgstore.EventVisitorCredential, error) {
+	cookie, err := c.Cookie(name)
 	if err != nil {
 		return nil, nil
 	}
@@ -167,6 +172,13 @@ func resolvePostgresVisitor(c *gin.Context, repo *pgstore.Repository, event *pgs
 		}
 	}
 	result := &postgresVisitor{externalUserID: externalID, owner: owner}
+	grantVisitor, _, err := provenPostgresGrant(c, repo, event)
+	if err != nil {
+		return nil, err
+	}
+	if grantVisitor != nil {
+		result.grantedVisitorID = grantVisitor.ID
+	}
 	if publicID != "" {
 		visitor, err := repo.GetEventVisitorIdentity(c.Request.Context(), event.ID, publicID)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -230,7 +242,7 @@ func resolvePostgresVisitor(c *gin.Context, repo *pgstore.Repository, event *pgs
 }
 
 func (v *postgresVisitor) controls(ctx context.Context, repo *pgstore.Repository, visitorID string) (bool, error) {
-	if v.authorized && v.identity.ID == visitorID {
+	if v.grantedVisitorID == visitorID || (v.authorized && v.identity.ID == visitorID) {
 		return true, nil
 	}
 	if v.externalUserID == "" {

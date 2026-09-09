@@ -430,6 +430,7 @@
                       >
                     </v-btn>
                   </template>
+                  <EventAccessTransfer :event="event" />
                   <EventOwnerActions
                     :event="event"
                     @changed="refreshEvent"
@@ -1091,6 +1092,7 @@ import {
   defineAsyncComponent,
   type PropType,
 } from "vue"
+import EventAccessTransfer from "@/components/event/EventAccessTransfer.vue"
 import EventOwnerActions from "@/components/event/EventOwnerActions.vue"
 import { useRouter, useRoute } from "vue-router"
 import { storeToRefs } from "pinia"

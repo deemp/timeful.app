@@ -71,8 +71,15 @@ func authorizePostgresOwner(c *gin.Context, repo *pgstore.Repository, event *pgs
 			return owned, err
 		}
 	}
-	// This validates the future transfer credential without adding an issuance
-	// route. A base EVCC, even the creator's, never grants Event Owner powers.
+	grantVisitor, grant, err := provenPostgresGrant(c, repo, event)
+	if err != nil {
+		return false, err
+	}
+	if grant != nil && grant.GrantsOwner && event.OwnerEventVisitorIdentityID != nil && grantVisitor.ID == *event.OwnerEventVisitorIdentityID {
+		return true, nil
+	}
+	// Retain validation of grants stored in the foundation cookie slot.
+	// A base EVCC, even the creator's, never grants Event Owner powers.
 	cookie, err := c.Cookie(postgresCredentialCookieName(event.ShortID))
 	if err != nil {
 		return false, nil

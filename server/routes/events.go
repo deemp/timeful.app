@@ -64,6 +64,9 @@ func InitEvents(router *gin.RouterGroup) {
 	eventRouter := router.Group("/events")
 
 	eventRouter.POST("", createEvent)
+	eventRouter.POST("/:eventId/transfers", eventSourceHandler(postgresEventRouteUnavailable, postgresCreateTransfer))
+	eventRouter.POST("/:eventId/transfers/:transferId/:action", eventSourceHandler(postgresEventRouteUnavailable, postgresTransferAction))
+	eventRouter.POST("/:eventId/grant-association", eventSourceHandler(postgresEventRouteUnavailable, postgresGrantAssociation))
 	eventRouter.POST("/import", middleware.AuthRequired(), importEvent)
 	eventRouter.PUT("/:eventId", eventSourceHandler(editEvent, postgresEditEvent))
 	eventRouter.GET("/:eventId/ids", eventSourceHandler(getEventIds, postgresGetEventIDs))
