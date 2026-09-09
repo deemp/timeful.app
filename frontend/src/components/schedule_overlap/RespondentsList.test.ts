@@ -1,18 +1,30 @@
 // @vitest-environment happy-dom
 
-import { shallowMount } from "@vue/test-utils"
+import { flushPromises, shallowMount } from "@vue/test-utils"
 import { describe, expect, it, vi } from "vitest"
 import { nextTick, ref } from "vue"
 import { Temporal } from "temporal-polyfill"
 import { durations, UTC } from "@/constants"
 import {
   respondentsListStubs,
+  passThroughStub,
   type ComponentStubMap,
 } from "@/test/componentStubs"
+import { createLocalStorageMock } from "@/test/localStorage"
 import { ZdtMap, ZdtSet } from "@/utils"
+import type * as UtilsModule from "@/utils"
 import type { TimedCellState } from "@/composables/schedule_overlap/types"
 import RespondentsList from "./RespondentsList.vue"
 import respondentsListSource from "./RespondentsList.vue?raw"
+
+const { deleteMock } = vi.hoisted(() => ({
+  deleteMock: vi.fn(),
+}))
+
+vi.mock("@/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof UtilsModule>()),
+  _delete: deleteMock,
+}))
 
 vi.mock("pinia", () => ({
   storeToRefs: (store: { authUser: unknown }) => ({
@@ -1393,4 +1405,173 @@ describe("RespondentsList", () => {
 
     expect(wrapper.text()).not.toContain("mdi-delete")
   })
+
+  it("deletes a PostgreSQL respondent through the explicit responseId contract", async () => {
+    isPhoneValue.value = false
+    deleteMock.mockReset()
+    deleteMock.mockResolvedValue(undefined)
+    const previousStorage = globalThis.localStorage
+    globalThis.localStorage = createLocalStorageMock({
+      "timeful.eventVisitor.evt-1": "visitor-1",
+      "timeful.selectedResponse.evt-1": "public-1",
+    })
+
+    try {
+      const wrapper = mountOwnerDeleteFixture({ eventVisitorId: "visitor-1" })
+
+      const rowDeleteButton = wrapper
+        .findAll("button")
+        .find((node) => node.text().includes("mdi-delete"))
+      if (!rowDeleteButton) {
+        throw new Error("Expected owner row delete action to be rendered")
+      }
+      await rowDeleteButton.trigger("click")
+
+      const confirmButton = wrapper
+        .findAll("button")
+        .find((node) => node.text() === "Delete")
+      if (!confirmButton) {
+        throw new Error("Expected delete confirmation action to be rendered")
+      }
+      await confirmButton.trigger("click")
+      await flushPromises()
+
+      expect(deleteMock).toHaveBeenCalledWith(
+        "/events/evt-1/response?eventVisitorId=visitor-1",
+        { responseId: "public-1" },
+      )
+      expect(localStorage.getItem("timeful.selectedResponse.evt-1")).toBeNull()
+      expect(wrapper.emitted("guestAvailabilityDeleted")).toEqual([["user-1"]])
+      expect(wrapper.emitted("refreshEvent")).toHaveLength(1)
+    } finally {
+      globalThis.localStorage = previousStorage
+      isPhoneValue.value = true
+    }
+  })
+
+  it("keeps the legacy delete payload for MongoDB respondents", async () => {
+    isPhoneValue.value = false
+    deleteMock.mockReset()
+    deleteMock.mockResolvedValue(undefined)
+
+    try {
+      const wrapper = mountOwnerDeleteFixture()
+
+      const rowDeleteButton = wrapper
+        .findAll("button")
+        .find((node) => node.text().includes("mdi-delete"))
+      if (!rowDeleteButton) {
+        throw new Error("Expected owner row delete action to be rendered")
+      }
+      await rowDeleteButton.trigger("click")
+
+      const confirmButton = wrapper
+        .findAll("button")
+        .find((node) => node.text() === "Delete")
+      if (!confirmButton) {
+        throw new Error("Expected delete confirmation action to be rendered")
+      }
+      await confirmButton.trigger("click")
+      await flushPromises()
+
+      expect(deleteMock).toHaveBeenCalledWith("/events/evt-1/response", {
+        guest: false,
+        userId: "user-1",
+        name: "Ada",
+        guestId: undefined,
+      })
+      expect(wrapper.emitted("guestAvailabilityDeleted")).toEqual([["user-1"]])
+      expect(wrapper.emitted("refreshEvent")).toHaveLength(1)
+    } finally {
+      isPhoneValue.value = true
+    }
+  })
 })
+
+function mountOwnerDeleteFixture({
+  eventVisitorId,
+}: { eventVisitorId?: string } = {}) {
+  const VBtnStub = {
+    emits: ["click"],
+    template: "<button @click=\"$emit('click', $event)\"><slot /></button>",
+  }
+  const VIconStub = {
+    template: "<span><slot /></span>",
+  }
+  const VDialogStub = {
+    template: "<div><slot /></div>",
+  }
+
+  return shallowMount(RespondentsList, {
+    props: {
+      eventId: "evt-1",
+      event: {
+        blindAvailabilityEnabled: false,
+        collectEmails: false,
+        dates: [Temporal.PlainDate.from("2026-01-01")],
+        timeSeed: zdt("2026-01-01T09:00:00Z"),
+        duration: durations.ONE_HOUR,
+        daysOnly: false,
+        eventVisitorId,
+      },
+      curGuestId: "",
+      ownedGuestResponseLookupKeys: [],
+      guestResponseLookupKey: "",
+      days: [],
+      times: [],
+      curDate: zdt("2026-01-01T09:00:00Z"),
+      curRespondent: "",
+      curRespondents: [],
+      curTimeslot: { dayIndex: -1, timeIndex: -1 },
+      curTimeslotAvailability: { "user-1": true },
+      respondents: [
+        {
+          _id: "user-1",
+          firstName: "Ada",
+          lastName: "Lovelace",
+        } as never,
+      ],
+      parsedResponses: {
+        "user-1": {
+          user: {
+            _id: "user-1",
+            firstName: "Ada",
+            lastName: "Lovelace",
+          } as never,
+          availability: new ZdtSet(),
+          ifNeeded: new ZdtSet(),
+          guest: false,
+          publicId: "public-1",
+          canEdit: true,
+        },
+      },
+      isOwner: true,
+      isGroup: false,
+      showCalendarEvents: false,
+      responsesFormatted: new ZdtMap<Set<string>>(),
+      timezone: {
+        value: UTC,
+        offset: durations.ZERO,
+        label: UTC,
+        gmtString: "GMT",
+      },
+      showBestTimes: false,
+      hideIfNeeded: false,
+      collapseDisabledTimes: true,
+      guestAddedAvailability: false,
+      addingAvailabilityAsGuest: false,
+    },
+    global: {
+      stubs: {
+        ...sharedRespondentsListStubs,
+        "v-btn": VBtnStub,
+        "v-card": passThroughStub,
+        "v-card-actions": passThroughStub,
+        "v-card-text": passThroughStub,
+        "v-card-title": passThroughStub,
+        "v-dialog": VDialogStub,
+        "v-icon": VIconStub,
+      },
+    },
+  })
+}

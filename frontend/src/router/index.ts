@@ -11,6 +11,12 @@ import {
 
 const routes: RouteRecordRaw[] = [
   {
+    path: "/transfer/:eventId/:transferId",
+    name: "access-transfer",
+    component: () => import("@/views/AccessTransfer.vue"),
+    props: true,
+  },
+  {
     path: "/",
     name: "landing",
     component: () => import("@/views/Landing.vue"),

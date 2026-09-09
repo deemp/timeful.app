@@ -9,6 +9,24 @@ import {
 } from "./eventOwnership"
 
 describe("event ownership semantics", () => {
+  it("uses server-proven PostgreSQL settings authority and fails closed", () => {
+    const event = { ownerId: guestUserId, eventVisitorId: "visitor" }
+    expect(canEditEventMetadata(event, null)).toBe(false)
+    expect(canEditEventMetadata(event, { _id: guestUserId })).toBe(false)
+    expect(
+      canEditEventMetadata({ ...event, canEditSettings: true }, null),
+    ).toBe(true)
+    expect(
+      canEditEventMetadata({ ...event, canEditSettings: false }, null),
+    ).toBe(false)
+    expect(
+      canEditEventMetadata(
+        { ...event, canEditSettings: true, isArchived: true },
+        null,
+      ),
+    ).toBe(false)
+  })
+
   it("treats empty owner ids as anonymous at the shared helper boundary", () => {
     const anonymousEvent = { ownerId: "" }
     const signedInUser = { _id: "user-1" }

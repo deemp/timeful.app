@@ -370,6 +370,11 @@ import { computed, nextTick, onMounted, ref } from "vue"
 import { storeToRefs } from "pinia"
 import { useMainStore } from "@/stores/main"
 import { useDisplayHelpers } from "@/utils/useDisplayHelpers"
+import {
+  selectVisitorResponse,
+  selectedVisitorResponse,
+  withEventVisitorIdentity,
+} from "@/composables/event/visitorIdentityStorage"
 import { _delete } from "@/utils"
 import { getResponseDisplayName } from "@/utils/guestName"
 import { formatTimezoneDisplay } from "@/utils/timezone_utils"
@@ -527,7 +532,7 @@ function formatRespondentName(user: User) {
 }
 
 function canEditGuestAvailability(user: User) {
-  if (authUser.value || user._id == null) {
+  if ((authUser.value && !props.event.eventVisitorId) || user._id == null) {
     return false
   }
   return canGuestEditResponse(
@@ -549,12 +554,24 @@ async function deleteAvailability(user: User | null) {
     const parsedResponse = user._id
       ? props.parsedResponses[user._id]
       : undefined
-    await _delete(`/events/${props.eventId}/response`, {
-      guest: isGuest(user),
-      userId: user._id,
-      name: user.firstName,
-      guestId: parsedResponse?.guestId,
-    })
+    if (props.event.eventVisitorId) {
+      const responseId = parsedResponse?.publicId ?? user._id
+      if (!responseId) return
+      await _delete(
+        withEventVisitorIdentity(`/events/${props.eventId}/response`),
+        { responseId },
+      )
+      if (selectedVisitorResponse(props.eventId) === responseId) {
+        selectVisitorResponse(props.eventId)
+      }
+    } else {
+      await _delete(`/events/${props.eventId}/response`, {
+        guest: isGuest(user),
+        userId: user._id,
+        name: user.firstName,
+        guestId: parsedResponse?.guestId,
+      })
+    }
     emit("guestAvailabilityDeleted", user._id ?? "")
     emit("refreshEvent")
     showInfo("Availability successfully deleted!")

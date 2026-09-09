@@ -1,3 +1,8 @@
+import type { Event } from "@/types"
+import {
+  selectedVisitorResponse,
+  selectVisitorResponse,
+} from "@/composables/event/visitorIdentityStorage"
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue"
 import { normalizeGuestName } from "@/utils/guestName"
 import {
@@ -23,6 +28,7 @@ import {
 
 export interface UseScheduleOverlapPreferencesOptions {
   eventId: ComputedRef<string>
+  event?: ComputedRef<Pick<Event, "eventVisitorId" | "responses">>
 }
 
 export interface UseScheduleOverlapPreferencesReturn {
@@ -52,6 +58,24 @@ export interface UseScheduleOverlapPreferencesReturn {
 export function useScheduleOverlapPreferences(
   opts: UseScheduleOverlapPreferencesOptions,
 ): UseScheduleOverlapPreferencesReturn {
+  const visitorResponses = computed<StoredGuestOwnership[]>(() =>
+    Object.entries(opts.event?.value.responses ?? {})
+      .filter(([, response]) => response.publicId && response.canEdit)
+      .map(([lookupKey, response]) => ({
+        lookupKey,
+        name: response.name ?? "",
+        lastUsedAt: 0,
+      })),
+  )
+  const visitorSelection = computed(() =>
+    visitorResponses.value.find(
+      (record) =>
+        record.lookupKey === selectedVisitorResponse(opts.eventId.value),
+    ),
+  )
+  const hasVisitorIdentity = computed(() =>
+    Boolean(opts.event?.value.eventVisitorId),
+  )
   const guestNameKey = computed(() =>
     getGuestNameStorageKey(opts.eventId.value),
   )
@@ -115,6 +139,7 @@ export function useScheduleOverlapPreferences(
     value: GuestOwnershipState,
     options: { select?: boolean } = {},
   ) {
+    if (hasVisitorIdentity.value) return
     const nextCollection = upsertGuestOwnershipRecord(
       guestOwnershipCollection.value,
       value,
@@ -131,6 +156,10 @@ export function useScheduleOverlapPreferences(
   }
 
   function selectGuestOwnership(lookupKey?: string) {
+    if (hasVisitorIdentity.value) {
+      selectVisitorResponse(opts.eventId.value, lookupKey)
+      return
+    }
     const nextCollection = selectGuestOwnershipRecord(
       guestOwnershipCollection.value,
       lookupKey,
@@ -140,6 +169,11 @@ export function useScheduleOverlapPreferences(
   }
 
   function removeGuestOwnership(lookupKey: string) {
+    if (hasVisitorIdentity.value) {
+      if (selectedVisitorResponse(opts.eventId.value) === lookupKey)
+        selectVisitorResponse(opts.eventId.value)
+      return
+    }
     const nextCollection = removeGuestOwnershipRecord(
       guestOwnershipCollection.value,
       lookupKey,
@@ -153,6 +187,10 @@ export function useScheduleOverlapPreferences(
   }
 
   function getOwnedGuestOwnership(lookupKey?: string) {
+    if (hasVisitorIdentity.value)
+      return visitorResponses.value.find(
+        (record) => record.lookupKey === lookupKey,
+      )
     return getGuestOwnershipByLookupKey(
       guestOwnershipCollection.value,
       lookupKey,
@@ -162,20 +200,28 @@ export function useScheduleOverlapPreferences(
   return {
     guestNameKey,
     guestOwnershipCollectionKey,
-    guestName: computed(() => guestName.value),
+    guestName: computed(() =>
+      hasVisitorIdentity.value ? visitorSelection.value?.name : guestName.value,
+    ),
     guestOwnershipCollection: computed(() => guestOwnershipCollection.value),
     ownedGuestResponses: computed<StoredGuestOwnership[]>(() =>
-      sortStoredGuestOwnershipRecords(
-        guestOwnershipCollection.value?.records ?? [],
-      ),
+      hasVisitorIdentity.value
+        ? visitorResponses.value
+        : sortStoredGuestOwnershipRecords(
+            guestOwnershipCollection.value?.records ?? [],
+          ),
     ),
     guestOwnership: computed(() =>
-      getSelectedGuestOwnership(guestOwnershipCollection.value),
+      hasVisitorIdentity.value
+        ? visitorSelection.value
+        : getSelectedGuestOwnership(guestOwnershipCollection.value),
     ),
     guestResponseLookupKey: computed(() =>
-      getGuestResponseLookupKey(
-        getSelectedGuestOwnership(guestOwnershipCollection.value),
-      ),
+      hasVisitorIdentity.value
+        ? visitorSelection.value?.lookupKey
+        : getGuestResponseLookupKey(
+            getSelectedGuestOwnership(guestOwnershipCollection.value),
+          ),
     ),
     showBestTimes,
     setGuestName,

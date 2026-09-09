@@ -172,3 +172,21 @@ export function toSignUpBlockResponseSubmissionPayload(input: {
     email: input.guestPayload.email,
   }
 }
+
+export function encodeVisitorResponseSubmission(input: {
+  availability: Temporal.ZonedDateTime[]
+  ifNeeded: Temporal.ZonedDateTime[]
+  responseId?: string
+  name: string
+  email?: string
+}) {
+  const slots = normalizeTimedResponseSlots(input)
+  return {
+    availability: toTransportDateTimeStrings(slots.availability),
+    ifNeeded: toTransportDateTimeStrings(slots.ifNeeded),
+    responseId: input.responseId,
+    createResponse: !input.responseId,
+    name: validateGuestName(input.name).normalizedName,
+    email: input.email,
+  }
+}

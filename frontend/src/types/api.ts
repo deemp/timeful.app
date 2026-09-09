@@ -527,6 +527,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/visitor-identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Associate browser Event Visitor Identities with the authenticated account
+         * @description Source EVCC proof associates response identity; independent Event Owner Edit Token proof associates or moves event ownership without moving responses. Granted EVCC association awaits the transfer confirmation flow.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Browser-local public identities; matching HttpOnly credentials are required */
+            requestBody: {
+                content: {
+                    "application/json": {
+                        identities?: {
+                            eventId?: string;
+                            eventVisitorId?: string;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -569,7 +623,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Created */
+                /** @description PostgreSQL creation returns eventVisitorId and issues separate HttpOnly EVCC and Event Owner Edit Token cookies; MongoDB credentials are unchanged */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -577,6 +631,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             eventId?: string;
+                            eventVisitorId?: string;
                         };
                     };
                 };
@@ -598,7 +653,10 @@ export interface paths {
         /** Gets an event based on its id */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -608,18 +666,26 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description PostgreSQL returns server-proven owner capabilities and browser eventVisitorId; response entries add publicId and canEdit. MongoDB payloads are unchanged. */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["models.Event"];
+                        "application/json": components["schemas"]["models.Event"] & {
+                            canCreateResponse?: boolean;
+                            canEditSettings?: boolean;
+                            canManageEvent?: boolean;
+                            eventVisitorId?: string;
+                        };
                     };
                 };
             };
         };
-        /** Edits an event based on its id */
+        /**
+         * Edits an event based on its id
+         * @description PostgreSQL requires Event Owner Edit Token proof, the associated Platform Visitor Identity session, or an owner-issued Granted EVCC; base EVCCs never authorize settings edits. Archived PostgreSQL events are read-only. MongoDB authorization is unchanged.
+         */
         put: {
             parameters: {
                 query?: never;
@@ -660,10 +726,31 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Owner authority required or event archived */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
             };
         };
         post?: never;
-        /** Deletes an event based on its id */
+        /**
+         * Deletes an event based on its id
+         * @description PostgreSQL requires the same owner credentials as settings edits; deleted events and responses stop resolving. MongoDB requires its legacy authenticated owner.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -683,6 +770,24 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description Owner authority required or event archived */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
             };
         };
         options?: never;
@@ -699,7 +804,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Archive an event */
+        /**
+         * Archive an event
+         * @description PostgreSQL requires the same owner credentials as settings edits; archive makes the event read-only and unarchive restores mutations. MongoDB requires its legacy authenticated owner.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -725,6 +833,24 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Owner authority required or event archived */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
                 };
             };
         };
@@ -864,6 +990,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/events/{eventId}/grant-association": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inspect or explicitly confirm granted response identity association
+         * @description PostgreSQL only. An active Granted EVCC and signed-in session are required. Association preserves source response ownership and does not associate event ownership.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Event ID */
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            /** @description Explicit consent; false only inspects */
+            requestBody: {
+                content: {
+                    "application/json": {
+                        confirm?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            confirmationRequired?: boolean;
+                        };
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events/{eventId}/ids": {
         parameters: {
             query?: never;
@@ -927,7 +1111,10 @@ export interface paths {
         /** Rename a guest response */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -935,12 +1122,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the guest response to rename */
+            /** @description Object containing info about the guest response to rename; PostgreSQL events require the opaque responseId instead of oldName */
             requestBody: {
                 content: {
                     "application/json": {
                         newName?: string;
                         oldName?: string;
+                        responseId?: string;
                     };
                 };
             };
@@ -1025,7 +1213,10 @@ export interface paths {
         /** Updates the current user's availability */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -1033,12 +1224,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the event response to update */
+            /** @description Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId */
             requestBody: {
                 content: {
                     "application/json": {
                         availability?: string[];
                         calendarOptions?: components["schemas"]["models.CalendarOptions"];
+                        createResponse?: boolean;
+                        email?: string;
                         enabledCalendars?: {
                             [key: string]: string[];
                         };
@@ -1048,6 +1241,7 @@ export interface paths {
                             [key: string]: string[];
                         };
                         name?: string;
+                        responseId?: string;
                         signUpBlockIds?: string[];
                         useCalendarAvailability?: boolean;
                     };
@@ -1061,12 +1255,24 @@ export interface paths {
                     };
                     content?: never;
                 };
+                /** @description select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
             };
         };
         /** Delete the current user's availability */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
+                };
                 header?: never;
                 path: {
                     /** @description Event ID */
@@ -1074,12 +1280,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the event response to delete */
+            /** @description Object containing info about the event response to delete; PostgreSQL events require the opaque responseId */
             requestBody: {
                 content: {
                     "application/json": {
                         guest?: boolean;
                         name?: string;
+                        responseId?: string;
                         userId?: string;
                     };
                 };
@@ -1110,6 +1317,8 @@ export interface paths {
         get: {
             parameters: {
                 query: {
+                    /** @description PostgreSQL browser Event Visitor Identity public ID */
+                    eventVisitorId?: string;
                     /** @description Lower bound for start time to filter availability by */
                     timeMin: string;
                     /** @description Upper bound for end time to filter availability by */
@@ -1124,7 +1333,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description PostgreSQL responses are keyed by opaque publicId and each entry adds publicId and canEdit */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1139,6 +1348,140 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/{eventId}/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a five-minute source-confirmed access transfer
+         * @description PostgreSQL only. Requires a signed-in session or base EVCC; anonymous owners additionally prove their owner token. The link grants no authority.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Event ID */
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            expiresAt?: string;
+                            id?: string;
+                        };
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events/{eventId}/transfers/{transferId}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Advance a source-confirmed transfer
+         * @description Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof; replacing a different signed-in account requires confirmAccountSwitch), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Event ID */
+                    eventId: string;
+                    /** @description Transfer ID */
+                    transferId: string;
+                    /** @description Transfer action */
+                    action: string;
+                };
+                cookie?: never;
+            };
+            /** @description Approval selection, explicit account-switch consent, or empty object */
+            requestBody: {
+                content: {
+                    "application/json": {
+                        code?: string;
+                        confirmAccountSwitch?: boolean;
+                        requestId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code?: string;
+                            requestId?: string;
+                            requests?: {
+                                code?: string;
+                                id?: string;
+                            }[];
+                            revocable?: boolean;
+                            state?: string;
+                        };
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Explicit consent required to replace a different sign-in */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            accountSwitchRequired?: boolean;
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

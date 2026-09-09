@@ -754,6 +754,41 @@ paths:
       summary: Gets whether the user is signed in or not
       tags:
       - auth
+  /auth/visitor-identities:
+    post:
+      consumes:
+      - application/json
+      description: Source EVCC proof associates response identity; independent Event
+        Owner Edit Token proof associates or moves event ownership without moving
+        responses. Granted EVCC association awaits the transfer confirmation flow.
+      parameters:
+      - description: Browser-local public identities; matching HttpOnly credentials
+          are required
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            identities:
+              items:
+                properties:
+                  eventId:
+                    type: string
+                  eventVisitorId:
+                    type: string
+                type: object
+              type: array
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      summary: Associate browser Event Visitor Identities with the authenticated account
+      tags:
+      - auth
   /events:
     post:
       consumes:
@@ -815,10 +850,14 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: PostgreSQL creation returns eventVisitorId and issues separate
+            HttpOnly EVCC and Event Owner Edit Token cookies; MongoDB credentials
+            are unchanged
           schema:
             properties:
               eventId:
+                type: string
+              eventVisitorId:
                 type: string
             type: object
       summary: Creates a new event
@@ -826,6 +865,9 @@ paths:
       - events
   /events/{eventId}:
     delete:
+      description: PostgreSQL requires the same owner credentials as settings edits;
+        deleted events and responses stop resolving. MongoDB requires its legacy authenticated
+        owner.
       parameters:
       - description: Event ID
         in: path
@@ -837,6 +879,14 @@ paths:
       responses:
         "200":
           description: OK
+        "403":
+          description: Owner authority required or event archived
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/responses.Error'
       summary: Deletes an event based on its id
       tags:
       - events
@@ -847,17 +897,38 @@ paths:
         name: eventId
         required: true
         type: string
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: PostgreSQL returns server-proven owner capabilities and browser
+            eventVisitorId; response entries add publicId and canEdit. MongoDB payloads
+            are unchanged.
           schema:
-            $ref: '#/definitions/models.Event'
+            allOf:
+            - $ref: '#/definitions/models.Event'
+            - properties:
+                canCreateResponse:
+                  type: boolean
+                canEditSettings:
+                  type: boolean
+                canManageEvent:
+                  type: boolean
+                eventVisitorId:
+                  type: string
+              type: object
       summary: Gets an event based on its id
       tags:
       - events
     put:
+      description: PostgreSQL requires Event Owner Edit Token proof, the associated
+        Platform Visitor Identity session, or an owner-issued Granted EVCC; base EVCCs
+        never authorize settings edits. Archived PostgreSQL events are read-only.
+        MongoDB authorization is unchanged.
       parameters:
       - description: Event ID
         in: path
@@ -917,6 +988,14 @@ paths:
       responses:
         "200":
           description: OK
+        "403":
+          description: Owner authority required or event archived
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/responses.Error'
       summary: Edits an event based on its id
       tags:
       - events
@@ -924,6 +1003,9 @@ paths:
     post:
       consumes:
       - application/json
+      description: PostgreSQL requires the same owner credentials as settings edits;
+        archive makes the event read-only and unarchive restores mutations. MongoDB
+        requires its legacy authenticated owner.
       parameters:
       - description: Event ID
         in: path
@@ -944,6 +1026,14 @@ paths:
       responses:
         "200":
           description: OK
+        "403":
+          description: Owner authority required or event archived
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/responses.Error'
       summary: Archive an event
       tags:
       - events
@@ -1027,6 +1117,43 @@ paths:
       summary: Duplicate event
       tags:
       - events
+  /events/{eventId}/grant-association:
+    post:
+      consumes:
+      - application/json
+      description: PostgreSQL only. An active Granted EVCC and signed-in session are
+        required. Association preserves source response ownership and does not associate
+        event ownership.
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: string
+      - description: Explicit consent; false only inspects
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            confirm:
+              type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              confirmationRequired:
+                type: boolean
+            type: object
+        "403":
+          description: Forbidden
+      summary: Inspect or explicitly confirm granted response identity association
+      tags:
+      - events
   /events/{eventId}/ids:
     get:
       parameters:
@@ -1064,7 +1191,12 @@ paths:
         name: eventId
         required: true
         type: string
-      - description: Object containing info about the guest response to rename
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
+      - description: Object containing info about the guest response to rename; PostgreSQL
+          events require the opaque responseId instead of oldName
         in: body
         name: payload
         required: true
@@ -1073,6 +1205,8 @@ paths:
             newName:
               type: string
             oldName:
+              type: string
+            responseId:
               type: string
           type: object
       produces:
@@ -1124,7 +1258,12 @@ paths:
         name: eventId
         required: true
         type: string
-      - description: Object containing info about the event response to delete
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
+      - description: Object containing info about the event response to delete; PostgreSQL
+          events require the opaque responseId
         in: body
         name: payload
         required: true
@@ -1133,6 +1272,8 @@ paths:
             guest:
               type: boolean
             name:
+              type: string
+            responseId:
               type: string
             userId:
               type: string
@@ -1154,7 +1295,13 @@ paths:
         name: eventId
         required: true
         type: string
-      - description: Object containing info about the event response to update
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
+        type: string
+      - description: Object containing info about the event response to update; PostgreSQL
+          events require responseId or createResponse=true and return responseId with
+          eventVisitorId
         in: body
         name: payload
         required: true
@@ -1166,6 +1313,10 @@ paths:
               type: array
             calendarOptions:
               $ref: '#/definitions/models.CalendarOptions'
+            createResponse:
+              type: boolean
+            email:
+              type: string
             enabledCalendars:
               additionalProperties:
                 items:
@@ -1186,6 +1337,8 @@ paths:
               type: object
             name:
               type: string
+            responseId:
+              type: string
             signUpBlockIds:
               items:
                 type: string
@@ -1198,6 +1351,11 @@ paths:
       responses:
         "200":
           description: OK
+        "400":
+          description: select-response-or-explicitly-create when a PostgreSQL mutation
+            omits both responseId and createResponse
+          schema:
+            $ref: '#/definitions/responses.Error'
       summary: Updates the current user's availability
       tags:
       - events
@@ -1208,6 +1366,10 @@ paths:
         in: path
         name: eventId
         required: true
+        type: string
+      - description: PostgreSQL browser Event Visitor Identity public ID
+        in: query
+        name: eventVisitorId
         type: string
       - description: Lower bound for start time to filter availability by
         in: query
@@ -1223,13 +1385,118 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: PostgreSQL responses are keyed by opaque publicId and each
+            entry adds publicId and canEdit
           schema:
             additionalProperties:
               $ref: '#/definitions/models.Response'
             type: object
       summary: Gets responses for an event, filtering availability to be within the
         date ranges
+      tags:
+      - events
+  /events/{eventId}/transfers:
+    post:
+      description: PostgreSQL only. Requires a signed-in session or base EVCC; anonymous
+        owners additionally prove their owner token. The link grants no authority.
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              expiresAt:
+                type: string
+              id:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+      summary: Create a five-minute source-confirmed access transfer
+      tags:
+      - events
+  /events/{eventId}/transfers/{transferId}/{action}:
+    post:
+      consumes:
+      - application/json
+      description: 'Actions: open (new target request, or the approved request back
+        to its target), status (source lists codes), approve (source supplies requestId
+        and exact code), redeem (target proof; replacing a different signed-in account
+        requires confirmAccountSwitch), cancel, revoke. Approval is single-use and
+        only the selected target can redeem before expiry; cancel works while the
+        transfer is pending or approved but unredeemed. Revocation has no time limit.'
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: string
+      - description: Transfer ID
+        in: path
+        name: transferId
+        required: true
+        type: string
+      - description: Transfer action
+        in: path
+        name: action
+        required: true
+        type: string
+      - description: Approval selection, explicit account-switch consent, or empty
+          object
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            code:
+              type: string
+            confirmAccountSwitch:
+              type: boolean
+            requestId:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              code:
+                type: string
+              requestId:
+                type: string
+              requests:
+                items:
+                  properties:
+                    code:
+                      type: string
+                    id:
+                      type: string
+                  type: object
+                type: array
+              revocable:
+                type: boolean
+              state:
+                type: string
+            type: object
+        "403":
+          description: Forbidden
+        "409":
+          description: Explicit consent required to replace a different sign-in
+          schema:
+            properties:
+              accountSwitchRequired:
+                type: boolean
+            type: object
+      summary: Advance a source-confirmed transfer
       tags:
       - events
   /events/import:

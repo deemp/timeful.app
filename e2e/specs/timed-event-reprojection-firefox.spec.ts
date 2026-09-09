@@ -34,7 +34,7 @@ test("reprojects a canonical timed event with the same slot window after reload"
 }) => {
   const selectedDays = ["2026-06-02", "2026-06-03"]
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: `Seeded timed event ${String(Temporal.Now.instant().epochMilliseconds)}`,
       selectedDays,
@@ -187,7 +187,7 @@ test("preserves timed instants when the event timezone changes and shifts projec
   // re-anchors the membership day to 2026-01-05 after the timezone change.
   const activeSlots = ["2026-01-05T07:00:00Z", "2026-01-05T07:30:00Z"]
   const seeded = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: "Timezone preservation regression",
       selectedDays: ["2026-01-04"],
@@ -303,7 +303,7 @@ async function expectTimedFixtureReopen(input: {
   // UTC column; default to one column per membership day.
   expectedColumns?: number
 }) {
-  const seeded = await seedCanonicalTimedEvent(input.request, input.seed)
+  const seeded = await seedCanonicalTimedEvent(input.page.request, input.seed)
   await openEventPage(input.page, seeded.shortId)
   const editorCard = await openEditDialog(input.page)
   const selectedDates = selectedDatesFromState(

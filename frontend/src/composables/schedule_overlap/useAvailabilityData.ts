@@ -1,3 +1,9 @@
+import { encodeVisitorResponseSubmission } from "@/composables/event/responseSubmissionBoundary"
+import {
+  selectedVisitorResponse,
+  selectVisitorResponse,
+  withEventVisitorIdentity,
+} from "@/composables/event/visitorIdentityStorage"
 import {
   computed,
   nextTick,
@@ -295,7 +301,8 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
     if (
       (opts.event.value as { blindAvailabilityEnabled?: boolean })
         .blindAvailabilityEnabled &&
-      !opts.isOwner.value
+      !opts.isOwner.value &&
+      !opts.event.value.eventVisitorId
     ) {
       const userId = authUser?._id ?? opts.guestResponseLookupKey.value ?? ""
       if (userId in responses) {
@@ -329,6 +336,8 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
         ifNeeded: new ZdtSet(normalizedFetchedResponse.ifNeeded ?? []),
         enabledCalendars: responses[k].enabledCalendars,
         calendarOptions: normalizeCalendarOptions(responses[k].calendarOptions),
+        publicId: responses[k].publicId,
+        canEdit: responses[k].canEdit,
         guest: Boolean(responses[k].name),
         guestId: responses[k].guestId,
         guestEditPolicy: responses[k].guestEditPolicy,
@@ -346,6 +355,7 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
 
   const userHasResponded = computed(() => {
     const authUser = mainStore.authUser
+    if (opts.event.value.eventVisitorId) return false
     return Boolean(authUser?._id && authUser._id in parsedResponses.value)
   })
 
@@ -573,6 +583,9 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
     const responses = opts.event.value.responses
     if (
       opts.state.value === states.EDIT_AVAILABILITY &&
+      // PostgreSQL responses are keyed by opaque public IDs, so an authUser._id
+      // membership test cannot decide whether the visitor already responded.
+      !opts.event.value.eventVisitorId &&
       authUser?._id &&
       !(authUser._id in (responses ?? {})) &&
       !opts.loadingCalendarEvents.value &&
@@ -784,6 +797,32 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
 
     const eventId =
       typeof opts.event.value._id === "string" ? opts.event.value._id : ""
+    if (opts.event.value.eventVisitorId) {
+      const responseId =
+        opts.curGuestId.value || selectedVisitorResponse(eventId)
+      const fallbackName =
+        (responseId
+          ? opts.event.value.responses?.[responseId]?.name
+          : undefined) ??
+        [mainStore.authUser?.firstName, mainStore.authUser?.lastName]
+          .filter(Boolean)
+          .join(" ")
+      const name = guestPayload.name || fallbackName
+      const result = await post<{ responseId: string }>(
+        withEventVisitorIdentity(`/events/${eventId}/response`),
+        encodeVisitorResponseSubmission({
+          availability: availabilityArray.value,
+          ifNeeded: ifNeededArray.value,
+          responseId,
+          name,
+          email: guestPayload.email,
+        }),
+      )
+      selectVisitorResponse(eventId, result.responseId)
+      opts.refreshEvent()
+      unsavedChanges.value = false
+      return true
+    }
     let type: string
     const authUser = mainStore.authUser
     const existingGuestLookupKey = opts.guestResponseLookupKey.value
@@ -887,6 +926,18 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
   const deleteAvailability = async (name = "") => {
     const eventId =
       typeof opts.event.value._id === "string" ? opts.event.value._id : ""
+    if (opts.event.value.eventVisitorId) {
+      const responseId =
+        name || opts.curGuestId.value || selectedVisitorResponse(eventId)
+      if (!responseId) return
+      await _delete(withEventVisitorIdentity(`/events/${eventId}/response`), {
+        responseId,
+      })
+      selectVisitorResponse(eventId)
+      availability.value = new ZdtSet()
+      opts.refreshEvent()
+      return
+    }
     const payload: Record<string, unknown> = {}
     const authUser = mainStore.authUser
     if (authUser && !opts.addingAvailabilityAsGuest.value) {

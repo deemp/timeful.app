@@ -1,3 +1,4 @@
+import { withEventVisitorIdentity } from "@/composables/event/visitorIdentityStorage"
 import { nextTick, type ComputedRef, type Ref } from "vue"
 import { post } from "@/utils"
 import { canGuestEditResponse } from "@/composables/schedule_overlap/useScheduleOverlapUI"
@@ -58,7 +59,7 @@ export function useGuestAvailabilityActions(
   const editGuestAvailability = (userId: string) => {
     const response = opts.parsedResponses.value[userId]
     if (
-      opts.isAuthenticated.value ||
+      (opts.isAuthenticated.value && !response.publicId) ||
       !canGuestEditResponse(response, opts.ownedGuestResponseLookupKeys.value)
     ) {
       return
@@ -127,6 +128,17 @@ export function useGuestAvailabilityActions(
     }
 
     try {
+      if (opts.event.value.eventVisitorId) {
+        await post(
+          withEventVisitorIdentity(
+            `/events/${opts.event.value._id}/rename-user`,
+          ),
+          { responseId: opts.curGuestId.value, newName: name },
+        )
+        opts.editGuestNameDialog.value = false
+        opts.refreshEvent()
+        return
+      }
       const currentResponse =
         opts.event.value.responses?.[opts.curGuestId.value]
       const response = await post<RenameGuestResponse>(

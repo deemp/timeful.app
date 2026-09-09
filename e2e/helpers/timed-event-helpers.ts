@@ -344,6 +344,9 @@ function buildSeedPayload(input: CanonicalTimedSeedInput) {
   }
 }
 
+// For browser owner journeys, pass page.request (or page.context().request)
+// so creation's HttpOnly cookies are shared with the browser that will edit.
+// The standalone request fixture keeps a separate cookie jar for visitor tests.
 export async function seedCanonicalTimedEvent(
   request: APIRequestContext,
   input: CanonicalTimedSeedInput,

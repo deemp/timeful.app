@@ -26,6 +26,10 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Pass an explicit timeout only with a reason; the default action timeout is 15 seconds and the default expect timeout is 5 seconds.
 - Keep one behavior per test, and wrap long journeys in `test.step()` so traces and errors name the failing step.
 - Seed state through the API instead of long UI setup journeys; reuse `./helpers` builders such as `seedCanonicalTimedEvent`.
+- For API-seeded browser owner journeys, pass `page.request` or `page.context().request` to the seed helper before opening the event.
+  These request contexts share the browser's cookie jar, including the HttpOnly creation cookies that prove [Event Owner](../docs/terminology/glossary.md#event-owner) authority in PostgreSQL mode.
+  The standalone Playwright `request` fixture has its own cookie jar, so an event created through it leaves the page without creation credentials.
+  Keep separate request or browser contexts for visitor and authorization-denial journeys; do not substitute visitor credentials for owner authority or bypass the edit control.
 - Treat fixed settle delays as exceptions; use `settlePage` from `./helpers/settle` only when no state-based wait can express the condition, for example settling a CSS transition after resize.
 
 ## Environment

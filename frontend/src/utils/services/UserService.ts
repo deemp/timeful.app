@@ -1,3 +1,4 @@
+import { browserEventVisitorIdentities } from "@/composables/event/visitorIdentityStorage"
 import { get, post } from "@/utils"
 import type { User } from "@/types"
 import type { RawUser } from "@/types/transport"
@@ -18,11 +19,24 @@ export async function signInWithOAuthCode(payload: {
   timezoneOffset: number
   eventsToLink: string[]
 }): Promise<User> {
-  return fromRawUser(await post<RawUser>("/auth/sign-in", payload))
+  const user = fromRawUser(await post<RawUser>("/auth/sign-in", payload))
+  await associateBrowserIdentities()
+  return user
 }
 
 export async function verifyOtpSignIn(
   payload: Record<string, unknown>,
 ): Promise<User> {
-  return fromRawUser(await post<RawUser>("/auth/otp/verify", payload))
+  const user = fromRawUser(await post<RawUser>("/auth/otp/verify", payload))
+  await associateBrowserIdentities()
+  return user
+}
+
+async function associateBrowserIdentities() {
+  const identities = browserEventVisitorIdentities()
+  for (let offset = 0; offset < identities.length; offset += 200) {
+    await post("/auth/visitor-identities", {
+      identities: identities.slice(offset, offset + 200),
+    })
+  }
 }

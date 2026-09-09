@@ -54,6 +54,7 @@ export function canGuestEditResponse(
   response: ParsedResponse | undefined,
   ownedGuestResponseLookupKeys: Set<string>,
 ) {
+  if (response?.publicId) return response.canEdit === true
   if (response?.guest !== true) return false
   if (response.guestOwnershipMode !== "token") {
     return Boolean(

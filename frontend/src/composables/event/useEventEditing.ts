@@ -1,3 +1,4 @@
+import { canEditEventMetadata } from "./eventOwnership"
 import { ref, nextTick, type Ref, type ComputedRef } from "vue"
 import { signInGoogle, signInOutlook } from "@/utils"
 import { authTypes, calendarTypes } from "@/constants"
@@ -62,10 +63,11 @@ export function useEventEditing(opts: UseEventEditingOptions) {
   }
 
   function addAvailability() {
+    if (opts.event.value?.eventVisitorId && opts.event.value.isArchived) return
     const so = opts.scheduleOverlapRef.value
     if (!so) return
     const ev = opts.event.value
-    if (!opts.authUser.value) {
+    if (!opts.authUser.value || ev?.eventVisitorId) {
       so.clearSelectedGuestOwnership()
       opts.curGuestId.value = ""
     }
@@ -89,6 +91,7 @@ export function useEventEditing(opts: UseEventEditingOptions) {
   }
 
   function addAvailabilityAsGuest() {
+    if (opts.event.value?.eventVisitorId && opts.event.value.isArchived) return
     opts.scheduleOverlapRef.value?.clearSelectedGuestOwnership()
     opts.curGuestId.value = ""
     opts.addingAvailabilityAsGuest.value = true
@@ -136,6 +139,7 @@ export function useEventEditing(opts: UseEventEditingOptions) {
   }
 
   function editEvent() {
+    if (!canEditEventMetadata(opts.event.value, opts.authUser.value)) return
     editEventDialog.value = true
   }
 

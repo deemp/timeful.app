@@ -1,6 +1,14 @@
 <template>
   <span>
     <div v-if="eventLoadStatus === 'ready' && event" class="tw:mt-8 tw:h-full">
+      <v-alert
+        v-if="event.eventVisitorId && event.isArchived"
+        type="info"
+        variant="tonal"
+        class="tw:mb-4"
+      >
+        This event is archived and read-only.
+      </v-alert>
       <!-- Mark availability option dialog -->
       <MarkAvailabilityDialog
         v-model="choiceDialog"
@@ -184,7 +192,10 @@
                 </div>
                 <div
                   v-if="
-                    isGroup || (!isPhone && (!isSignUp || canEditAvailability))
+                    isGroup ||
+                    (!isPhone &&
+                      (!isSignUp || canEditAvailability) &&
+                      !isReadOnlyEvent)
                   "
                   class="desktop-event-header-actions tw:relative tw:flex tw:min-w-0 tw:flex-col tw:gap-2"
                 >
@@ -219,7 +230,11 @@
                     </v-btn>
                   </div>
                   <div
-                    v-else-if="!isPhone && (!isSignUp || canEditAvailability)"
+                    v-else-if="
+                      !isPhone &&
+                      (!isSignUp || canEditAvailability) &&
+                      !isReadOnlyEvent
+                    "
                     id="event-header-actions"
                     ref="desktopGuestEditMenuRoot"
                     class="tw:w-full"
@@ -415,6 +430,12 @@
                       >
                     </v-btn>
                   </template>
+                  <EventAccessTransfer :event="event" />
+                  <EventOwnerActions
+                    :event="event"
+                    @changed="refreshEvent"
+                    @deleted="router.push('/')"
+                  />
                   <v-btn
                     v-if="!isGroup"
                     id="copy-link-btn"
@@ -839,7 +860,8 @@
         v-if="
           !isSettingSpecificTimes &&
           isPhone &&
-          (!isSignUp || canEditAvailability)
+          (!isSignUp || canEditAvailability) &&
+          !isReadOnlyEvent
         "
         ref="mobileGuestEditMenuRoot"
         class="timeful-action-bar-layer tw:fixed tw:bottom-0 tw:flex tw:w-full tw:flex-col"
@@ -1070,6 +1092,8 @@ import {
   defineAsyncComponent,
   type PropType,
 } from "vue"
+import EventAccessTransfer from "@/components/event/EventAccessTransfer.vue"
+import EventOwnerActions from "@/components/event/EventOwnerActions.vue"
 import { useRouter, useRoute } from "vue-router"
 import { storeToRefs } from "pinia"
 import { Temporal } from "temporal-polyfill"
@@ -1122,8 +1146,14 @@ import { hasEventDraftData } from "@/composables/event/draftBoundary"
 import { fetchEventResponses } from "@/composables/event/eventTransportBoundary"
 import {
   encodeEventResponseSubmissionPayload,
+  encodeVisitorResponseSubmission,
   toEventResponseSubmissionPayload,
 } from "@/composables/event/responseSubmissionBoundary"
+import {
+  selectVisitorResponse,
+  selectedVisitorResponse,
+  withEventVisitorIdentity,
+} from "@/composables/event/visitorIdentityStorage"
 import {
   toScheduleOverlapEvent,
   states as scheduleOverlapStates,
@@ -1240,6 +1270,9 @@ const eventType = computed(() => {
   else if (isSignUp.value) return "signup"
   return "event"
 })
+const isReadOnlyEvent = computed(() =>
+  Boolean(loader.event.value?.eventVisitorId && loader.event.value.isArchived),
+)
 const canEditAvailability = computed(() =>
   canEditAvailabilityAsCurrentViewer(loader.event.value, authUser.value),
 )
@@ -1336,10 +1369,13 @@ const showSecondaryAddAvailabilityAction = computed(() => {
   if (!(authUser.value || guestAddedAvailability.value)) return false
   const event = loader.event.value
   if (!event) return false
-  return !event.blindAvailabilityEnabled || isOwner.value
+  return (
+    !event.blindAvailabilityEnabled ||
+    (event.eventVisitorId ? event.canManageEvent === true : isOwner.value)
+  )
 })
 const showScheduleEventButton = computed(
-  () => !isEditing.value && !isSignUp.value,
+  () => !isEditing.value && !isSignUp.value && !isReadOnlyEvent.value,
 )
 const desktopScheduleEventButtonClass = computed(() =>
   numResponses.value > 0 ? "tw:w-full" : "desktop-event-header-single-column",
@@ -1876,7 +1912,58 @@ async function setSlots(e: MessageEvent<PluginMessageData>) {
   const isGuest = forceGuestMode || !authUser.value
   let guestName = ""
   let guestEmail = ""
-  if (isGuest) {
+  let visitorResponseId: string | undefined
+  if (ev.eventVisitorId) {
+    // PostgreSQL events own responses through Event Visitor Identities, so the
+    // plugin acts on the browser visitor's selected or named response instead
+    // of MongoDB guest credentials.
+    const responses = ev.responses ?? {}
+    const namedResponseId = hasGuestName
+      ? Object.keys(responses).find(
+          (key) => responses[key]?.name === payloadGuestName,
+        )
+      : undefined
+    visitorResponseId = namedResponseId ?? selectedVisitorResponse(ev._id ?? "")
+    if (hasGuestName) {
+      guestName = payloadGuestName
+    } else {
+      guestName =
+        responses[visitorResponseId ?? ""]?.name ??
+        [authUser.value?.firstName, authUser.value?.lastName]
+          .filter(Boolean)
+          .join(" ")
+      if (!visitorResponseId && guestName.length === 0) {
+        sendPluginError(
+          requestId,
+          command,
+          "Guest name is required. Please provide 'guestName' in the payload or add your availability through the UI first.",
+        )
+        return
+      }
+    }
+    guestEmail =
+      e.data.payload?.guestEmail ??
+      responses[visitorResponseId ?? ""]?.email ??
+      ""
+    if (!visitorResponseId && ev.collectEmails) {
+      if (guestEmail.length === 0) {
+        sendPluginError(
+          requestId,
+          command,
+          "Guest email is required because this event collects emails. Please provide 'guestEmail' in the payload.",
+        )
+        return
+      }
+      if (!validateEmail(guestEmail)) {
+        sendPluginError(
+          requestId,
+          command,
+          `Invalid email format: ${guestEmail}`,
+        )
+        return
+      }
+    }
+  } else if (isGuest) {
     const guestNameKey = getGuestNameStorageKey(ev._id ?? "")
     const guestOwnershipCollection = readGuestOwnershipCollectionForEvent(
       ev._id ?? "",
@@ -2084,6 +2171,22 @@ async function setSlots(e: MessageEvent<PluginMessageData>) {
     const ifNeeded = allIfNeededTimestamps.map((ms) =>
       Temporal.Instant.fromEpochMilliseconds(ms).toZonedDateTimeISO("UTC"),
     )
+    if (ev.eventVisitorId) {
+      const result = await post<{ responseId: string }>(
+        withEventVisitorIdentity(`/events/${sanitizedId}/response`),
+        encodeVisitorResponseSubmission({
+          availability,
+          ifNeeded,
+          responseId: visitorResponseId,
+          name: guestName,
+          email: guestEmail,
+        }),
+      )
+      selectVisitorResponse(ev._id ?? "", result.responseId)
+      await loader.refreshEvent()
+      sendPluginSuccess(requestId, command)
+      return
+    }
     const storedGuestOwnership = event.value._id
       ? getSelectedGuestOwnership(
           readGuestOwnershipCollectionForEvent(event.value._id),

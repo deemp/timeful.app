@@ -127,10 +127,9 @@ test("event page renders unique projected civil date labels at UTC+6 and UTC+7",
 
 test("specific-times edit grid projects enabled-domain columns per display timezone", async ({
   page,
-  request,
 }) => {
   const shortId = await seedBangkokMidnightEvent(
-    request,
+    page.request,
     "Viewer TZ edit grid column regression",
   )
   console.log(`Seeded event: /e/${shortId}`)

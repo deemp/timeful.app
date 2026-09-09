@@ -3,6 +3,9 @@ package routes
 import (
 	"context"
 	"net/http"
+	"net/http/cookiejar"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"sync"
 	"testing"
@@ -168,10 +171,11 @@ func TestAnonymousTimedEventCompatibilityContract(t *testing.T) {
 			})
 
 			responseRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+eventID+"/response", map[string]any{
-				"guest":        true,
-				"name":         "Ada",
-				"availability": []string{"2026-01-05T14:00:00Z", "2026-01-05T14:00:00Z"},
-				"ifNeeded":     []string{"2026-01-05T14:00:00Z", "2026-01-05T14:15:00Z", "2026-01-05T14:15:00Z"},
+				"guest":          true,
+				"createResponse": store.name == "postgres",
+				"name":           "Ada",
+				"availability":   []string{"2026-01-05T14:00:00Z", "2026-01-05T14:00:00Z"},
+				"ifNeeded":       []string{"2026-01-05T14:00:00Z", "2026-01-05T14:15:00Z", "2026-01-05T14:15:00Z"},
 			})
 			if responseRecorder.Code != http.StatusOK {
 				t.Fatalf("expected response status 200, got %d: %s", responseRecorder.Code, responseRecorder.Body.String())
@@ -179,16 +183,27 @@ func TestAnonymousTimedEventCompatibilityContract(t *testing.T) {
 			credentials := decodeJSONBody[struct {
 				GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
 			}](t, responseRecorder).GuestCredentials
-			if credentials == nil || credentials.GuestID == "" || credentials.GuestEditToken == "" {
+			responseKey := ""
+			if store.name == "postgres" {
+				responseKey = decodeJSONBody[struct {
+					ResponseID string `json:"responseId"`
+				}](t, responseRecorder).ResponseID
+				if responseKey == "" || credentials != nil {
+					t.Fatal("expected opaque response ID without legacy credentials")
+				}
+			} else if credentials == nil || credentials.GuestID == "" || credentials.GuestEditToken == "" {
 				t.Fatalf("expected recoverable guest credentials, got %#v", credentials)
+			}
+			if credentials != nil {
+				responseKey = credentials.GuestID
 			}
 			responsesRecorder := timedEventRequest(t, router, http.MethodGet, "/api/events/"+eventID+"/responses?timeMin=2026-01-05T14:00:00Z&timeMax=2026-01-05T14:30:00Z", nil)
 			if responsesRecorder.Code != http.StatusOK {
 				t.Fatalf("expected response read status 200, got %d: %s", responsesRecorder.Code, responsesRecorder.Body.String())
 			}
-			response, exists := decodeJSONBody[map[string]models.Response](t, responsesRecorder)[credentials.GuestID]
+			response, exists := decodeJSONBody[map[string]models.Response](t, responsesRecorder)[responseKey]
 			if !exists {
-				t.Fatalf("expected guest response map key %q", credentials.GuestID)
+				t.Fatalf("expected response map key %q", responseKey)
 			}
 			assertPrimitiveDateTimesEqual(t, response.Availability, []primitive.DateTime{
 				timedSlotDateTime(t, "2026-01-05T14:00:00Z"),
@@ -254,10 +269,32 @@ func TestAnonymousDatesOnlyEventCompatibilityContract(t *testing.T) {
 	}
 }
 
+// These payload-compatibility checks act as the creating browser, retaining
+// PostgreSQL's owner credential. Authorization rejection has a separate suite.
+func compatibilityOwnerBrowser(router http.Handler) http.Handler {
+	jar, _ := cookiejar.New(nil)
+	origin, _ := url.Parse("http://example.com/api/")
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		for _, cookie := range jar.Cookies(origin) {
+			req.AddCookie(cookie)
+		}
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		jar.SetCookies(origin, recorder.Result().Cookies())
+		for name, values := range recorder.Header() {
+			for _, value := range values {
+				w.Header().Add(name, value)
+			}
+		}
+		w.WriteHeader(recorder.Code)
+		_, _ = w.Write(recorder.Body.Bytes())
+	})
+}
+
 func TestAnonymousEventEditCompatibilityContract(t *testing.T) {
 	for _, store := range anonymousEventContractStores() {
 		t.Run(store.name, func(t *testing.T) {
-			router := store.newRouter(t)
+			router := compatibilityOwnerBrowser(store.newRouter(t))
 			timedID := createAnonymousCompatibilityEvent(t, router, canonicalTimedEventPayload("Original timed event"))
 			t.Cleanup(func() { store.cleanupEvent(t, timedID) })
 
@@ -322,7 +359,8 @@ func TestAnonymousEventEditCompatibilityContract(t *testing.T) {
 }
 
 func TestAnonymousGuestResponseOwnershipCompatibilityContract(t *testing.T) {
-	for _, store := range anonymousEventContractStores() {
+	// PostgreSQL uses TestPostgresVisitorIdentityContract; these legacy credentials remain MongoDB-only.
+	for _, store := range anonymousEventContractStores()[:1] {
 		t.Run(store.name, func(t *testing.T) {
 			router := store.newRouter(t)
 			eventID := createAnonymousCompatibilityEvent(t, router, canonicalTimedEventPayload("Guest ownership event"))

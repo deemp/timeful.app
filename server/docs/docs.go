@@ -493,6 +493,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/visitor-identities": {
+            "post": {
+                "description": "Source EVCC proof associates response identity; independent Event Owner Edit Token proof associates or moves event ownership without moving responses. Granted EVCC association awaits the transfer confirmation flow.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Associate browser Event Visitor Identities with the authenticated account",
+                "parameters": [
+                    {
+                        "description": "Browser-local public identities; matching HttpOnly credentials are required",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "identities": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "eventId": {
+                                                "type": "string"
+                                            },
+                                            "eventVisitorId": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
         "/events": {
             "post": {
                 "consumes": [
@@ -586,11 +636,14 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "PostgreSQL creation returns eventVisitorId and issues separate HttpOnly EVCC and Event Owner Edit Token cookies; MongoDB credentials are unchanged",
                         "schema": {
                             "type": "object",
                             "properties": {
                                 "eventId": {
+                                    "type": "string"
+                                },
+                                "eventVisitorId": {
                                     "type": "string"
                                 }
                             }
@@ -661,18 +714,46 @@ const docTemplate = `{
                         "name": "eventId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "PostgreSQL returns server-proven owner capabilities and browser eventVisitorId; response entries add publicId and canEdit. MongoDB payloads are unchanged.",
                         "schema": {
-                            "$ref": "#/definitions/models.Event"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.Event"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "canCreateResponse": {
+                                            "type": "boolean"
+                                        },
+                                        "canEditSettings": {
+                                            "type": "boolean"
+                                        },
+                                        "canManageEvent": {
+                                            "type": "boolean"
+                                        },
+                                        "eventVisitorId": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             },
             "put": {
+                "description": "PostgreSQL requires Event Owner Edit Token proof, the associated Platform Visitor Identity session, or an owner-issued Granted EVCC; base EVCCs never authorize settings edits. Archived PostgreSQL events are read-only. MongoDB authorization is unchanged.",
                 "produces": [
                     "application/json"
                 ],
@@ -763,10 +844,23 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "403": {
+                        "description": "Owner authority required or event archived",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             },
             "delete": {
+                "description": "PostgreSQL requires the same owner credentials as settings edits; deleted events and responses stop resolving. MongoDB requires its legacy authenticated owner.",
                 "produces": [
                     "application/json"
                 ],
@@ -786,12 +880,25 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "403": {
+                        "description": "Owner authority required or event archived",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             }
         },
         "/events/{eventId}/archive": {
             "post": {
+                "description": "PostgreSQL requires the same owner credentials as settings edits; archive makes the event read-only and unarchive restores mutations. MongoDB requires its legacy authenticated owner.",
                 "consumes": [
                     "application/json"
                 ],
@@ -828,6 +935,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "403": {
+                        "description": "Owner authority required or event archived",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             }
@@ -953,6 +1072,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{eventId}/grant-association": {
+            "post": {
+                "description": "PostgreSQL only. An active Granted EVCC and signed-in session are required. Association preserves source response ownership and does not associate event ownership.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Inspect or explicitly confirm granted response identity association",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Explicit consent; false only inspects",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "confirm": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "confirmationRequired": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        },
         "/events/{eventId}/ids": {
             "get": {
                 "produces": [
@@ -1016,7 +1189,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Object containing info about the guest response to rename",
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object containing info about the guest response to rename; PostgreSQL events require the opaque responseId instead of oldName",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1027,6 +1206,9 @@ const docTemplate = `{
                                     "type": "string"
                                 },
                                 "oldName": {
+                                    "type": "string"
+                                },
+                                "responseId": {
                                     "type": "string"
                                 }
                             }
@@ -1109,7 +1291,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Object containing info about the event response to update",
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1124,6 +1312,12 @@ const docTemplate = `{
                                 },
                                 "calendarOptions": {
                                     "$ref": "#/definitions/models.CalendarOptions"
+                                },
+                                "createResponse": {
+                                    "type": "boolean"
+                                },
+                                "email": {
+                                    "type": "string"
                                 },
                                 "enabledCalendars": {
                                     "type": "object",
@@ -1155,6 +1349,9 @@ const docTemplate = `{
                                 "name": {
                                     "type": "string"
                                 },
+                                "responseId": {
+                                    "type": "string"
+                                },
                                 "signUpBlockIds": {
                                     "type": "array",
                                     "items": {
@@ -1171,6 +1368,12 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "400": {
+                        "description": "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             },
@@ -1194,7 +1397,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Object containing info about the event response to delete",
+                        "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Object containing info about the event response to delete; PostgreSQL events require the opaque responseId",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1205,6 +1414,9 @@ const docTemplate = `{
                                     "type": "boolean"
                                 },
                                 "name": {
+                                    "type": "string"
+                                },
+                                "responseId": {
                                     "type": "string"
                                 },
                                 "userId": {
@@ -1240,6 +1452,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "PostgreSQL browser Event Visitor Identity public ID",
+                        "name": "eventVisitorId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Lower bound for start time to filter availability by",
                         "name": "timeMin",
                         "in": "query",
@@ -1255,11 +1473,159 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "PostgreSQL responses are keyed by opaque publicId and each entry adds publicId and canEdit",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
                                 "$ref": "#/definitions/models.Response"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{eventId}/transfers": {
+            "post": {
+                "description": "PostgreSQL only. Requires a signed-in session or base EVCC; anonymous owners additionally prove their owner token. The link grants no authority.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Create a five-minute source-confirmed access transfer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "expiresAt": {
+                                    "type": "string"
+                                },
+                                "id": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        },
+        "/events/{eventId}/transfers/{transferId}/{action}": {
+            "post": {
+                "description": "Actions: open (new target request, or the approved request back to its target), status (source lists codes), approve (source supplies requestId and exact code), redeem (target proof; replacing a different signed-in account requires confirmAccountSwitch), cancel, revoke. Approval is single-use and only the selected target can redeem before expiry; cancel works while the transfer is pending or approved but unredeemed. Revocation has no time limit.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Advance a source-confirmed transfer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Transfer ID",
+                        "name": "transferId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Transfer action",
+                        "name": "action",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Approval selection, explicit account-switch consent, or empty object",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "string"
+                                },
+                                "confirmAccountSwitch": {
+                                    "type": "boolean"
+                                },
+                                "requestId": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "code": {
+                                    "type": "string"
+                                },
+                                "requestId": {
+                                    "type": "string"
+                                },
+                                "requests": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "code": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "revocable": {
+                                    "type": "boolean"
+                                },
+                                "state": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "409": {
+                        "description": "Explicit consent required to replace a different sign-in",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "accountSwitchRequired": {
+                                    "type": "boolean"
+                                }
                             }
                         }
                     }

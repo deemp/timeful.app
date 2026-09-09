@@ -231,6 +231,7 @@ const shownInTimezoneStorageKey = computed(
 const scheduleOverlapPreferences: UseScheduleOverlapPreferencesReturn =
   useScheduleOverlapPreferences({
     eventId: computed(() => props.event._id ?? ""),
+    event: eventReadonly,
   })
 const guestNameKey = scheduleOverlapPreferences.guestNameKey
 const ownedGuestResponses = scheduleOverlapPreferences.ownedGuestResponses
@@ -1151,6 +1152,7 @@ const mobileEditingBottomClearance = computed<string | undefined>(() => {
 })
 
 function startEditing() {
+  if (props.event.eventVisitorId && props.event.isArchived) return
   state.value = isSignUp.value
     ? states.EDIT_SIGN_UP_BLOCKS
     : states.EDIT_AVAILABILITY
