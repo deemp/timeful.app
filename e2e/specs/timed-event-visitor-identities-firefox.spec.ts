@@ -1,10 +1,5 @@
 import { expect, test } from "@playwright/test"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
-
 test("Event Visitor Identity survives reload and edits two independently selected responses", async ({
   page,
 }) => {

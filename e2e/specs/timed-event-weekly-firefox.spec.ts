@@ -92,7 +92,6 @@ test("round-trips weekly canonical timed fields through the edit flow", async ({
 
 test("round-trips group canonical timed fields through the edit flow", async ({
   page,
-  request,
 }) => {
   const activeSlots = [
     "2026-01-05T17:00:00Z",
@@ -100,7 +99,10 @@ test("round-trips group canonical timed fields through the edit flow", async ({
     "2026-01-07T17:00:00Z",
     "2026-01-07T17:30:00Z",
   ]
-  const seeded = await seedCanonicalTimedEvent(request, {
+  // The page-scoped request context shares the browser's cookie jar, including
+  // the HttpOnly Event Visitor Control Credential that proves owner authority
+  // for a PostgreSQL group event.
+  const seeded = await seedCanonicalTimedEvent(page.request, {
     name: "Group timed roundtrip",
     type: "group",
     activeSlots,
@@ -126,7 +128,7 @@ test("round-trips group canonical timed fields through the edit flow", async ({
   await getEditorNameInput(page).fill("Group timed roundtrip edited")
   await saveEditorAndWaitForPut(page, { action: "save" })
 
-  const savedEvent = await fetchEventByShortId(request, seeded.shortId)
+  const savedEvent = await fetchEventByShortId(page.request, seeded.shortId)
   expect(savedEvent.type).toBe("group")
   expect(savedEvent.eventTimezone).toBe("America/Los_Angeles")
   expect(savedEvent.slotGeneration).toMatchObject({

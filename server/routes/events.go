@@ -220,7 +220,7 @@ func createEvent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, responses.Error{Error: err.Error()})
 		return
 	}
-	if postgresCreationEnabled(c) {
+	if postgresSupportsEventCreation(c) {
 		postgresCreateEvent(c)
 		return
 	}

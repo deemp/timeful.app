@@ -64,31 +64,18 @@ func canonicalTimedEventPayload(name string) map[string]any {
 	}
 }
 
+// anonymousEventContractStores returns the PostgreSQL store that now serves all
+// supported anonymous creation. Legacy MongoDB records keep the same observable
+// behavior through explicit fixtures (see the legacy guest-credential contract),
+// not through a creation switch.
 func anonymousEventContractStores() []anonymousEventContractStore {
 	return []anonymousEventContractStore{
-		{
-			name: "mongo",
-			newRouter: func(t *testing.T) http.Handler {
-				t.Setenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED", "false")
-				initRoutesReadFiltersTestDB(t)
-				return newEventsReadFiltersTestRouter()
-			},
-			cleanupEvent: func(t *testing.T, eventID string) {
-				t.Helper()
-				_, storageID := eventsource.Parse(eventID)
-				event := loadEventByID(t, storageID)
-				ctx := context.Background()
-				_, _ = db.EventResponsesCollection.DeleteMany(ctx, bson.M{"eventId": event.Id})
-				_, _ = db.EventsCollection.DeleteOne(ctx, bson.M{"_id": event.Id})
-			},
-		},
 		{
 			name: "postgres",
 			newRouter: func(t *testing.T) http.Handler {
 				if os.Getenv("POSTGRES_APPLICATION_URI") == "" {
 					t.Skip("POSTGRES_APPLICATION_URI is required for PostgreSQL route contracts")
 				}
-				t.Setenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED", "true")
 				anonymousEventPostgresOnce.Do(func() { pgstore.Init() })
 				return newEventsReadFiltersTestRouter()
 			},
@@ -358,103 +345,117 @@ func TestAnonymousEventEditCompatibilityContract(t *testing.T) {
 	}
 }
 
-func TestAnonymousGuestResponseOwnershipCompatibilityContract(t *testing.T) {
-	// PostgreSQL uses TestPostgresVisitorIdentityContract; these legacy credentials remain MongoDB-only.
-	for _, store := range anonymousEventContractStores()[:1] {
-		t.Run(store.name, func(t *testing.T) {
-			router := store.newRouter(t)
-			eventID := createAnonymousCompatibilityEvent(t, router, canonicalTimedEventPayload("Guest ownership event"))
-			t.Cleanup(func() { store.cleanupEvent(t, eventID) })
-			shortID := assertEventIDsResolve(t, router, eventID)
+// TestLegacyMongoGuestResponseOwnershipContract proves that legacy MongoDB
+// guest-edit credentials still behave as before for explicit legacy fixture
+// records. Anonymous creation is PostgreSQL-only, so this path is no longer
+// reachable by creating an event through the API.
+func TestLegacyMongoGuestResponseOwnershipContract(t *testing.T) {
+	initRoutesReadFiltersTestDB(t)
+	router := newEventsReadFiltersTestRouter()
 
-			createRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+eventID+"/response", map[string]any{
-				"guest":        true,
-				"name":         "Ada",
-				"availability": []string{"2030-01-01T00:00:00Z", "2030-01-01T00:00:00Z"},
-				"ifNeeded":     []string{"2030-01-01T00:00:00Z", "2030-01-01T00:15:00Z", "2030-01-01T00:15:00Z"},
-			})
-			if createRecorder.Code != http.StatusOK {
-				t.Fatalf("expected protected guest response status 200, got %d: %s", createRecorder.Code, createRecorder.Body.String())
-			}
-			credentials := decodeJSONBody[struct {
-				GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
-			}](t, createRecorder).GuestCredentials
-			if credentials == nil || len(credentials.GuestID) != 24 || credentials.GuestEditPolicy != guestEditPolicyProtected || credentials.GuestOwnershipMode != guestOwnershipModeToken {
-				t.Fatalf("expected protected 24-hex guest credentials, got %#v", credentials)
-			}
+	event := models.Event{
+		Id:              primitive.NewObjectID(),
+		Name:            "Legacy guest ownership event",
+		Type:            models.SPECIFIC_DATES,
+		ActiveSlots:     []primitive.DateTime{timedSlotDateTime(t, "2030-01-01T00:00:00Z")},
+		NumResponses:    intPtr(0),
+		ScheduleVersion: 1,
+		SignUpResponses: map[string]*models.SignUpResponse{},
+	}
+	seedEventReadFiltersTestData(t, event, nil, nil)
+	eventID := event.Id.Hex()
+	t.Cleanup(func() {
+		ctx := context.Background()
+		_, _ = db.EventResponsesCollection.DeleteMany(ctx, bson.M{"eventId": event.Id})
+		_, _ = db.EventsCollection.DeleteOne(ctx, bson.M{"_id": event.Id})
+	})
 
-			for _, mutation := range []struct {
-				name   string
-				method string
-				target string
-				body   map[string]any
-			}{
-				{
-					name:   "edit",
-					method: http.MethodPost,
-					target: "/api/events/" + eventID + "/response",
-					body:   map[string]any{"guest": true, "guestId": credentials.GuestID, "name": "Ada", "availability": []string{}},
-				},
-				{
-					name:   "rename",
-					method: http.MethodPost,
-					target: "/api/events/" + eventID + "/rename-user",
-					body:   map[string]any{"guestId": credentials.GuestID, "newName": "Ada Lovelace"},
-				},
-				{
-					name:   "delete",
-					method: http.MethodDelete,
-					target: "/api/events/" + eventID + "/response",
-					body:   map[string]any{"guest": true, "guestId": credentials.GuestID},
-				},
-			} {
-				t.Run("protected-"+mutation.name+"-without-token", func(t *testing.T) {
-					recorder := timedEventRequest(t, router, mutation.method, mutation.target, mutation.body)
-					if recorder.Code != http.StatusForbidden {
-						t.Fatalf("expected protected %s status 403, got %d: %s", mutation.name, recorder.Code, recorder.Body.String())
-					}
-				})
-			}
+	createRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+eventID+"/response", map[string]any{
+		"guest":        true,
+		"name":         "Ada",
+		"availability": []string{"2030-01-01T00:00:00Z", "2030-01-01T00:00:00Z"},
+		"ifNeeded":     []string{"2030-01-01T00:00:00Z", "2030-01-01T00:15:00Z", "2030-01-01T00:15:00Z"},
+	})
+	if createRecorder.Code != http.StatusOK {
+		t.Fatalf("expected protected guest response status 200, got %d: %s", createRecorder.Code, createRecorder.Body.String())
+	}
+	credentials := decodeJSONBody[struct {
+		GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
+	}](t, createRecorder).GuestCredentials
+	if credentials == nil || len(credentials.GuestID) != 24 || credentials.GuestEditPolicy != guestEditPolicyProtected || credentials.GuestOwnershipMode != guestOwnershipModeToken {
+		t.Fatalf("expected protected 24-hex guest credentials, got %#v", credentials)
+	}
 
-			openRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+eventID+"/response", map[string]any{
-				"guest":           true,
-				"guestId":         credentials.GuestID,
-				"guestEditToken":  credentials.GuestEditToken,
-				"guestEditPolicy": guestEditPolicyOpen,
-				"name":            "Ada",
-				"availability":    []string{"2030-01-01T00:00:00Z"},
-			})
-			if openRecorder.Code != http.StatusOK {
-				t.Fatalf("expected policy change status 200, got %d: %s", openRecorder.Code, openRecorder.Body.String())
-			}
-			openCredentials := decodeJSONBody[struct {
-				GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
-			}](t, openRecorder).GuestCredentials
-			if openCredentials == nil || openCredentials.GuestID != credentials.GuestID || openCredentials.GuestEditToken != credentials.GuestEditToken || openCredentials.GuestEditPolicy != guestEditPolicyOpen {
-				t.Fatalf("expected open policy to retain recoverable credentials, got %#v", openCredentials)
-			}
-
-			renameRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+shortID+"/rename-user", map[string]any{
-				"guestId": credentials.GuestID,
-				"newName": "Ada Lovelace",
-			})
-			if renameRecorder.Code != http.StatusOK {
-				t.Fatalf("expected tokenless open rename status 200, got %d: %s", renameRecorder.Code, renameRecorder.Body.String())
-			}
-			renameCredentials := decodeJSONBody[struct {
-				GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
-			}](t, renameRecorder).GuestCredentials
-			if renameCredentials == nil || renameCredentials.GuestEditToken != credentials.GuestEditToken {
-				t.Fatalf("expected tokenless open rename to return stored credentials, got %#v", renameCredentials)
-			}
-
-			deleteRecorder := timedEventRequest(t, router, http.MethodDelete, "/api/events/"+shortID+"/response", map[string]any{
-				"guest":   true,
-				"guestId": credentials.GuestID,
-			})
-			if deleteRecorder.Code != http.StatusOK {
-				t.Fatalf("expected tokenless open delete status 200, got %d: %s", deleteRecorder.Code, deleteRecorder.Body.String())
+	for _, mutation := range []struct {
+		name   string
+		method string
+		target string
+		body   map[string]any
+	}{
+		{
+			name:   "edit",
+			method: http.MethodPost,
+			target: "/api/events/" + eventID + "/response",
+			body:   map[string]any{"guest": true, "guestId": credentials.GuestID, "name": "Ada", "availability": []string{}},
+		},
+		{
+			name:   "rename",
+			method: http.MethodPost,
+			target: "/api/events/" + eventID + "/rename-user",
+			body:   map[string]any{"guestId": credentials.GuestID, "newName": "Ada Lovelace"},
+		},
+		{
+			name:   "delete",
+			method: http.MethodDelete,
+			target: "/api/events/" + eventID + "/response",
+			body:   map[string]any{"guest": true, "guestId": credentials.GuestID},
+		},
+	} {
+		t.Run("protected-"+mutation.name+"-without-token", func(t *testing.T) {
+			recorder := timedEventRequest(t, router, mutation.method, mutation.target, mutation.body)
+			if recorder.Code != http.StatusForbidden {
+				t.Fatalf("expected protected %s status 403, got %d: %s", mutation.name, recorder.Code, recorder.Body.String())
 			}
 		})
+	}
+
+	openRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+eventID+"/response", map[string]any{
+		"guest":           true,
+		"guestId":         credentials.GuestID,
+		"guestEditToken":  credentials.GuestEditToken,
+		"guestEditPolicy": guestEditPolicyOpen,
+		"name":            "Ada",
+		"availability":    []string{"2030-01-01T00:00:00Z"},
+	})
+	if openRecorder.Code != http.StatusOK {
+		t.Fatalf("expected policy change status 200, got %d: %s", openRecorder.Code, openRecorder.Body.String())
+	}
+	openCredentials := decodeJSONBody[struct {
+		GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
+	}](t, openRecorder).GuestCredentials
+	if openCredentials == nil || openCredentials.GuestID != credentials.GuestID || openCredentials.GuestEditToken != credentials.GuestEditToken || openCredentials.GuestEditPolicy != guestEditPolicyOpen {
+		t.Fatalf("expected open policy to retain recoverable credentials, got %#v", openCredentials)
+	}
+
+	renameRecorder := timedEventRequest(t, router, http.MethodPost, "/api/events/"+eventID+"/rename-user", map[string]any{
+		"guestId": credentials.GuestID,
+		"newName": "Ada Lovelace",
+	})
+	if renameRecorder.Code != http.StatusOK {
+		t.Fatalf("expected tokenless open rename status 200, got %d: %s", renameRecorder.Code, renameRecorder.Body.String())
+	}
+	renameCredentials := decodeJSONBody[struct {
+		GuestCredentials *anonymousGuestCredentials `json:"guestCredentials"`
+	}](t, renameRecorder).GuestCredentials
+	if renameCredentials == nil || renameCredentials.GuestEditToken != credentials.GuestEditToken {
+		t.Fatalf("expected tokenless open rename to return stored credentials, got %#v", renameCredentials)
+	}
+
+	deleteRecorder := timedEventRequest(t, router, http.MethodDelete, "/api/events/"+eventID+"/response", map[string]any{
+		"guest":   true,
+		"guestId": credentials.GuestID,
+	})
+	if deleteRecorder.Code != http.StatusOK {
+		t.Fatalf("expected tokenless open delete status 200, got %d: %s", deleteRecorder.Code, deleteRecorder.Body.String())
 	}
 }

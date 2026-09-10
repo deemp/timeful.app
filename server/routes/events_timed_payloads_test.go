@@ -2,14 +2,12 @@ package routes
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"timeful/server/db"
 	"timeful/server/eventsource"
@@ -62,6 +60,23 @@ func loadEventByID(t *testing.T, eventID string) *models.Event {
 	return event
 }
 
+// loadPostgresEventModel reads a PostgreSQL event through the same public API a
+// browser uses, so creation normalization is asserted at the HTTP boundary. It
+// returns the decoded wire payload and the raw JSON object for omitted-field
+// checks.
+func loadPostgresEventModel(t *testing.T, router http.Handler, eventID string) (anonymousEventPayload, map[string]any) {
+	t.Helper()
+
+	recorder := timedEventRequest(t, router, http.MethodGet, "/api/events/"+eventID, nil)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected PostgreSQL event read status 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+
+	event := decodeJSONBody[anonymousEventPayload](t, recorder)
+	raw := decodeJSONBody[map[string]any](t, recorder)
+	return event, raw
+}
+
 func assertPrimitiveDateTimesEqual(
 	t *testing.T,
 	actual []primitive.DateTime,
@@ -81,8 +96,8 @@ func assertPrimitiveDateTimesEqual(
 }
 
 func TestCreateEventCanonicalTimedPayloadNormalizesAndPersistsCanonicalFields(t *testing.T) {
-	initRoutesReadFiltersTestDB(t)
-	router := newEventsReadFiltersTestRouter()
+	store := anonymousEventContractStores()[0]
+	router := store.newRouter(t)
 
 	payload := map[string]any{
 		"name":                 "Canonical timed create",
@@ -105,11 +120,9 @@ func TestCreateEventCanonicalTimedPayloadNormalizesAndPersistsCanonicalFields(t 
 	createResponse := decodeJSONBody[struct {
 		EventID string `json:"eventId"`
 	}](t, recorder)
-	t.Cleanup(func() {
-		_, _ = db.EventsCollection.DeleteOne(context.Background(), bson.M{"_id": utilsStringToObjectID(createResponse.EventID)})
-	})
+	t.Cleanup(func() { store.cleanupEvent(t, createResponse.EventID) })
 
-	storedEvent := loadEventByID(t, createResponse.EventID)
+	storedEvent, storedRaw := loadPostgresEventModel(t, router, createResponse.EventID)
 	if storedEvent.Description == nil || *storedEvent.Description != "First line\nSecond line" {
 		t.Fatalf("expected stored description to persist, got %#v", storedEvent.Description)
 	}
@@ -122,8 +135,10 @@ func TestCreateEventCanonicalTimedPayloadNormalizesAndPersistsCanonicalFields(t 
 	if storedEvent.EventTimezone == nil || *storedEvent.EventTimezone != "America/New_York" {
 		t.Fatalf("expected stored timezone to persist, got %#v", storedEvent.EventTimezone)
 	}
-	if storedEvent.TimeIncrement != nil || storedEvent.Duration != nil || storedEvent.Times != nil {
-		t.Fatalf("expected legacy timed fields to be absent, got %#v", storedEvent)
+	for _, legacyField := range []string{"times", "duration", "timeIncrement", "hasSpecificTimes", "startOnMonday"} {
+		if _, exists := storedRaw[legacyField]; exists {
+			t.Fatalf("expected stored timed event to omit legacy field %q, got %#v", legacyField, storedRaw[legacyField])
+		}
 	}
 	if storedEvent.SlotGeneration == nil ||
 		storedEvent.SlotGeneration.StartTimeLocal != "09:00:00" ||
@@ -143,7 +158,7 @@ func TestCreateEventCanonicalTimedPayloadNormalizesAndPersistsCanonicalFields(t 
 		t.Fatalf("expected status 200, got %d: %s", getRecorder.Code, getRecorder.Body.String())
 	}
 
-	responseEvent := decodeJSONBody[models.Event](t, getRecorder)
+	responseEvent := decodeJSONBody[anonymousEventPayload](t, getRecorder)
 	if responseEvent.Description == nil || *responseEvent.Description != "First line\nSecond line" {
 		t.Fatalf("expected response description to persist, got %#v", responseEvent.Description)
 	}
@@ -157,14 +172,11 @@ func TestCreateEventCanonicalTimedPayloadNormalizesAndPersistsCanonicalFields(t 
 	if responseEvent.EventTimezone == nil || *responseEvent.EventTimezone != "America/New_York" {
 		t.Fatalf("expected response timezone to persist, got %#v", responseEvent.EventTimezone)
 	}
-	if responseEvent.TimeIncrement != nil || responseEvent.Duration != nil || responseEvent.Times != nil {
-		t.Fatalf("expected response to omit legacy timed fields, got %#v", responseEvent)
-	}
 }
 
 func TestCreateEventIgnoresUnknownEnabledSlotsAndDerivesTheDomain(t *testing.T) {
-	initRoutesReadFiltersTestDB(t)
-	router := newEventsReadFiltersTestRouter()
+	store := anonymousEventContractStores()[0]
+	router := store.newRouter(t)
 
 	// An old frontend still sends enabledSlots; the server ignores the
 	// unknown key and derives the domain from the contract, so the stored
@@ -188,11 +200,9 @@ func TestCreateEventIgnoresUnknownEnabledSlotsAndDerivesTheDomain(t *testing.T) 
 	createResponse := decodeJSONBody[struct {
 		EventID string `json:"eventId"`
 	}](t, recorder)
-	t.Cleanup(func() {
-		_, _ = db.EventsCollection.DeleteOne(context.Background(), bson.M{"_id": utilsStringToObjectID(createResponse.EventID)})
-	})
+	t.Cleanup(func() { store.cleanupEvent(t, createResponse.EventID) })
 
-	storedEvent := loadEventByID(t, createResponse.EventID)
+	storedEvent, _ := loadPostgresEventModel(t, router, createResponse.EventID)
 	assertPrimitiveDateTimesEqual(t, storedEvent.ActiveSlots, []primitive.DateTime{
 		timedSlotDateTime(t, "2026-01-05T14:00:00Z"),
 		timedSlotDateTime(t, "2026-01-05T14:30:00Z"),
@@ -437,8 +447,8 @@ func TestCreateEventRejectsWeeklyActiveSlotsOutsideDerivedDomain(t *testing.T) {
 }
 
 func TestCreateEventAcceptsActiveSlotsInsideFullDayOutsideWindow(t *testing.T) {
-	initRoutesReadFiltersTestDB(t)
-	router := newEventsReadFiltersTestRouter()
+	store := anonymousEventContractStores()[0]
+	router := store.newRouter(t)
 
 	// The enabled domain is the full civil day, not the 09:00-10:00 window:
 	// an active at 00:30 New York time is inside the day but outside the
@@ -461,11 +471,9 @@ func TestCreateEventAcceptsActiveSlotsInsideFullDayOutsideWindow(t *testing.T) {
 	createResponse := decodeJSONBody[struct {
 		EventID string `json:"eventId"`
 	}](t, recorder)
-	t.Cleanup(func() {
-		_, _ = db.EventsCollection.DeleteOne(context.Background(), bson.M{"_id": utilsStringToObjectID(createResponse.EventID)})
-	})
+	t.Cleanup(func() { store.cleanupEvent(t, createResponse.EventID) })
 
-	storedEvent := loadEventByID(t, createResponse.EventID)
+	storedEvent, _ := loadPostgresEventModel(t, router, createResponse.EventID)
 	assertPrimitiveDateTimesEqual(t, storedEvent.ActiveSlots, []primitive.DateTime{
 		timedSlotDateTime(t, "2026-01-05T05:30:00Z"),
 		timedSlotDateTime(t, "2026-01-05T14:30:00Z"),
@@ -473,8 +481,8 @@ func TestCreateEventAcceptsActiveSlotsInsideFullDayOutsideWindow(t *testing.T) {
 }
 
 func TestCreateEventPreservesExplicitEmptyActiveSlots(t *testing.T) {
-	initRoutesReadFiltersTestDB(t)
-	router := newEventsReadFiltersTestRouter()
+	store := anonymousEventContractStores()[0]
+	router := store.newRouter(t)
 
 	payload := map[string]any{
 		"name":            "Specific times empty active subset",
@@ -494,20 +502,10 @@ func TestCreateEventPreservesExplicitEmptyActiveSlots(t *testing.T) {
 	createResponse := decodeJSONBody[struct {
 		EventID string `json:"eventId"`
 	}](t, recorder)
-	t.Cleanup(func() {
-		_, _ = db.EventsCollection.DeleteOne(context.Background(), bson.M{"_id": utilsStringToObjectID(createResponse.EventID)})
-	})
+	t.Cleanup(func() { store.cleanupEvent(t, createResponse.EventID) })
 
-	storedEvent := loadEventByID(t, createResponse.EventID)
+	storedEvent, _ := loadPostgresEventModel(t, router, createResponse.EventID)
 	assertPrimitiveDateTimesEqual(t, storedEvent.ActiveSlots, []primitive.DateTime{})
-
-	getRecorder := timedEventRequest(t, router, http.MethodGet, "/api/events/"+createResponse.EventID, nil)
-	if getRecorder.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d: %s", getRecorder.Code, getRecorder.Body.String())
-	}
-
-	responseEvent := decodeJSONBody[models.Event](t, getRecorder)
-	assertPrimitiveDateTimesEqual(t, responseEvent.ActiveSlots, []primitive.DateTime{})
 }
 
 func TestCreateEventRejectsLegacyTimedFields(t *testing.T) {

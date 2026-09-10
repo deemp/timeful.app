@@ -58,26 +58,22 @@ jobs:
               --project=chromium-production-mobile
             workers: "2"
             frontend: ""
-            postgres-anonymous: "false"
             save-cache: true
-          # PostgreSQL anonymous event creation is a stack-level setting read at
-          # global setup, so this suite stays its own job and never shares an
-          # invocation with the Mongo-backed suites. Bundled mode keeps the
-          # heavier access-transfer journeys within budget at two workers.
+          # All browser suites create events in PostgreSQL by default now, so
+          # each suite is its own job on its own isolated stack. Bundled mode
+          # keeps the heavier access-transfer journeys within budget at two
+          # workers.
           - suite: firefox-desktop
             projects: --project=firefox-desktop
             workers: "2"
             frontend: bundled
-            postgres-anonymous: "true"
             save-cache: false
           # The touch suite matches a single serial spec file that cannot
-          # parallelize further, and it keeps Mongo-backed creation because its
-          # spec seeds guest responses through the standalone request fixture.
+          # parallelize further.
           - suite: firefox-touch
             projects: --project=firefox-touch
             workers: "1"
             frontend: ""
-            postgres-anonymous: "false"
             save-cache: false
 
     steps:
@@ -253,13 +249,11 @@ jobs:
       # under E2E_ARTIFACTS_DIR (see e2e/config/tooling.ts); the upload step
       # below collects them after failures. `--workers` overrides the CI
       # default of one worker per project. `E2E_FRONTEND=bundled` makes the
-      # webServer build and preview a test-mode frontend, and the PostgreSQL
-      # creation flag only takes effect in the firefox-desktop entry.
+      # webServer build and preview a test-mode frontend.
       - name: Run ${{ matrix.suite }} browser E2E suite
         env:
           E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
           E2E_FRONTEND: ${{ matrix.frontend }}
-          E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: ${{ matrix['postgres-anonymous'] }}
         run: nix run .#e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }}
 
       # Parallel jobs upload under distinct names so the artifacts do not

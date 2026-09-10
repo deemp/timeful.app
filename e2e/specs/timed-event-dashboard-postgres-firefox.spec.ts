@@ -6,11 +6,6 @@ import {
   waitForEventShell,
 } from "../helpers/timed-event-helpers"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
-
 // A signed-in PostgreSQL poll must appear on the dashboard, open through its
 // canonical bare short identifier, and survive a dashboard reload.
 test("signed-in PostgreSQL event loads on the dashboard and persists across reload", async ({

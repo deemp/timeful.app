@@ -324,10 +324,6 @@ func newAccountEventContractRouter(t *testing.T) *gin.Engine {
 	}
 	anonymousEventPostgresOnce.Do(func() { pgstore.Init() })
 	t.Setenv("LISTMONK_ENABLED", "false")
-	// This router leaves the transition creation flag disabled, so signed-in
-	// creation takes the MongoDB path, which increments the account usage
-	// counter; anonymous PostgreSQL creation does not.
-	t.Setenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED", "false")
 
 	router := gin.New()
 	store := cookie.NewStore([]byte(os.Getenv("SESSION_SECRET")))

@@ -418,11 +418,11 @@ test("Responses panel list scrolls under a static Responses heading", async ({
       {
         data: {
           guest: true,
+          createResponse: true,
           name,
           email: "",
           availability: [slot],
           ifNeeded: [],
-          guestEditPolicy: "open",
         },
       },
     )

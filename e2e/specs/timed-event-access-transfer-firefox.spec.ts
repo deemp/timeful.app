@@ -4,10 +4,6 @@ import { fileURLToPath } from "node:url"
 import { expect, type APIRequestContext } from "@playwright/test"
 import { test } from "../helpers/actor-context"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
 const payload = {
   name: "Transfer browser coverage",
   type: "specific_dates",

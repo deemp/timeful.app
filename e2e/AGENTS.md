@@ -59,7 +59,7 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Run `npm run test:e2e -- --project=chromium-production-desktop --project=chromium-production-mobile` for production-asset verification.
   Do not use `--no-deps`: the dependency builds fresh assets before the checks.
 - Run `npm run test:e2e` for all projects, including the production build and checks.
-  To verify PostgreSQL creation as well, run `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop`.
+  Supported events are created in PostgreSQL by default; no creation flag is required.
 - Keep parallelism inside a single Playwright invocation; concurrent invocations conflict over the fixed test-stack project and ports.
   The stack prints setup and teardown durations so infrastructure overhead can be distinguished from test execution.
 - The Firefox desktop plus touch benchmark passed at one and two workers, reducing wall time from 337s to 239s at two workers; four workers caused timeouts and was rejected.
@@ -67,4 +67,4 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Set `E2E_FRONTEND=bundled` to make the webServer build a fresh test-mode frontend and serve it from a Playwright-owned preview on the isolated host, port, and proxy, with assets under the invocation artifact directory.
   Bundled mode is opt-in and does not replace the production-asset projects; the dev server remains the default.
   On the benchmark machine, all eight access-transfer tests pass at the default two workers with `E2E_FRONTEND=bundled E2E_VIDEO=on`, and the first four pass repeatedly.
-- Use `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop --workers=1 specs/timed-event-access-transfer-firefox.spec.ts` as the sequential fallback when bundled mode is unavailable.
+- Use `npm run test:e2e -- --project=firefox-desktop --workers=1 specs/timed-event-access-transfer-firefox.spec.ts` as the sequential fallback when bundled mode is unavailable.

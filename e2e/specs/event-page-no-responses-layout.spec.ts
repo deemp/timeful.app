@@ -11,7 +11,6 @@ test.describe.configure({ mode: "serial" })
 
 test("event page without responses pairs each header row with one action column", async ({
   page,
-  request,
 }, testInfo) => {
   test.skip(
     testInfo.project.name === "chromium-mobile",
@@ -22,7 +21,7 @@ test("event page without responses pairs each header row with one action column"
   const today = now.toZonedDateTimeISO("UTC").toPlainDate().toString()
 
   const seed = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: `Layout test ${String(now.epochMilliseconds)}`,
       selectedDays: [today],
@@ -62,10 +61,12 @@ test("event page without responses pairs each header row with one action column"
       "#event-header > .event-header-row:first-child > .tw\\:min-w-0.tw\\:flex-1 > div:first-child",
     )
     const editEventButton = page.locator("#edit-event-btn")
+    const ownerActionRow = page.locator("#event-header-button-row")
     const [
       titleBox,
       addAvailabilityBox,
       editEventBox,
+      ownerActionRowBox,
       collapseDisabledTimesBox,
       scheduleEventBox,
       timeFormatToggleBox,
@@ -77,6 +78,7 @@ test("event page without responses pairs each header row with one action column"
       title.boundingBox(),
       addAvailabilityBtn.boundingBox(),
       editEventButton.boundingBox(),
+      ownerActionRow.boundingBox(),
       collapseDisabledTimesToggle.boundingBox(),
       scheduleEventButton.boundingBox(),
       timeFormatToggle.boundingBox(),
@@ -89,6 +91,7 @@ test("event page without responses pairs each header row with one action column"
       titleBox === null ||
       addAvailabilityBox === null ||
       editEventBox === null ||
+      ownerActionRowBox === null ||
       collapseDisabledTimesBox === null ||
       scheduleEventBox === null ||
       timeFormatToggleBox === null ||
@@ -101,9 +104,17 @@ test("event page without responses pairs each header row with one action column"
         "Expected each header-row detail and action to have boxes",
       )
     }
+    // A PostgreSQL [Event Owner](../../../docs/terminology/glossary.md#event-owner)
+    // additionally renders the access-transfer action, so the owner action
+    // cluster may wrap to a second line; the collapse toggle stays centered on
+    // the cluster rather than on any single button.
+    expect(editEventBox.y).toBeGreaterThanOrEqual(ownerActionRowBox.y)
+    expect(editEventBox.y + editEventBox.height).toBeLessThanOrEqual(
+      ownerActionRowBox.y + ownerActionRowBox.height,
+    )
     for (const [detailBox, actionBox] of [
       [titleBox, addAvailabilityBox],
-      [editEventBox, collapseDisabledTimesBox],
+      [ownerActionRowBox, collapseDisabledTimesBox],
     ]) {
       expect(
         Math.abs(

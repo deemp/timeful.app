@@ -9,11 +9,6 @@ import { test } from "../helpers/actor-context"
 import { signInNewAccount } from "../helpers/account-auth"
 import { postgresScalar } from "../helpers/postgres-inspect"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
-
 interface FolderResponse {
   _id: string
   name: string

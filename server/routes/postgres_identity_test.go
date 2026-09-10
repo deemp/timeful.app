@@ -17,7 +17,7 @@ import (
 )
 
 func TestPostgresVisitorIdentityContract(t *testing.T) {
-	store := anonymousEventContractStores()[1]
+	store := anonymousEventContractStores()[0]
 	router := store.newRouter(t).(*gin.Engine)
 	InitAuth(router.Group("/api"))
 	router.POST("/test/sign-in/:id", func(c *gin.Context) {

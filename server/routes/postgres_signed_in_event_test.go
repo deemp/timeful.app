@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -15,13 +14,12 @@ import (
 	pgstore "timeful/server/postgres"
 )
 
-// signedInPostgresEventRouter enables PostgreSQL creation for a signed-in
-// account while reusing the account-contract sign-in and cleanup helpers.
+// signedInPostgresEventRouter exposes the account-contract sign-in and cleanup
+// helpers with the event routes, which always create supported kinds in
+// PostgreSQL.
 func signedInPostgresEventRouter(t *testing.T) *gin.Engine {
 	t.Helper()
-	router := newAccountEventContractRouter(t)
-	t.Setenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED", "true")
-	return router
+	return newAccountEventContractRouter(t)
 }
 
 func createSignedInAccount(t *testing.T, router *gin.Engine) (*accountContractClient, *pgstore.Account) {
@@ -190,48 +188,3 @@ func TestSignedInPostgresResponseAssociation(t *testing.T) {
 	}
 }
 
-// TestSignedInCreationFallsBackToMongoWhenPostgresDisabled proves that the
-// transition flag still preserves the legacy MongoDB creation path, including
-// the account usage counter, when it is disabled.
-func TestSignedInCreationFallsBackToMongoWhenPostgresDisabled(t *testing.T) {
-	router := newAccountEventContractRouter(t)
-	client, account := createSignedInAccount(t, router)
-	ctx := context.Background()
-	objectID := accountObjectID(t, account.ExternalUserID)
-
-	created := client.request(http.MethodPost, "/api/events", canonicalTimedEventPayload("MongoDB fallback event"), http.StatusCreated)
-	eventID := decodeAccountString(t, created, "eventId")
-	if source, _ := eventsource.Parse(eventID); source != eventsource.MongoDB {
-		t.Fatalf("expected a MongoDB event identifier, got %q", eventID)
-	}
-	storageID := strings.TrimPrefix(eventID, eventsource.MongoDBIDPrefix)
-	objectIDFromEvent, err := primitive.ObjectIDFromHex(storageID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		_, _ = db.EventsCollection.DeleteMany(context.Background(), bson.M{"ownerId": objectID})
-	})
-	var mongoEvents int64
-	mongoEvents, err = db.EventsCollection.CountDocuments(ctx, bson.M{"_id": objectIDFromEvent})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if mongoEvents != 1 {
-		t.Fatalf("expected one MongoDB event document, got %d", mongoEvents)
-	}
-	var postgresEvents int
-	if err := pgstore.Pool.QueryRow(ctx, `SELECT count(*) FROM postgres_events WHERE owner_external_id = $1`, account.ExternalUserID).Scan(&postgresEvents); err != nil {
-		t.Fatal(err)
-	}
-	if postgresEvents != 0 {
-		t.Fatalf("flag-disabled creation wrote %d PostgreSQL events", postgresEvents)
-	}
-	reloaded, err := repositoryForTest(t).GetAccountByExternalUserID(ctx, account.ExternalUserID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if reloaded.NumEventsCreated != account.NumEventsCreated+1 {
-		t.Fatalf("usage counter = %d, want %d", reloaded.NumEventsCreated, account.NumEventsCreated+1)
-	}
-}

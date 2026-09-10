@@ -1,10 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL anonymous event creation",
-)
-
 interface EventIDs {
   shortId: string
   longId: string

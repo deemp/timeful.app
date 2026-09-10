@@ -2,9 +2,9 @@
 
 ## Scope
 
-These tables own only new anonymous timed and dates-only polls.
-MongoDB remains authoritative for legacy events, authenticated creation, groups, signup forms, folders, account adoption, and dashboard event loading. `postgres_events` and `postgres_event_responses` are not HTTP DTOs and must not use BSON types.
-The MongoDB-authoritative list above describes the repository before the [PostgreSQL Core Migration Contracts](postgres-core-migration-contracts.md) cut each record kind over; after a kind is cut over, PostgreSQL owns it and this contract continues to govern only its observable API behavior.
+These tables own new supported events for anonymous and signed-in creation: [Timed Event](../../docs/terminology/glossary.md#timed-event), [Dates-Only Event](../../docs/terminology/glossary.md#dates-only-event), day-of-week, availability group, and signup form kinds.
+MongoDB remains the read/write store only for legacy records and for retained integration data such as calendar connections, provider tokens, OTP challenges, friend requests, and historical daily user logs. `postgres_events` and `postgres_event_responses` are not HTTP DTOs and must not use BSON types.
+The compatibility rules below continue to govern the observable API behavior of PostgreSQL-owned records.
 
 `postgres_events.id` and `postgres_event_responses.id` are internal UUIDv7 identities.
 API handlers expose only `short_id`, an eight-character Crockford Base32 identifier.
@@ -92,7 +92,6 @@ Repository fixtures and source-confirmed transfer regressions verify this author
 The migration preserves ownership already associated through the creator's [Event Visitor Identity](../../docs/terminology/glossary.md#event-visitor-identity).
 Older anonymous events have no recoverable [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token); without an existing ownership association, their settings, archive state, and deletion cannot be managed after this migration.
 Existing base credentials are deliberately not promoted to owner authority.
-PostgreSQL dashboard loading remains outside this foundation.
 
 ## Transactions
 

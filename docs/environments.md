@@ -138,7 +138,6 @@ Backend runtime variables:
 - `POSTGRES_BACKUP_PASSWORD`
 - `POSTGRES_MIGRATOR_URI`
 - `POSTGRES_APPLICATION_URI`
-- `POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED`
 - `POSTGRES_CONNECT_TIMEOUT_SECONDS`
 - `POSTGRES_MAX_CONNS`
 - `TEST_DB_PERSIST` (test only)
@@ -384,15 +383,14 @@ Compose `wait` only lists running containers, so the one-shot migrate container 
 
 Browser E2E starts its own isolated `mongo-test`, `postgres-test`, and `server-test` services, waits for `http://E2E_API_HOST:E2E_API_PORT/api/health`, and launches a fresh Vite process at `http://E2E_VITE_HOST:E2E_VITE_PORT`. `server-test` listens on `E2E_API_INTERNAL_PORT`; Compose publishes it at `E2E_API_HOST:E2E_API_PORT`.
 It inherits the complete `.env.test` server environment contract.
-The E2E harness overrides only the generated PostgreSQL database name and the opt-in anonymous PostgreSQL creation flag; `.env.test` clears external integration secrets to prevent side effects:
+The E2E harness overrides only the generated PostgreSQL database name; `.env.test` clears external integration secrets to prevent side effects:
 
 ```sh
 cd e2e
 npm run test:e2e
 ```
 
-Browser E2E uses MongoDB creation by default.
-Set `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true` when running the PostgreSQL namespaced-event lifecycle spec.
+Browser E2E creates supported events in PostgreSQL by default; no creation flag is required.
 
 Local browser runs default to two workers, while CI defaults to one; `--workers=1`, `--workers=2`, and `--workers=4` override the shared worker budget, including Firefox.
 Keep concurrent tests within one Playwright invocation because separate invocations share the test-stack project and ports.

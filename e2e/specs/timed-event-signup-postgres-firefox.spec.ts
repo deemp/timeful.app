@@ -5,11 +5,6 @@ import { signInNewAccount } from "../helpers/account-auth"
 import { postgresScalar } from "../helpers/postgres-inspect"
 import { openEventPage } from "../helpers/timed-event-helpers"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
-
 const blockName = "Morning Slot"
 const joinSlotLink = "+ Join this slot"
 

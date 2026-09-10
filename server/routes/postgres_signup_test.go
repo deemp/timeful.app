@@ -24,7 +24,6 @@ func intPtr(value int) *int { return &value }
 // blocks and returns its public identifier, stored event, and stored blocks.
 func createSignupPostgresEvent(t *testing.T, client *accountContractClient, name string, blocks []map[string]any) (string, *pgstore.Event, []pgstore.SignupBlock) {
 	t.Helper()
-	t.Setenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED", "true")
 	payload := canonicalTimedEventPayload(name)
 	payload["isSignUpForm"] = true
 	payload["collectEmails"] = true

@@ -76,7 +76,6 @@ test("mobile editing with no responses shows Collapse disabled times in row 2 an
 
 test("mobile editing with responses keeps Show best times in row 2 and More options in row 3 and no Options button", async ({
   page,
-  request,
 }, testInfo) => {
   test.skip(
     testInfo.project.name !== "chromium-mobile",
@@ -87,7 +86,7 @@ test("mobile editing with responses keeps Show best times in row 2 and More opti
   const today = now.toZonedDateTimeISO("UTC").toPlainDate().toString()
 
   const seed = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: `Mobile responses edit ${String(now.epochMilliseconds)}`,
       selectedDays: [today],
@@ -99,64 +98,22 @@ test("mobile editing with responses keeps Show best times in row 2 and More opti
     }),
   )
 
-  const guestResponse = await request.post(
+  // The page-scoped request context retains the HttpOnly Event Visitor Control
+  // Credential, so this browser owns the response without legacy localStorage.
+  const guestResponse = await page.request.post(
     `/api/events/${seed.eventId}/response`,
     {
       data: {
         guest: true,
+        createResponse: true,
         name: "Mobile Editing Guest",
         email: "",
         availability: [`${today}T09:00:00.000Z`, `${today}T10:00:00.000Z`],
         ifNeeded: [],
-        guestEditPolicy: "open",
       },
     },
   )
   expect(guestResponse.ok()).toBeTruthy()
-  const guestBody = (await guestResponse.json()) as {
-    guestCredentials?: {
-      name?: string
-      guestId: string
-      guestEditToken: string
-      guestEditPolicy: string
-      guestOwnershipMode: string
-    }
-  }
-  const guestCredentials = guestBody.guestCredentials
-  if (guestCredentials == null || guestCredentials.guestId.length === 0) {
-    throw new Error("Expected the guest response to return credentials")
-  }
-
-  const seededEvent = await request.get(`/api/events/${seed.shortId}`)
-  expect(seededEvent.ok()).toBeTruthy()
-  const seededEventBody = (await seededEvent.json()) as { _id?: string }
-  const eventMongoId = seededEventBody._id
-  if (eventMongoId == null || eventMongoId.length === 0) {
-    throw new Error("Expected the seeded event to expose its Mongo id")
-  }
-
-  await page.addInitScript(
-    ({ eventId, guestCredentials }) => {
-      const record = {
-        name: guestCredentials.name ?? "Mobile Editing Guest",
-        guestId: guestCredentials.guestId,
-        guestEditToken: guestCredentials.guestEditToken,
-        guestEditPolicy: guestCredentials.guestEditPolicy,
-        guestOwnershipMode: guestCredentials.guestOwnershipMode,
-        lookupKey: guestCredentials.guestId,
-        lastUsedAt: Temporal.Now.instant().epochMilliseconds,
-      }
-      localStorage.setItem(
-        `${eventId}.guestOwnershipCollection`,
-        JSON.stringify({
-          version: 1,
-          selectedLookupKey: record.guestId,
-          records: [record],
-        }),
-      )
-    },
-    { eventId: eventMongoId, guestCredentials },
-  )
 
   await openEventPage(page, seed.shortId)
 

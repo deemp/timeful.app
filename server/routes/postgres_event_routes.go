@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -940,10 +939,12 @@ func postgresEventRouteUnavailable(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, responses.Error{Error: errs.PostgreSQLEventUnsupported})
 }
 
-func postgresCreationEnabled(c *gin.Context) bool {
-	if !strings.EqualFold(os.Getenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED"), "true") {
-		return false
-	}
+// postgresSupportsEventCreation reports whether the request body names an event
+// kind that the PostgreSQL store serves. Supported kinds are always created in
+// PostgreSQL; legacy or noncanonical shapes continue through the MongoDB path
+// rather than becoming a new rejection, and a PostgreSQL failure never falls
+// back to MongoDB.
+func postgresSupportsEventCreation(c *gin.Context) bool {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		return false

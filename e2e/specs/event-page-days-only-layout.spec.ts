@@ -12,7 +12,6 @@ test.describe.configure({ mode: "serial" })
 
 test("dates-only event Edit event opens the dates-only editor", async ({
   page,
-  request,
 }) => {
   const now = Temporal.Now.instant()
   const today = now.toZonedDateTimeISO("UTC").toPlainDate().toString()
@@ -22,7 +21,7 @@ test("dates-only event Edit event opens the dates-only editor", async ({
     .add({ days: 1 })
     .toString()
 
-  const seed = await seedCanonicalTimedEvent(request, {
+  const seed = await seedCanonicalTimedEvent(page.request, {
     name: `Dates-only edit dialog ${String(now.epochMilliseconds)}`,
     type: "specific_dates",
     daysOnly: true,
@@ -133,7 +132,6 @@ test("days-only event page without responses shows an inline Start on Monday swi
 
 test("days-only event editing with responses shows Start on Monday to the right of Overlay availability", async ({
   page,
-  request,
 }, testInfo) => {
   test.skip(
     testInfo.project.name === "chromium-mobile",
@@ -148,7 +146,7 @@ test("days-only event editing with responses shows Start on Monday to the right 
     .add({ days: 1 })
     .toString()
 
-  const seed = await seedCanonicalTimedEvent(request, {
+  const seed = await seedCanonicalTimedEvent(page.request, {
     name: `Days-only overlay editing ${String(now.epochMilliseconds)}`,
     type: "specific_dates",
     daysOnly: true,
@@ -167,66 +165,23 @@ test("days-only event editing with responses shows Start on Monday to the right 
     },
   })
 
-  const guestResponse = await request.post(
+  // Creating the response with the page-scoped request context keeps the
+  // HttpOnly Event Visitor Control Credential that proves this browser owns it,
+  // so the page offers Edit availability without legacy localStorage.
+  const guestResponse = await page.request.post(
     `/api/events/${seed.eventId}/response`,
     {
       data: {
         guest: true,
+        createResponse: true,
         name: "Days-only Guest",
         email: "",
         availability: [`${today}T00:00:00.000Z`, `${tomorrow}T00:00:00.000Z`],
         ifNeeded: [],
-        guestEditPolicy: "open",
       },
     },
   )
   expect(guestResponse.ok()).toBeTruthy()
-  const guestBody = (await guestResponse.json()) as {
-    guestCredentials?: {
-      name?: string
-      guestId: string
-      guestEditToken: string
-      guestEditPolicy: string
-      guestOwnershipMode: string
-    }
-  }
-  const guestCredentials = guestBody.guestCredentials
-  if (guestCredentials == null || guestCredentials.guestId.length === 0) {
-    throw new Error("Expected the guest response to return credentials")
-  }
-
-  const seededEvent = await request.get(`/api/events/${seed.shortId}`)
-  expect(seededEvent.ok()).toBeTruthy()
-  const seededEventBody = (await seededEvent.json()) as {
-    _id?: string
-  }
-  const eventMongoId = seededEventBody._id
-  if (eventMongoId == null || eventMongoId.length === 0) {
-    throw new Error("Expected the seeded event to expose its Mongo id")
-  }
-
-  await page.addInitScript(
-    ({ eventId, guestCredentials }) => {
-      const record = {
-        name: guestCredentials.name ?? "Days-only Guest",
-        guestId: guestCredentials.guestId,
-        guestEditToken: guestCredentials.guestEditToken,
-        guestEditPolicy: guestCredentials.guestEditPolicy,
-        guestOwnershipMode: guestCredentials.guestOwnershipMode,
-        lookupKey: guestCredentials.guestId,
-        lastUsedAt: Temporal.Now.instant().epochMilliseconds,
-      }
-      localStorage.setItem(
-        `${eventId}.guestOwnershipCollection`,
-        JSON.stringify({
-          version: 1,
-          selectedLookupKey: record.guestId,
-          records: [record],
-        }),
-      )
-    },
-    { eventId: eventMongoId, guestCredentials },
-  )
 
   await openEventPage(page, seed.shortId)
   await waitForScheduleOverlapMounted(page)

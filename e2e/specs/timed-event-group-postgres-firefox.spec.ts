@@ -9,11 +9,6 @@ import {
   waitForEventShell,
 } from "../helpers/timed-event-helpers"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
-
 function uniqueName(label: string): string {
   return `${label} ${String(Temporal.Now.instant().epochMilliseconds)}`
 }

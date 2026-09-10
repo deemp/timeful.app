@@ -10,7 +10,6 @@ test.describe.configure({ mode: "serial" })
 
 test("mobile timed toolbar groups row 1 left and stacks the action rows", async ({
   page,
-  request,
 }, testInfo) => {
   test.skip(
     testInfo.project.name !== "chromium-mobile",
@@ -26,7 +25,7 @@ test("mobile timed toolbar groups row 1 left and stacks the action rows", async 
   )
 
   const seed = await seedCanonicalTimedEvent(
-    request,
+    page.request,
     buildSpecificDateSeed({
       name: `Mobile toolbar layout ${String(now.epochMilliseconds)}`,
       selectedDays: pickedDays,
@@ -38,64 +37,22 @@ test("mobile timed toolbar groups row 1 left and stacks the action rows", async 
     }),
   )
 
-  const guestResponse = await request.post(
+  // The page-scoped request context retains the HttpOnly Event Visitor Control
+  // Credential, so this browser owns the response without legacy localStorage.
+  const guestResponse = await page.request.post(
     `/api/events/${seed.eventId}/response`,
     {
       data: {
         guest: true,
+        createResponse: true,
         name: "Mobile Toolbar Guest",
         email: "",
         availability: [`${today}T09:00:00.000Z`, `${today}T10:00:00.000Z`],
         ifNeeded: [],
-        guestEditPolicy: "open",
       },
     },
   )
   expect(guestResponse.ok()).toBeTruthy()
-  const guestBody = (await guestResponse.json()) as {
-    guestCredentials?: {
-      name?: string
-      guestId: string
-      guestEditToken: string
-      guestEditPolicy: string
-      guestOwnershipMode: string
-    }
-  }
-  const guestCredentials = guestBody.guestCredentials
-  if (guestCredentials == null || guestCredentials.guestId.length === 0) {
-    throw new Error("Expected the guest response to return credentials")
-  }
-
-  const seededEvent = await request.get(`/api/events/${seed.shortId}`)
-  expect(seededEvent.ok()).toBeTruthy()
-  const seededEventBody = (await seededEvent.json()) as { _id?: string }
-  const eventMongoId = seededEventBody._id
-  if (eventMongoId == null || eventMongoId.length === 0) {
-    throw new Error("Expected the seeded event to expose its Mongo id")
-  }
-
-  await page.addInitScript(
-    ({ eventId, guestCredentials }) => {
-      const record = {
-        name: guestCredentials.name ?? "Mobile Toolbar Guest",
-        guestId: guestCredentials.guestId,
-        guestEditToken: guestCredentials.guestEditToken,
-        guestEditPolicy: guestCredentials.guestEditPolicy,
-        guestOwnershipMode: guestCredentials.guestOwnershipMode,
-        lookupKey: guestCredentials.guestId,
-        lastUsedAt: Temporal.Now.instant().epochMilliseconds,
-      }
-      localStorage.setItem(
-        `${eventId}.guestOwnershipCollection`,
-        JSON.stringify({
-          version: 1,
-          selectedLookupKey: record.guestId,
-          records: [record],
-        }),
-      )
-    },
-    { eventId: eventMongoId, guestCredentials },
-  )
 
   await openEventPage(page, seed.shortId)
 
@@ -294,27 +251,37 @@ test("mobile timezone control keeps its fixed width when the reset button appear
 
   const options = page.locator('[data-testid="timezone-select-option"]:visible')
   await expect.poll(async () => options.count()).toBeGreaterThan(0)
+  const activeOption = page
+    .locator(
+      '[data-testid="timezone-select-option"].timezone-select__item--active:visible',
+    )
+    .first()
+  // Wait for the active-option class binding before choosing a neighbor; a
+  // stale read can otherwise pick the already-selected option and the
+  // selection never changes.
+  await expect(activeOption).toHaveCount(1)
+  const activeValue = await activeOption.getAttribute("data-timezone-value")
   const optionCount = await options.count()
   let chosenOption: Locator | null = null
   for (let index = 0; index < optionCount; index += 1) {
     const option = options.nth(index)
-    const classNames = (await option.getAttribute("class")) ?? ""
-    if (!classNames.includes("timezone-select__item--active")) {
-      chosenOption = option
+    if ((await option.getAttribute("data-timezone-value")) === activeValue) {
+      const neighborIndex = index + 1 < optionCount ? index + 1 : index - 1
+      chosenOption = options.nth(neighborIndex)
       break
     }
   }
   if (chosenOption === null) {
     throw new Error("Expected a non-selected timezone option")
   }
-  // The timezone menu animates its items in on open; clicking before the
-  // geometry settles lands on overlapping items and the selection is lost.
+  // The timezone menu animates its items in on open; wait for the neighbor's
+  // geometry and let Playwright's actionability checks reject a moving target.
   await expect
     .poll(async () => (await chosenOption.boundingBox())?.height ?? 0, {
       timeout: 10000,
     })
     .toBeGreaterThanOrEqual(44)
-  await chosenOption.click({ force: true })
+  await chosenOption.click()
 
   const resetButton = timezoneContainer.locator(
     ".timezone-select__reset-button--right",

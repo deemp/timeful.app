@@ -23,7 +23,7 @@ type failingTransferSession struct{ sessions.Session }
 func (s failingTransferSession) Save() error { return errors.New("injected session encoding failure") }
 
 func TestPostgresAccessTransfers(t *testing.T) {
-	store := anonymousEventContractStores()[1]
+	store := anonymousEventContractStores()[0]
 	router := store.newRouter(t).(*gin.Engine)
 	router.POST("/test/sign-in/:id", func(c *gin.Context) {
 		s := sessions.Default(c)

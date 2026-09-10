@@ -1,9 +1,5 @@
 import { expect, test } from "@playwright/test"
 
-test.skip(
-  process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
-  "requires PostgreSQL creation",
-)
 const payload = {
   name: "Owner authority",
   type: "specific_dates",
