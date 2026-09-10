@@ -230,6 +230,8 @@ For guidance on authoring functional requirements, read [`functional/README.md`]
 | [FR-118](functional/fr/FR-118.md) | Restrict event-editor date selection to the [Event Timezone](../terminology/glossary.md#event-timezone) current date and later                                                                                                      | frontend          |
 | [FR-119](functional/fr/FR-119.md) | Limit event names to 100 characters                                                                                                                                                                                                 | frontend, backend |
 | [FR-120](functional/fr/FR-120.md) | Separate non-consecutive [Projected Date Columns](../terminology/glossary.md#projected-date-column) with a [Sub-grid Gap](../terminology/glossary.md#sub-grid-gap)                                                                  | frontend          |
+| [FR-121](functional/fr/FR-121.md) | Serve migrated core records from a single authoritative store                                                                                                                                                                       | backend           |
+| [FR-122](functional/fr/FR-122.md) | Resolve retained MongoDB records to the authoritative account                                                                                                                                                                       | backend           |
 
 ## Quality Requirements
 
@@ -248,5 +250,6 @@ Read [`quality/README.md`](quality/README.md) before creating or changing a qual
 | [QR-009](quality/qr/QR-009.md) | Reject unsafe deployment configuration                                                | infrastructure          |
 | [QR-010](quality/qr/QR-010.md) | Diagnose failed requests without exposing data                                        | backend, infrastructure |
 | [QR-011](quality/qr/QR-011.md) | Authenticate [Access Transfers](../terminology/glossary.md#access-transfer)           | frontend, backend       |
+| [QR-012](quality/qr/QR-012.md) | Preserve authorization when migrating core records                                    | backend, infrastructure |
 
 When a requirement is migrated, add its row to the matching table with a stable relative link, for example `[FR-001](functional/fr/FR-001.md)`.

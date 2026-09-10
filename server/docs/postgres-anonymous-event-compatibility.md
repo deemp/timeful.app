@@ -4,6 +4,7 @@
 
 These tables own only new anonymous timed and dates-only polls.
 MongoDB remains authoritative for legacy events, authenticated creation, groups, signup forms, folders, account adoption, and dashboard event loading. `postgres_events` and `postgres_event_responses` are not HTTP DTOs and must not use BSON types.
+The MongoDB-authoritative list above describes the repository before the [PostgreSQL Core Migration Contracts](postgres-core-migration-contracts.md) cut each record kind over; after a kind is cut over, PostgreSQL owns it and this contract continues to govern only its observable API behavior.
 
 `postgres_events.id` and `postgres_event_responses.id` are internal UUIDv7 identities.
 API handlers expose only `short_id`, an eight-character Crockford Base32 identifier.

@@ -4,6 +4,7 @@ title: Move core event and account data from MongoDB to PostgreSQL
 status: To Do
 assignee: []
 created_date: '2026-09-09 21:45'
+updated_date: '2026-09-10 09:46'
 labels:
   - postgresql
   - migration
@@ -28,7 +29,7 @@ Make PostgreSQL authoritative for existing and new accounts, identities, events,
 Include signed-in polls, signup forms, availability groups, folders, and historical data migration.
 Temporarily retain calendar connections, provider tokens and calendar preferences, OTP challenges, friend requests, and historical daily user logs in MongoDB.
 Retained integration documents must not remain a second account authority.
-Preserve existing event links, account references, and access rights through explicit legacy-ID mappings.
+Preserve account identity, ownership, and access rights through the legacy account mapping; public event links may change at cutover, and migrated relationships are rewritten during migration instead of using a permanent legacy-ID map.
 Use one authoritative store per migrated record and avoid permanent dual writes.
 Implementation and isolated rehearsal are in scope; live deployments and production data migration are separately scheduled operational actions.
 Preserve historical handoffs and completed task records.
@@ -37,7 +38,7 @@ Preserve historical handoffs and completed task records.
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Linked subtasks deliver independently verified account, event-type, organization, migration, default-routing, and cutover-readiness stages.
-- [ ] #2 Existing and new core records can be served authoritatively from PostgreSQL with old links and identity references preserved.
+- [ ] #2 Existing and new core records can be served authoritatively from PostgreSQL with identity and relationship references preserved; public event URLs may change at cutover.
 - [ ] #3 Retained MongoDB integrations continue to work through explicit identity mappings without acting as a second source of account truth.
 - [ ] #4 Both anonymous-creation flags are removed after migration rehearsal and browser fixture readiness.
 - [ ] #5 A tested migration and backup/restore runbook records reconciliation evidence, handling of ambiguous records, and rollback boundaries.
@@ -50,3 +51,12 @@ Preserve historical handoffs and completed task records.
 - [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
 - [ ] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+created: 2026-09-10 09:46
+---
+TASK-0190.01 narrowed AC#2: per the user's decision, pre-existing public event URLs need not keep resolving after cutover. Identity and relationship references (accounts, ownership, folder membership, retained MongoDB references) remain authoritative, and migrated relationships are rewritten during migration rather than preserved as public URLs.
+---
+<!-- COMMENTS:END -->
