@@ -173,7 +173,10 @@ export function createPlaywrightConfig(
     const network = loadIsolatedE2ENetwork()
     return {
       baseURL: getIsolatedE2EViteBaseURL(network),
-      webServerCommand: "npm run dev:test",
+      webServerCommand:
+        process.env.E2E_FRONTEND === "bundled"
+          ? "../e2e/node_modules/.bin/tsx ../e2e/config/bundled-frontend.ts"
+          : "npm run dev:test",
       webServerPort: network.vitePort,
     }
   }

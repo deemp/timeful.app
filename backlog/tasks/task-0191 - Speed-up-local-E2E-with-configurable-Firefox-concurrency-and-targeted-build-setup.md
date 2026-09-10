@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - OpenCode
 created_date: '2026-09-10 05:42'
-updated_date: '2026-09-10 06:19'
+updated_date: '2026-09-10 07:06'
 labels:
   - e2e
   - developer-experience
@@ -227,4 +227,16 @@ E2E lint, fmt:check, typecheck, root format:markdown, and git diff --check passe
 Ran graphify update . successfully; it reported four JSON source files producing zero nodes and refreshed community labels heuristically.
 No frontend runtime code changed in this follow-up; pending broad Chromium/production verification and earlier task checks remain pending.
 TASK-0191 remains In Progress because the parallel PostgreSQL approval workload still exceeds its budget and broader verification is incomplete.
+
+### Recorded two-worker optimization follow-up — 2026-09-10 session stop
+User requested focused performance work as subtask TASK-0191.01 and later approved a separately linked frontend consent race fix as TASK-0192.
+TASK-0191.01 depends on TASK-0192; both remain In Progress with detailed implementation/resume notes and artifact paths.
+Current changes include semantic navigation readiness, concurrent recorded actor page startup, early stranger closure, fixture-owned teardown, async account seeding overlap, and opt-in E2E_FRONTEND=bundled for fresh test-mode assets served by Playwright-owned isolated Vite preview.
+Default dev-server mode remains unchanged; two-worker passing evidence currently applies to the opt-in bundled mode only.
+The consent watcher previously dropped a required response after same-account navigation despite confirmationRequired:true; a sign-in-generation fix and nine focused unit tests are present, including an observed failing-before/passing-after regression.
+Latest first-four PostgreSQL Firefox desktop run with two workers and all videos: 4 passed in 1.1m; guest 28.3s, owner 28.2s, signed-in 18.5s, approved guest reload 13.0s.
+Artifacts: /tmp/opencode/timeful-e2e-artifacts/task-0191-01-consent-fixed-four-1/.
+This is one successful run with limited headroom; repeated first-four/full-eight verification, successful video inspection, developer docs, package/full frontend checks, Markdown formatting, and graph update remain pending.
+User explicitly stopped work to continue next session; no further test run started after that success and no commit was created.
+Resume from TASK-0191.01 and TASK-0192 before the parent's broader pending verification.
 <!-- SECTION:NOTES:END -->
