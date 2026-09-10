@@ -223,7 +223,9 @@ func (r *Repository) deleteAccountAuthority(ctx context.Context, externalUserID,
 	visitorIDs := []string{}
 	rows, err := r.db.Query(ctx, `SELECT id FROM event_visitor_identities WHERE platform_identity_id = $1
 UNION
-SELECT event_visitor_identity_id FROM postgres_event_responses WHERE account_user_id = $2`, platformIdentityID, externalUserID)
+SELECT event_visitor_identity_id FROM postgres_event_responses WHERE account_user_id = $2
+UNION
+SELECT event_visitor_identity_id FROM event_signup_responses WHERE account_user_id = $2`, platformIdentityID, externalUserID)
 	if err != nil {
 		return err
 	}
@@ -262,6 +264,10 @@ WHERE owner_platform_identity_id = $1
 
 	if _, err := r.db.Exec(ctx, `DELETE FROM postgres_event_responses
 WHERE account_user_id = $1 OR event_visitor_identity_id = ANY($2)`, externalUserID, visitorIDs); err != nil {
+		return err
+	}
+	if _, err := r.db.Exec(ctx, `DELETE FROM event_signup_responses
+WHERE account_user_id = $1 OR event_visitor_identity_id::text = ANY($2)`, externalUserID, visitorIDs); err != nil {
 		return err
 	}
 	if _, err := r.db.Exec(ctx, `DELETE FROM event_visitor_identities WHERE id = ANY($1)`, visitorIDs); err != nil {

@@ -10,6 +10,7 @@ import (
 const (
 	EventTypeSpecificDates = "specific_dates"
 	EventTypeDayOfWeek     = "dow"
+	EventTypeSignup        = "signup"
 
 	RespondentKindAccount = "account"
 	RespondentKindGuest   = "guest"
