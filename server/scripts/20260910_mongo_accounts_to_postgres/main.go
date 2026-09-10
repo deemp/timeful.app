@@ -100,9 +100,13 @@ func migrateAccounts(ctx context.Context, database *mongo.Database, pool *pgxpoo
 	collection := database.Collection("users")
 	summary := migrationSummary{}
 
+	// hasCursor separates "no page read yet" from a legitimate zero ObjectID.
+	// Using lastID.IsZero() as the sentinel would make a zero-identifier source
+	// document re-read the same first page forever.
 	var lastID primitive.ObjectID
+	hasCursor := false
 	for {
-		cursor, err := collection.Find(ctx, pageFilter(lastID), options.Find().SetSort(bson.M{"_id": 1}).SetLimit(config.batchSize))
+		cursor, err := collection.Find(ctx, pageFilter(lastID, hasCursor), options.Find().SetSort(bson.M{"_id": 1}).SetLimit(config.batchSize))
 		if err != nil {
 			return summary, err
 		}
@@ -118,25 +122,13 @@ func migrateAccounts(ctx context.Context, database *mongo.Database, pool *pgxpoo
 
 		for _, user := range users {
 			summary.Scanned++
-			lastID = user.Id
-			if user.Id.IsZero() {
-				continue
-			}
-			externalUserID := user.Id.Hex()
-			if _, err := repository.GetAccountByExternalUserID(ctx, externalUserID); err == nil {
-				summary.Skipped++
-				continue
-			} else if !errors.Is(err, pgx.ErrNoRows) {
+			if err := migrateAccountUnit(ctx, repository, user, config.apply, &summary); err != nil {
 				return summary, err
 			}
-			if !config.apply {
-				summary.Migrated++
-				continue
-			}
-			if _, err := repository.FindOrCreateAccount(ctx, externalUserID, buildAccount(user)); err != nil {
-				return summary, fmt.Errorf("migrate account %s: %w", externalUserID, err)
-			}
-			summary.Migrated++
+			// Advance the source cursor only after the unit committed, so an
+			// interruption resumes from the first incomplete account.
+			lastID = user.Id
+			hasCursor = true
 		}
 		if int64(len(users)) < config.batchSize {
 			break
@@ -145,8 +137,30 @@ func migrateAccounts(ctx context.Context, database *mongo.Database, pool *pgxpoo
 	return summary, nil
 }
 
-func pageFilter(lastID primitive.ObjectID) bson.M {
-	if lastID.IsZero() {
+// migrateAccountUnit applies one account and its platform identity. It skips an
+// account that already exists, and in preflight mode it reports the work without
+// writing. A zero ObjectID is a legitimate source identifier and is migrated.
+func migrateAccountUnit(ctx context.Context, repository *pgstore.Repository, user models.User, apply bool, summary *migrationSummary) error {
+	externalUserID := user.Id.Hex()
+	if _, err := repository.GetAccountByExternalUserID(ctx, externalUserID); err == nil {
+		summary.Skipped++
+		return nil
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+	if !apply {
+		summary.Migrated++
+		return nil
+	}
+	if _, err := repository.FindOrCreateAccount(ctx, externalUserID, buildAccount(user)); err != nil {
+		return fmt.Errorf("migrate account %s: %w", externalUserID, err)
+	}
+	summary.Migrated++
+	return nil
+}
+
+func pageFilter(lastID primitive.ObjectID, hasCursor bool) bson.M {
+	if !hasCursor {
 		return bson.M{}
 	}
 	return bson.M{"_id": bson.M{"$gt": lastID}}

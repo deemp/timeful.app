@@ -74,20 +74,34 @@ func (r *Repository) GetAccountByEmail(ctx context.Context, email string) (*Acco
 
 // FindOrCreateAccount links the legacy external user ID to a platform identity
 // and inserts the account once. Re-running against an existing account returns
-// the stored row without creating a duplicate identity or account.
+// the stored row without creating a duplicate identity or account. The identity
+// and the account are written in one transaction, so a crash or cancellation
+// cannot leave a partially applied migration unit. A repository that is already
+// transaction-scoped (for example the sign-in path) reuses that transaction.
 func (r *Repository) FindOrCreateAccount(ctx context.Context, externalUserID string, initial Account) (*Account, error) {
-	platform, err := r.FindOrCreatePlatformIdentity(ctx, externalUserID)
-	if err != nil {
-		return nil, err
+	if externalUserID == "" {
+		return nil, errors.New("account external user ID is required")
 	}
-	if _, err := r.db.Exec(ctx, `INSERT INTO accounts
+	var account *Account
+	err := r.withTransaction(ctx, func(ctx context.Context, tx *Repository) error {
+		platform, err := tx.FindOrCreatePlatformIdentity(ctx, externalUserID)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.db.Exec(ctx, `INSERT INTO accounts
  (platform_identity_id, email, first_name, last_name, picture, has_custom_name, timezone_offset, num_events_created)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT (platform_identity_id) DO NOTHING`,
-		platform.ID, initial.Email, initial.FirstName, initial.LastName, initial.Picture, initial.HasCustomName, initial.TimezoneOffset, initial.NumEventsCreated); err != nil {
+			platform.ID, initial.Email, initial.FirstName, initial.LastName, initial.Picture, initial.HasCustomName, initial.TimezoneOffset, initial.NumEventsCreated); err != nil {
+			return err
+		}
+		account, err = tx.GetAccountByExternalUserID(ctx, externalUserID)
+		return err
+	})
+	if err != nil {
 		return nil, err
 	}
-	return r.GetAccountByExternalUserID(ctx, externalUserID)
+	return account, nil
 }
 
 // FindOrCreateAccountByEmail resolves the single account for a case-insensitive

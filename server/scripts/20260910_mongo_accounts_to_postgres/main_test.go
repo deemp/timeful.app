@@ -46,16 +46,30 @@ func TestBuildAccountPreservesAbsentCustomName(t *testing.T) {
 }
 
 func TestPageFilterPagination(t *testing.T) {
-	if len(pageFilter(primitive.NilObjectID)) != 0 {
+	if len(pageFilter(primitive.NilObjectID, false)) != 0 {
 		t.Fatal("the first page must not filter by _id")
 	}
 	lastID := primitive.NewObjectID()
-	filter := pageFilter(lastID)
+	filter := pageFilter(lastID, true)
 	value, ok := filter["_id"].(primitive.M)
 	if !ok {
 		t.Fatalf("unexpected filter %#v", filter)
 	}
 	if value["$gt"] != lastID {
 		t.Fatalf("filter = %#v, want _id > %s", filter, lastID.Hex())
+	}
+}
+
+// TestPageFilterTreatsZeroIdentifierAsCursor proves that a zero ObjectID is a
+// real cursor rather than the "no page read yet" sentinel. Otherwise a source
+// document with a zero identifier would re-read the first page forever.
+func TestPageFilterTreatsZeroIdentifierAsCursor(t *testing.T) {
+	filter := pageFilter(primitive.NilObjectID, true)
+	value, ok := filter["_id"].(primitive.M)
+	if !ok {
+		t.Fatalf("unexpected filter %#v", filter)
+	}
+	if value["$gt"] != primitive.NilObjectID {
+		t.Fatalf("filter = %#v, want _id > zero", filter)
 	}
 }

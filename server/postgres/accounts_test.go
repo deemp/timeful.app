@@ -206,6 +206,53 @@ func TestFindOrCreateAccountDoesNotUpdateExistingRow(t *testing.T) {
 	}
 }
 
+// TestFindOrCreateAccountRollsBackIdentityOnFailure proves that the platform
+// identity and the account are one unit: when the account insert violates a
+// constraint, the identity created for the same unit is rolled back instead of
+// leaking a half-applied account. Without the enclosing transaction the identity
+// would persist and the rerun would find it without an account.
+func TestFindOrCreateAccountRollsBackIdentityOnFailure(t *testing.T) {
+	uri := os.Getenv("POSTGRES_APPLICATION_URI")
+	if uri == "" {
+		t.Skip("POSTGRES_APPLICATION_URI is required")
+	}
+	ctx := context.Background()
+	config, err := pgxpool.ParseConfig(uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.ConnConfig.Database != "timeful-test" && !strings.HasPrefix(config.ConnConfig.Database, "timeful-test-") {
+		t.Fatal("requires an isolated test database")
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	repo := NewRepository(pool)
+
+	externalUserID := randomHex(t, 12)
+	t.Cleanup(func() {
+		if _, err := pool.Exec(context.Background(), `DELETE FROM accounts WHERE platform_identity_id IN (SELECT id FROM platform_identities WHERE external_user_id = $1)`, externalUserID); err != nil {
+			t.Errorf("delete failed-unit account: %v", err)
+		}
+		if _, err := pool.Exec(context.Background(), `DELETE FROM platform_identities WHERE external_user_id = $1`, externalUserID); err != nil {
+			t.Errorf("delete failed-unit identity: %v", err)
+		}
+	})
+
+	if _, err := repo.FindOrCreateAccount(ctx, externalUserID, Account{Email: "bad@example.com", NumEventsCreated: -1}); err == nil {
+		t.Fatal("expected a negative usage counter to fail the account insert")
+	}
+	var identities int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM platform_identities WHERE external_user_id = $1`, externalUserID).Scan(&identities); err != nil {
+		t.Fatal(err)
+	}
+	if identities != 0 {
+		t.Fatalf("failed unit leaked %d platform identity row(s)", identities)
+	}
+}
+
 // TestUpdateAccountProfilePreservesUsageCounter proves that a profile update
 // cannot change or reset the authoritative usage counter.
 func TestUpdateAccountProfilePreservesUsageCounter(t *testing.T) {
