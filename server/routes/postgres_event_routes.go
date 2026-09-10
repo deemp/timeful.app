@@ -509,9 +509,6 @@ func postgresCreationEnabled(c *gin.Context) bool {
 	if !strings.EqualFold(os.Getenv("POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED"), "true") {
 		return false
 	}
-	if _, signedIn := sessions.Default(c).Get("userId").(string); signedIn {
-		return false
-	}
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		return false
@@ -561,12 +558,35 @@ func postgresCreateEvent(c *gin.Context) {
 	if repository == nil {
 		return
 	}
+	// A signed-in creator owns the PostgreSQL event through the authoritative
+	// account, while anonymous creation relies on the issued owner token.
+	externalUserID, signedIn := sessions.Default(c).Get("userId").(string)
+	if !signedIn || externalUserID == "" {
+		signedIn = false
+		externalUserID = ""
+	}
 	stored := &pgstore.Event{Name: event.Name, Type: string(event.Type), ScheduleVersion: 1, CreatorPosthogID: event.CreatorPosthogId, Payload: encoded}
+	if signedIn {
+		stored.OwnerExternalID = &externalUserID
+	}
 	var visitor *pgstore.EventVisitorIdentity
 	var credential, ownerToken string
 	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		if err := tx.CreateEvent(ctx, stored); err != nil {
 			return err
+		}
+		if signedIn {
+			platform, err := tx.FindOrCreatePlatformIdentity(ctx, externalUserID)
+			if err != nil {
+				return err
+			}
+			if err := tx.AssociateEventOwner(ctx, stored.ID, platform.ID); err != nil {
+				return err
+			}
+			stored.OwnerPlatformIdentityID = &platform.ID
+			if err := tx.IncrementAccountEventsCreated(ctx, externalUserID); err != nil {
+				return err
+			}
 		}
 		var err error
 		visitor, err = tx.CreateEventVisitorIdentity(ctx, stored.ID)
