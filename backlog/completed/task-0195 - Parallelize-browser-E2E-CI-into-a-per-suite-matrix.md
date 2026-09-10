@@ -1,11 +1,11 @@
 ---
 id: TASK-0195
 title: Parallelize browser E2E CI into a per-suite matrix
-status: In Progress
+status: Done
 assignee:
   - opencode
 created_date: '2026-09-10 08:38'
-updated_date: '2026-09-10 08:41'
+updated_date: '2026-09-10 08:51'
 labels:
   - e2e
   - ci
@@ -49,24 +49,24 @@ Reference baseline: on run 34453841622 the Chromium suite took exactly 4 minutes
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 E2E CI runs the Chromium, Firefox desktop, and Firefox touch browser suites as independent jobs that execute in parallel instead of sequentially in a single job.
-- [ ] #2 The Chromium job runs the chromium-desktop, chromium-mobile, chromium-production-desktop, and chromium-production-mobile projects at two Playwright workers.
-- [ ] #3 The Firefox desktop job runs with PostgreSQL anonymous event creation enabled and the bundled test-mode frontend at two Playwright workers, or records why it falls back to one worker.
-- [ ] #4 The Firefox touch job retains the Mongo-backed event creation mode.
-- [ ] #5 Every browser job owns an isolated test stack and no job targets a development database or shares fixed ports with another job.
-- [ ] #6 The Nix, Go, and npm caches restore in every browser job, while exactly one designated job saves each cache.
-- [ ] #7 Each browser job uploads Playwright failure artifacts under a job-specific artifact name.
-- [ ] #8 E2E CI wall-clock time is materially below the sequential baseline, with before/after run durations recorded.
-- [ ] #9 actionlint passes on the modified workflow.
-- [ ] #10 docs/ci.md and e2e/AGENTS.md document the parallel suite structure, the CI worker counts, and the CI frontend mode.
+- [x] #1 E2E CI runs the Chromium, Firefox desktop, and Firefox touch browser suites as independent jobs that execute in parallel instead of sequentially in a single job.
+- [x] #2 The Chromium job runs the chromium-desktop, chromium-mobile, chromium-production-desktop, and chromium-production-mobile projects at two Playwright workers.
+- [x] #3 The Firefox desktop job runs with PostgreSQL anonymous event creation enabled and the bundled test-mode frontend at two Playwright workers, or records why it falls back to one worker.
+- [x] #4 The Firefox touch job retains the Mongo-backed event creation mode.
+- [x] #5 Every browser job owns an isolated test stack and no job targets a development database or shares fixed ports with another job.
+- [x] #6 The Nix, Go, and npm caches restore in every browser job, while exactly one designated job saves each cache.
+- [x] #7 Each browser job uploads Playwright failure artifacts under a job-specific artifact name.
+- [x] #8 E2E CI wall-clock time is materially below the sequential baseline, with before/after run durations recorded.
+- [x] #9 actionlint passes on the modified workflow.
+- [x] #10 docs/ci.md and e2e/AGENTS.md document the parallel suite structure, the CI worker counts, and the CI frontend mode.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
-- [ ] #4 Changed Markdown files are formatted with npm run format:markdown
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -95,3 +95,9 @@ Reference baseline: on run 34453841622 the Chromium suite took exactly 4 minutes
 - Concurrent same-key cache saves are avoided by the single designated writer; other jobs restore only.
 - Firefox desktop two-worker flakiness is the main risk; if access-transfer journeys time out, fall back to `workers: 1` for that entry and record why.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+CI verification on PR #37 branch speed-up-e2e. Parallel run 34456887263 (all three browser-e2e matrix jobs success): run 08:45:25Z to 08:51:06Z, total wall-clock 5m41s. Suite step durations: chromium 08:46:58Z-08:50:04Z (3m06s), firefox-desktop 08:47:01Z-08:50:55Z (3m54s), firefox-touch 08:47:00Z-08:49:10Z (2m10s). Job durations including ~1m31s setup/teardown: firefox-touch 3m52s, chromium 4m48s, firefox-desktop 5m38s. Firefox desktop stayed at two workers with bundled frontend and PostgreSQL anonymous creation, so no fallback to one worker was needed. Baseline sequential run 34453841622 was 08:11:35Z-08:23:46Z, total 12m11s in a single browser-e2e job. Wall-clock improved by about 6m30s (~53% reduction). actionlint passed through Markdown CI (markdown-quality), and frontend-quality passed lint, fmt:check, typecheck, test:unit, and build.
+<!-- SECTION:NOTES:END -->
