@@ -27,6 +27,11 @@ type Account struct {
 	UpdatedAt          time.Time
 }
 
+// ErrAccountDeleted reports that the external user identifier is permanently
+// tombstoned. A tombstoned identifier must never create or adopt an account, so
+// a backfill or concurrent creation cannot resurrect a deleted account.
+var ErrAccountDeleted = errors.New("account is deleted")
+
 const accountColumns = `a.id, a.platform_identity_id, p.external_user_id, a.email, a.first_name, a.last_name, a.picture, a.has_custom_name, a.timezone_offset, a.num_events_created, a.created_at, a.updated_at`
 
 func scanAccount(row interface{ Scan(...any) error }) (*Account, error) {
@@ -164,10 +169,107 @@ WHERE platform_identity_id = (SELECT id FROM platform_identities WHERE external_
 	return err
 }
 
-// DeleteAccountByExternalUserID removes only the PostgreSQL account authority.
-// The retained integration document and the platform identity are left intact.
+// AccountDeleted reports whether an external user identifier is tombstoned.
+func (r *Repository) AccountDeleted(ctx context.Context, externalUserID string) (bool, error) {
+	if externalUserID == "" {
+		return false, errors.New("account external user ID is required")
+	}
+	var deleted bool
+	if err := r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM account_deletion_tombstones WHERE external_user_id = $1)`, externalUserID).Scan(&deleted); err != nil {
+		return false, err
+	}
+	return deleted, nil
+}
+
+// DeleteAccountByExternalUserID permanently removes the account authority and
+// everything the deleted visitor owns, then records a tombstone so the identity
+// can never be recreated. It runs as one transaction under the same advisory
+// lock that creation paths use, so a concurrent account backfill either
+// completes before the deletion or is rejected afterwards by the tombstone.
+//
+// Events the account organized survive: their ownership pointers are released
+// while the events and every other guest's response stay intact. The account's
+// own responses, event visitor identities, credentials, and transfers are
+// removed. Repeating the call against an already-deleted account is a no-op.
 func (r *Repository) DeleteAccountByExternalUserID(ctx context.Context, externalUserID string) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM accounts
-WHERE platform_identity_id = (SELECT id FROM platform_identities WHERE external_user_id = $1)`, externalUserID)
+	if externalUserID == "" {
+		return errors.New("account external user ID is required")
+	}
+	return r.withTransaction(ctx, func(ctx context.Context, tx *Repository) error {
+		if _, err := tx.db.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, externalUserID); err != nil {
+			return err
+		}
+		var platformIdentityID string
+		err := tx.db.QueryRow(ctx, `SELECT id FROM platform_identities WHERE external_user_id = $1`, externalUserID).Scan(&platformIdentityID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		if err == nil {
+			if err := tx.deleteAccountAuthority(ctx, externalUserID, platformIdentityID); err != nil {
+				return err
+			}
+		}
+		_, err = tx.db.Exec(ctx, `INSERT INTO account_deletion_tombstones (external_user_id) VALUES ($1)
+ON CONFLICT (external_user_id) DO NOTHING`, externalUserID)
+		return err
+	})
+}
+
+// deleteAccountAuthority removes one platform identity's account and everything
+// it owns. Visitor identities tied to the account either directly through the
+// platform mapping or through a legacy response's account reference are removed
+// together with their credentials and transfers.
+func (r *Repository) deleteAccountAuthority(ctx context.Context, externalUserID, platformIdentityID string) error {
+	visitorIDs := []string{}
+	rows, err := r.db.Query(ctx, `SELECT id FROM event_visitor_identities WHERE platform_identity_id = $1
+UNION
+SELECT event_visitor_identity_id FROM postgres_event_responses WHERE account_user_id = $2`, platformIdentityID, externalUserID)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var visitorID string
+		if err := rows.Scan(&visitorID); err != nil {
+			rows.Close()
+			return err
+		}
+		visitorIDs = append(visitorIDs, visitorID)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	// Sever transfer references to the account or its visitor credentials
+	// before the credentials cascade away with their visitor identities.
+	if _, err := r.db.Exec(ctx, `DELETE FROM access_transfers
+WHERE external_user_id = $1
+   OR source_credential_id IN (SELECT id FROM event_visitor_credentials WHERE event_visitor_identity_id = ANY($2))
+   OR grant_id IN (SELECT id FROM event_visitor_credentials WHERE event_visitor_identity_id = ANY($2))`,
+		externalUserID, visitorIDs); err != nil {
+		return err
+	}
+
+	// Release event ownership while preserving the events themselves and every
+	// other guest's response.
+	if _, err := r.db.Exec(ctx, `UPDATE postgres_events
+SET owner_platform_identity_id = NULL, owner_external_id = NULL, owner_event_visitor_identity_id = NULL, updated_at = clock_timestamp()
+WHERE owner_platform_identity_id = $1
+   OR owner_external_id = $2
+   OR owner_event_visitor_identity_id = ANY($3)`, platformIdentityID, externalUserID, visitorIDs); err != nil {
+		return err
+	}
+
+	if _, err := r.db.Exec(ctx, `DELETE FROM postgres_event_responses
+WHERE account_user_id = $1 OR event_visitor_identity_id = ANY($2)`, externalUserID, visitorIDs); err != nil {
+		return err
+	}
+	if _, err := r.db.Exec(ctx, `DELETE FROM event_visitor_identities WHERE id = ANY($1)`, visitorIDs); err != nil {
+		return err
+	}
+	if _, err := r.db.Exec(ctx, `DELETE FROM accounts WHERE platform_identity_id = $1`, platformIdentityID); err != nil {
+		return err
+	}
+	_, err = r.db.Exec(ctx, `DELETE FROM platform_identities WHERE id = $1`, platformIdentityID)
 	return err
 }

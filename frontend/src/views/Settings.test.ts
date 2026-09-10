@@ -151,4 +151,36 @@ describe("Settings", () => {
       lastName: "Lovelace",
     })
   })
+
+  it("confirms deletion with the account email and describes the ratified outcome", async () => {
+    deleteMock.mockImplementation(() => new Promise(() => undefined))
+
+    const wrapper = mountSettings()
+    const deleteField = wrapper.findAllComponents(vTextFieldStub)[2]
+
+    const findDeleteButton = () =>
+      wrapper
+        .findAll("button")
+        .find((candidate) => candidate.text().trim() === "Delete")
+    const disabledInitially = findDeleteButton()
+    expect(disabledInitially?.attributes("disabled")).toBeDefined()
+
+    await deleteField.setValue("wrong@example.com")
+    expect(findDeleteButton()?.attributes("disabled")).toBeDefined()
+
+    await deleteField.setValue("ada@example.com")
+    const deleteButton = findDeleteButton()
+    expect(deleteButton?.attributes("disabled")).toBeUndefined()
+
+    if (deleteButton == null) {
+      throw new Error("Expected Delete button")
+    }
+    await deleteButton.trigger("click")
+    await flushPromises()
+
+    expect(deleteMock).toHaveBeenCalledWith("/user", {
+      email: "ada@example.com",
+    })
+    expect(wrapper.text()).toContain("permanent and immediate")
+  })
 })

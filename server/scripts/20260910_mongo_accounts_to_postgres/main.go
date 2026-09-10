@@ -138,10 +138,17 @@ func migrateAccounts(ctx context.Context, database *mongo.Database, pool *pgxpoo
 }
 
 // migrateAccountUnit applies one account and its platform identity. It skips an
-// account that already exists, and in preflight mode it reports the work without
-// writing. A zero ObjectID is a legitimate source identifier and is migrated.
+// account that already exists or is tombstoned by a deletion, and in preflight
+// mode it reports the work without writing. A zero ObjectID is a legitimate
+// source identifier and is migrated.
 func migrateAccountUnit(ctx context.Context, repository *pgstore.Repository, user models.User, apply bool, summary *migrationSummary) error {
 	externalUserID := user.Id.Hex()
+	if deleted, err := repository.AccountDeleted(ctx, externalUserID); err != nil {
+		return err
+	} else if deleted {
+		summary.Skipped++
+		return nil
+	}
 	if _, err := repository.GetAccountByExternalUserID(ctx, externalUserID); err == nil {
 		summary.Skipped++
 		return nil
@@ -153,6 +160,10 @@ func migrateAccountUnit(ctx context.Context, repository *pgstore.Repository, use
 		return nil
 	}
 	if _, err := repository.FindOrCreateAccount(ctx, externalUserID, buildAccount(user)); err != nil {
+		if errors.Is(err, pgstore.ErrAccountDeleted) {
+			summary.Skipped++
+			return nil
+		}
 		return fmt.Errorf("migrate account %s: %w", externalUserID, err)
 	}
 	summary.Migrated++

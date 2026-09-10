@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"os"
 	"strings"
 	"sync"
@@ -55,7 +56,10 @@ func newAccountsTestRepository(t *testing.T) (context.Context, *Repository, pgx.
 	apply("20260814170000_postgres_anonymous_event_compatibility.sql")
 	apply("20260815100000_postgres_event_short_id_only.sql")
 	apply("20260908160000_visitor_identities.sql")
+	apply("20260909090000_event_owner_authority.sql")
+	apply("20260909110000_access_transfers.sql")
 	apply("20260910120000_accounts.sql")
+	apply("20260910130000_account_deletion.sql")
 	return ctx, &Repository{db: tx}, tx
 }
 
@@ -120,7 +124,7 @@ func TestAccountRepositoryKeepsEqualEmailAccountsDistinct(t *testing.T) {
 	}
 }
 
-func TestAccountRepositoryUpdatesAndDeletesProfileOnly(t *testing.T) {
+func TestAccountRepositoryUpdatesAndDeletesProfileAndIdentity(t *testing.T) {
 	ctx, repo, tx := newAccountsTestRepository(t)
 	account, err := repo.FindOrCreateAccount(ctx, "333333333333333333333333", Account{Email: "old@example.com", FirstName: "Old"})
 	if err != nil {
@@ -145,12 +149,187 @@ func TestAccountRepositoryUpdatesAndDeletesProfileOnly(t *testing.T) {
 	if _, err := repo.GetAccountByExternalUserID(ctx, account.ExternalUserID); err == nil {
 		t.Fatal("account still resolves after delete")
 	}
-	var identities int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM platform_identities`).Scan(&identities); err != nil {
+	var identities, tombstones int
+	if err := tx.QueryRow(ctx, `SELECT (SELECT count(*) FROM platform_identities), (SELECT count(*) FROM account_deletion_tombstones WHERE external_user_id = $1)`, account.ExternalUserID).Scan(&identities, &tombstones); err != nil {
 		t.Fatal(err)
 	}
-	if identities != 1 {
-		t.Fatalf("deleting an account must retain its platform identity, got %d", identities)
+	if identities != 0 {
+		t.Fatalf("deleting an account must remove its platform identity, got %d", identities)
+	}
+	if tombstones != 1 {
+		t.Fatalf("deleting an account must record a tombstone, got %d", tombstones)
+	}
+	// A repeated deletion is idempotent and does not disturb the tombstone.
+	if err := repo.DeleteAccountByExternalUserID(ctx, account.ExternalUserID); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM account_deletion_tombstones WHERE external_user_id = $1`, account.ExternalUserID).Scan(&tombstones); err != nil {
+		t.Fatal(err)
+	}
+	if tombstones != 1 {
+		t.Fatalf("repeated deletion changed the tombstone count: %d", tombstones)
+	}
+}
+
+// TestAccountRepositoryTombstoneBlocksRecreation proves that a tombstoned
+// external identifier can never create or adopt an account again, so a backfill
+// racing a deletion cannot resurrect the account.
+func TestAccountRepositoryTombstoneBlocksRecreation(t *testing.T) {
+	ctx, repo, _ := newAccountsTestRepository(t)
+	externalUserID := "999999999999999999999999"
+	if _, err := repo.FindOrCreateAccount(ctx, externalUserID, Account{Email: "resurrect@example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.DeleteAccountByExternalUserID(ctx, externalUserID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.FindOrCreateAccount(ctx, externalUserID, Account{Email: "resurrect@example.com"}); !errors.Is(err, ErrAccountDeleted) {
+		t.Fatalf("recreation error = %v, want ErrAccountDeleted", err)
+	}
+	if _, err := repo.FindOrCreatePlatformIdentity(ctx, externalUserID); !errors.Is(err, ErrAccountDeleted) {
+		t.Fatalf("identity recreation error = %v, want ErrAccountDeleted", err)
+	}
+	deleted, err := repo.AccountDeleted(ctx, externalUserID)
+	if err != nil || !deleted {
+		t.Fatalf("AccountDeleted = %v, %v", deleted, err)
+	}
+}
+
+// TestAccountRepositoryDeletionReleasesOwnershipAndRemovesOwnResponses proves
+// that events the account organized survive with ownership released and their
+// other guests' responses intact, while the account's own response and visitor
+// identity are removed.
+func TestAccountRepositoryDeletionReleasesOwnershipAndRemovesOwnResponses(t *testing.T) {
+	ctx, repo, tx := newAccountsTestRepository(t)
+	account, err := repo.FindOrCreateAccount(ctx, "abcdefabcdefabcdefabcdef", Account{Email: "owner@example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var eventID string
+	if err := tx.QueryRow(ctx, `INSERT INTO postgres_events (short_id, name, type, owner_external_id, owner_platform_identity_id)
+VALUES ('AAAA0001', 'Owned', 'specific_dates', $1, $2) RETURNING id`, account.ExternalUserID, account.PlatformIdentityID).Scan(&eventID); err != nil {
+		t.Fatal(err)
+	}
+	var ownerVisitorID, guestVisitorID string
+	if err := tx.QueryRow(ctx, `INSERT INTO event_visitor_identities (event_id, platform_identity_id) VALUES ($1, $2) RETURNING id`, eventID, account.PlatformIdentityID).Scan(&ownerVisitorID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE postgres_events SET owner_event_visitor_identity_id = $2 WHERE id = $1`, eventID, ownerVisitorID); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.QueryRow(ctx, `INSERT INTO event_visitor_identities (event_id) VALUES ($1) RETURNING id`, eventID).Scan(&guestVisitorID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO postgres_event_responses (event_id, event_visitor_identity_id, respondent_kind, account_user_id, payload)
+VALUES ($1, $2, 'account', $3, '{"name":"Owner"}')`, eventID, ownerVisitorID, account.ExternalUserID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO postgres_event_responses (event_id, event_visitor_identity_id, respondent_kind, canonical_guest_name, payload)
+VALUES ($1, $2, 'guest', 'Guest', '{"name":"Guest"}')`, eventID, guestVisitorID); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := repo.DeleteAccountByExternalUserID(ctx, account.ExternalUserID); err != nil {
+		t.Fatal(err)
+	}
+
+	var owned, ownerVisitor, guestVisitor, ownResponses, guestResponses int
+	if err := tx.QueryRow(ctx, `SELECT
+ (SELECT count(*) FROM postgres_events WHERE id = $1 AND owner_platform_identity_id IS NULL AND owner_external_id IS NULL AND owner_event_visitor_identity_id IS NULL),
+ (SELECT count(*) FROM event_visitor_identities WHERE id = $2),
+ (SELECT count(*) FROM event_visitor_identities WHERE id = $3),
+ (SELECT count(*) FROM postgres_event_responses WHERE account_user_id = $4),
+ (SELECT count(*) FROM postgres_event_responses WHERE event_id = $1 AND respondent_kind = 'guest')`,
+		eventID, ownerVisitorID, guestVisitorID, account.ExternalUserID).Scan(&owned, &ownerVisitor, &guestVisitor, &ownResponses, &guestResponses); err != nil {
+		t.Fatal(err)
+	}
+	if owned != 1 {
+		t.Fatal("event must survive with ownership released")
+	}
+	if ownerVisitor != 0 || ownResponses != 0 {
+		t.Fatalf("account visitor identity and response must be removed: visitor=%d responses=%d", ownerVisitor, ownResponses)
+	}
+	if guestVisitor != 1 || guestResponses != 1 {
+		t.Fatalf("other guests' responses must survive: visitor=%d responses=%d", guestVisitor, guestResponses)
+	}
+}
+
+// TestAccountRepositoryConcurrentBackfillCannotResurrectDeletingAccount proves
+// that a backfill racing a deletion serializes on the account advisory lock and
+// cannot leave a resurrected account behind: whichever order the two acquire the
+// lock, the terminal state is no account, no platform identity, and a tombstone.
+func TestAccountRepositoryConcurrentBackfillCannotResurrectDeletingAccount(t *testing.T) {
+	uri := os.Getenv("POSTGRES_APPLICATION_URI")
+	if uri == "" {
+		t.Skip("POSTGRES_APPLICATION_URI is required")
+	}
+	ctx := context.Background()
+	config, err := pgxpool.ParseConfig(uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.ConnConfig.Database != "timeful-test" && !strings.HasPrefix(config.ConnConfig.Database, "timeful-test-") {
+		t.Fatal("requires an isolated test database")
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	repo := NewRepository(pool)
+
+	externalUserID := randomHex(t, 12)
+	if _, err := repo.FindOrCreateAccount(ctx, externalUserID, Account{Email: "race-delete@example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM account_deletion_tombstones WHERE external_user_id = $1`, externalUserID)
+		_, _ = pool.Exec(context.Background(), `DELETE FROM accounts WHERE platform_identity_id IN (SELECT id FROM platform_identities WHERE external_user_id = $1)`, externalUserID)
+		_, _ = pool.Exec(context.Background(), `DELETE FROM platform_identities WHERE external_user_id = $1`, externalUserID)
+	})
+
+	// Hold the deletion advisory lock so both the deletion and the backfill are
+	// in flight before either can make progress.
+	blocker, err := pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := blocker.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, externalUserID); err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	var deleteErr, backfillErr error
+	go func() { defer wg.Done(); deleteErr = repo.DeleteAccountByExternalUserID(ctx, externalUserID) }()
+	go func() {
+		defer wg.Done()
+		_, backfillErr = repo.FindOrCreateAccount(ctx, externalUserID, Account{Email: "race-delete@example.com"})
+	}()
+	if err := blocker.Rollback(ctx); err != nil {
+		t.Fatal(err)
+	}
+	wg.Wait()
+
+	if deleteErr != nil {
+		t.Fatalf("delete failed: %v", deleteErr)
+	}
+	if backfillErr != nil && !errors.Is(backfillErr, ErrAccountDeleted) {
+		t.Fatalf("backfill error = %v, want nil or ErrAccountDeleted", backfillErr)
+	}
+	var accounts, identities, tombstones int
+	if err := pool.QueryRow(ctx, `SELECT
+ (SELECT count(*) FROM accounts WHERE platform_identity_id IN (SELECT id FROM platform_identities WHERE external_user_id = $1)),
+ (SELECT count(*) FROM platform_identities WHERE external_user_id = $1),
+ (SELECT count(*) FROM account_deletion_tombstones WHERE external_user_id = $1)`, externalUserID).Scan(&accounts, &identities, &tombstones); err != nil {
+		t.Fatal(err)
+	}
+	if accounts != 0 || identities != 0 {
+		t.Fatalf("deletion left accounts=%d identities=%d", accounts, identities)
+	}
+	if tombstones != 1 {
+		t.Fatalf("deletion must record exactly one tombstone, got %d", tombstones)
 	}
 }
 

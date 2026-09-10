@@ -1649,6 +1649,10 @@
         },
         "/user": {
             "delete": {
+                "description": "Requires the account email address as confirmation. Deletion is permanent and immediate: the account profile, platform identity, and calendar connections are removed, events the account organized survive with ownership released, and the account's own responses, friend requests, folders, and historical logs are removed.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1656,9 +1660,31 @@
                     "user"
                 ],
                 "summary": "Deletes the currently signed in user",
+                "parameters": [
+                    {
+                        "description": "The account email address that must match the signed-in account",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "400": {
+                        "description": "The supplied email does not match the account",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
                     }
                 }
             }

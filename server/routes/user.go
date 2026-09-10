@@ -3,6 +3,7 @@ package routes
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -723,31 +724,48 @@ func searchContacts(c *gin.Context) {
 }
 
 // @Summary Deletes the currently signed in user
+// @Description Requires the account email address as confirmation. Deletion is permanent and immediate: the account profile, platform identity, and calendar connections are removed, events the account organized survive with ownership released, and the account's own responses, friend requests, folders, and historical logs are removed.
 // @Tags user
+// @Accept json
 // @Produce json
+// @Param payload body object{email=string} true "The account email address that must match the signed-in account"
 // @Success 200
+// @Failure 400 {object} responses.Error "The supplied email does not match the account"
 // @Router /user [delete]
 func deleteUser(c *gin.Context) {
-	userInterface, _ := c.Get("authUser")
-	user := userInterface.(*models.User)
-
-	// Remove the authoritative PostgreSQL account first, then the retained
-	// integration document.
-	if account := utils.GetAuthAccount(c); account != nil {
-		if err := accounts.DeleteAccount(c.Request.Context(), account.ExternalUserID); err != nil {
-			logger.StdErr.Panicln(err)
-		}
+	payload := struct {
+		Email string `json:"email"`
+	}{}
+	if err := c.BindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, responses.Error{Error: errs.AccountEmailMismatch})
+		return
 	}
 
-	_, err := db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": user.Id})
-	if err != nil {
-		logger.StdErr.Panicln(err)
+	account := utils.GetAuthAccount(c)
+	if account == nil {
+		c.JSON(http.StatusUnauthorized, responses.Error{Error: errs.UserDoesNotExist})
+		return
+	}
+	if !strings.EqualFold(strings.TrimSpace(payload.Email), strings.TrimSpace(account.Email)) {
+		c.JSON(http.StatusBadRequest, responses.Error{Error: errs.AccountEmailMismatch})
+		return
 	}
 
-	// Delete session
+	// The deletion unit cleans the retained MongoDB data and then removes the
+	// PostgreSQL account authority and platform identity in one transaction. The
+	// session is cleared only after the whole unit succeeds, so a failure leaves
+	// the visitor signed in and able to retry.
+	if err := accounts.DeleteAccount(c.Request.Context(), account.ExternalUserID); err != nil {
+		log.Printf("account deletion failed for %s: %v", account.ExternalUserID, err)
+		c.JSON(http.StatusInternalServerError, responses.Error{Error: "account-deletion-failed"})
+		return
+	}
+
 	session := sessions.Default(c)
 	session.Delete("userId")
-	session.Save()
+	if err := session.Save(); err != nil {
+		logger.StdErr.Panicln(err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{})
 }

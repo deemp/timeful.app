@@ -1544,11 +1544,32 @@ paths:
       - slackbot
   /user:
     delete:
+      consumes:
+      - application/json
+      description: 'Requires the account email address as confirmation. Deletion is
+        permanent and immediate: the account profile, platform identity, and calendar
+        connections are removed, events the account organized survive with ownership
+        released, and the account''s own responses, friend requests, folders, and
+        historical logs are removed.'
+      parameters:
+      - description: The account email address that must match the signed-in account
+        in: body
+        name: payload
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+          type: object
       produces:
       - application/json
       responses:
         "200":
           description: OK
+        "400":
+          description: The supplied email does not match the account
+          schema:
+            $ref: '#/definitions/responses.Error'
       summary: Deletes the currently signed in user
       tags:
       - user

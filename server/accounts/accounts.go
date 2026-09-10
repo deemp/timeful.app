@@ -147,15 +147,6 @@ func UpdateProfile(ctx context.Context, account *pgstore.Account) error {
 	return repository.UpdateAccountProfile(ctx, account)
 }
 
-// DeleteAccount removes only the PostgreSQL account authority.
-func DeleteAccount(ctx context.Context, externalUserID string) error {
-	repository, err := pgstore.DefaultRepository()
-	if err != nil {
-		return err
-	}
-	return repository.DeleteAccountByExternalUserID(ctx, externalUserID)
-}
-
 // IncrementEventsCreated advances the retained usage counter on the account.
 func IncrementEventsCreated(ctx context.Context, externalUserID string) error {
 	repository, err := pgstore.DefaultRepository()

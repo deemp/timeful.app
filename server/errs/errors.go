@@ -13,6 +13,7 @@ const EventArchived = "event-archived"
 const (
 	NotSignedIn                string = "not-signed-in"
 	UserDoesNotExist           string = "user-does-not-exist"
+	AccountEmailMismatch       string = "account-email-mismatch"
 	EventNotFound              string = "event-not-found"
 	FriendRequestNotFound      string = "friend-request-not-found"
 	UserNotFriends             string = "user-not-friends"

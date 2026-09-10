@@ -1580,7 +1580,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Deletes the currently signed in user */
+        /**
+         * Deletes the currently signed in user
+         * @description Requires the account email address as confirmation. Deletion is permanent and immediate: the account profile, platform identity, and calendar connections are removed, events the account organized survive with ownership released, and the account's own responses, friend requests, folders, and historical logs are removed.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -1588,7 +1591,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            /** @description The account email address that must match the signed-in account */
+            requestBody: {
+                content: {
+                    "application/json": {
+                        email?: string;
+                    };
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -1596,6 +1606,15 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description The supplied email does not match the account */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
                 };
             };
         };

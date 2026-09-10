@@ -145,8 +145,12 @@
             <v-card>
               <v-card-title>Are you sure?</v-card-title>
               <v-card-text class="tw:text-sm tw:text-dark-gray"
-                >Are you sure you want to delete your account? All your account
-                data will be lost.</v-card-text
+                >Deleting your account is permanent and immediate. Your profile
+                and sign-in identity are removed, every connected calendar is
+                disconnected, and your responses, friend requests, folders, and
+                activity logs are deleted. Events you organized stay available
+                without an owner. This data cannot be recovered, and signing in
+                again with the same email creates a new account.</v-card-text
               >
               <div class="tw:mx-6">
                 <div class="tw:text-sm tw:text-dark-gray">
@@ -167,7 +171,7 @@
                 <v-btn
                   variant="text"
                   color="error"
-                  :disabled="authUser?.email != deleteValidateEmail"
+                  :disabled="!deleteEmailMatches"
                   @click="deleteAccount()"
                   >Delete</v-btn
                 >
@@ -224,8 +228,14 @@ const nameUnsavedChanges = computed(
 )
 const profileUnsavedChanges = computed(() => nameUnsavedChanges.value)
 
+const deleteEmailMatches = computed(
+  () =>
+    deleteValidateEmail.value.trim().toLowerCase() ===
+    (authUser.value?.email ?? "").trim().toLowerCase(),
+)
+
 function deleteAccount() {
-  _delete(`/user`)
+  _delete(`/user`, { email: deleteValidateEmail.value })
     .then(() => {
       window.location.reload()
     })

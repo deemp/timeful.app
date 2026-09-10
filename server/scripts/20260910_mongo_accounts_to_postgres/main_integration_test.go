@@ -99,6 +99,33 @@ func assertBackfillRows(t *testing.T, ctx context.Context, pool *pgxpool.Pool, e
 // legacy source documents and asserts that no platform identity or account is
 // duplicated. The first run is the interrupted run's resume point: every unit it
 // commits must be skipped by the repeated run instead of rewritten.
+// TestMigrateAccountsSkipsTombstonedAccount proves that the backfill never
+// recreates an account that was deleted. The tombstone is the durable record of
+// the deletion and takes precedence over the retained MongoDB source document.
+func TestMigrateAccountsSkipsTombstonedAccount(t *testing.T) {
+	ctx, database, pool := newBackfillTestContext(t, "tombstone")
+	user := models.User{Id: primitive.NewObjectID(), Email: "tombstone@example.com", FirstName: "Tombstone"}
+	insertBackfillUsers(t, ctx, database, user)
+	externalUserID := user.Id.Hex()
+	deleteBackfillFixtures(t, ctx, database, pool, []string{externalUserID})
+
+	if _, err := pool.Exec(ctx, `INSERT INTO account_deletion_tombstones (external_user_id) VALUES ($1)`, externalUserID); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM account_deletion_tombstones WHERE external_user_id = $1`, externalUserID)
+	})
+
+	summary, err := migrateAccounts(ctx, database, pool, configuration{apply: true, batchSize: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.Scanned != 1 || summary.Migrated != 0 || summary.Skipped != 1 {
+		t.Fatalf("tombstoned account must be skipped: %#v", summary)
+	}
+	assertBackfillRows(t, ctx, pool, []string{externalUserID}, 0, 0)
+}
+
 func TestMigrateAccountsIsResumableAndIdempotent(t *testing.T) {
 	ctx, database, pool := newBackfillTestContext(t, "resume")
 	first := models.User{Id: primitive.NewObjectID(), Email: "backfill-one@example.com", FirstName: "One"}

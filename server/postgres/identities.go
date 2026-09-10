@@ -5,12 +5,29 @@ import (
 	"errors"
 )
 
+// FindOrCreatePlatformIdentity links an external user identifier to a platform
+// identity once. It serializes on the same advisory lock the deletion path
+// takes and refuses to create an identity for a tombstoned identifier, so a
+// concurrent account backfill cannot resurrect an account that is being
+// deleted. A repository that is already transaction-scoped reuses that
+// transaction so the lock spans the surrounding account creation unit.
 func (r *Repository) FindOrCreatePlatformIdentity(ctx context.Context, externalUserID string) (*PlatformIdentity, error) {
 	if externalUserID == "" {
 		return nil, errors.New("authenticated external user ID is required")
 	}
 	value := &PlatformIdentity{}
-	err := r.db.QueryRow(ctx, `WITH inserted AS (
+	err := r.withTransaction(ctx, func(ctx context.Context, tx *Repository) error {
+		if _, err := tx.db.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, externalUserID); err != nil {
+			return err
+		}
+		deleted, err := tx.AccountDeleted(ctx, externalUserID)
+		if err != nil {
+			return err
+		}
+		if deleted {
+			return ErrAccountDeleted
+		}
+		return tx.db.QueryRow(ctx, `WITH inserted AS (
  INSERT INTO platform_identities (external_user_id) VALUES ($1)
  ON CONFLICT (external_user_id) DO NOTHING
  RETURNING id, external_user_id, created_at
@@ -19,7 +36,11 @@ SELECT id, external_user_id, created_at FROM inserted
 UNION ALL
 SELECT id, external_user_id, created_at FROM platform_identities WHERE external_user_id = $1
 LIMIT 1`, externalUserID).Scan(&value.ID, &value.ExternalUserID, &value.CreatedAt)
-	return value, err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return value, nil
 }
 
 func (r *Repository) CreateEventVisitorIdentity(ctx context.Context, eventID string) (*EventVisitorIdentity, error) {

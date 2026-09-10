@@ -149,6 +149,9 @@ func deleteAccountTestFixtures(t *testing.T, externalUserIDs ...string) {
 		if _, err := pgstore.Pool.Exec(ctx, `DELETE FROM platform_identities WHERE external_user_id = $1`, externalUserID); err != nil {
 			t.Errorf("delete platform identity %s: %v", externalUserID, err)
 		}
+		if _, err := pgstore.Pool.Exec(ctx, `DELETE FROM account_deletion_tombstones WHERE external_user_id = $1`, externalUserID); err != nil {
+			t.Errorf("delete account tombstone %s: %v", externalUserID, err)
+		}
 	}
 }
 
