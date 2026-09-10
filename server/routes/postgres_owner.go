@@ -129,14 +129,14 @@ func postgresWritableEvent(event *pgstore.Event) error {
 	return nil
 }
 
-func postgresOwnerMutation(c *gin.Context, allowArchived bool, mutate func(context.Context, *pgstore.Repository, *pgstore.Event) error) {
+func postgresOwnerMutation(c *gin.Context, allowArchived bool, mutate func(context.Context, *pgstore.Repository, *pgstore.Event) error) bool {
 	repo := postgresRepository(c)
 	if repo == nil {
-		return
+		return false
 	}
 	event := postgresEvent(c, repo)
 	if event == nil {
-		return
+		return false
 	}
 	err := repo.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		locked, err := tx.LockEvent(ctx, event.ID)
@@ -159,9 +159,10 @@ func postgresOwnerMutation(c *gin.Context, allowArchived bool, mutate func(conte
 	})
 	if err != nil {
 		postgresMutationError(c, err)
-		return
+		return false
 	}
 	c.Status(http.StatusOK)
+	return true
 }
 
 func postgresArchiveEvent(c *gin.Context) {

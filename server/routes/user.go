@@ -249,13 +249,13 @@ func getEvents(c *gin.Context) {
 		logger.StdErr.Panicln(err)
 	}
 	if repository != nil {
-		dashboardEvents, err := repository.ListDashboardEvents(c.Request.Context(), userId.Hex())
+		dashboardEvents, err := repository.ListDashboardEvents(c.Request.Context(), userId.Hex(), user.Email)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-events"})
 			return
 		}
 		for _, item := range dashboardEvents {
-			payload, err := postgresDashboardEvent(item.Event, item.Owned, userId.Hex())
+			payload, err := postgresDashboardEvent(item.Event, item.Owned, userId.Hex(), item.Responded && item.Member)
 			if err != nil {
 				logger.StdErr.Panicln(err)
 			}
@@ -271,7 +271,8 @@ func getEvents(c *gin.Context) {
 // shortId so the frontend opens the event without a store prefix and uses it as
 // a stable list key. ownerId carries the account identifier only for owned
 // events, matching legacy owner detection; responded-only events stay anonymous.
-func postgresDashboardEvent(event pgstore.Event, owned bool, externalUserID string) (map[string]any, error) {
+// Group entries carry the derived responded state the legacy dashboard sets.
+func postgresDashboardEvent(event pgstore.Event, owned bool, externalUserID string, responded bool) (map[string]any, error) {
 	value, err := postgresEventModel(&event)
 	if err != nil {
 		return nil, err
@@ -295,6 +296,9 @@ func postgresDashboardEvent(event pgstore.Event, owned bool, externalUserID stri
 		}
 	}
 	result["ownerId"] = ownerID
+	if event.Type == pgstore.EventTypeGroup {
+		result["hasResponded"] = responded
+	}
 	return result, nil
 }
 

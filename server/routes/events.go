@@ -79,7 +79,7 @@ func InitEvents(router *gin.RouterGroup) {
 	eventRouter.DELETE("/:eventId/schedule", eventSourceHandler(clearTimefulSchedule, postgresClearSchedule))
 	eventRouter.POST("/:eventId/rename-user", eventSourceHandler(renameUser, postgresRenameUser))
 	eventRouter.POST("/:eventId/responded", eventSourceHandler(userResponded, postgresEventRouteUnavailable))
-	eventRouter.POST("/:eventId/decline", middleware.AuthRequired(), eventSourceHandler(declineInvite, postgresEventRouteUnavailable))
+	eventRouter.POST("/:eventId/decline", middleware.AuthRequired(), eventSourceHandler(declineInvite, postgresDeclineInvite))
 	eventRouter.GET("/:eventId/calendar-availabilities", middleware.AuthRequired(), eventSourceHandler(getCalendarAvailabilities, postgresEventRouteUnavailable))
 	eventRouter.DELETE("/:eventId", eventSourceHandler(authenticatedMongoEventHandler(deleteEvent), postgresDeleteEvent))
 	eventRouter.POST("/:eventId/duplicate", middleware.AuthRequired(), eventSourceHandler(duplicateEvent, postgresEventRouteUnavailable))

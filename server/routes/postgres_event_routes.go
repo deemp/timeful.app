@@ -341,28 +341,47 @@ func postgresGetEvent(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-responses"})
 		return
 	}
+	value, err := postgresEventModel(event)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
+		return
+	}
+	var groupAttendees []pgstore.Attendee
+	if event.Type == pgstore.EventTypeGroup {
+		groupAttendees, err = repository.ListAttendees(c.Request.Context(), event.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-attendees"})
+			return
+		}
+	}
 	for key, response := range responseMap {
 		stripSensitiveUserFields(response.User)
-		response.Email = ""
-		if response.User != nil {
-			response.User.Email = ""
-		}
 		response.Availability = nil
 		response.IfNeeded = nil
 		response.ManualAvailability = nil
 		responseMap[key] = response
+	}
+	if event.Type == pgstore.EventTypeGroup {
+		postgresGroupEmailVisibility(c.Request.Context(), value, visitor, groupAttendees, responseMap)
+	} else {
+		for key, response := range responseMap {
+			response.Email = ""
+			if response.User != nil {
+				response.User.Email = ""
+			}
+			responseMap[key] = response
+		}
 	}
 	payload, err := postgresEventPayload(event, responseMap)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
 		return
 	}
+	if event.Type == pgstore.EventTypeGroup {
+		payload["attendees"] = postgresGroupAttendeePayloads(event.ShortID, groupAttendees)
+		payload["hasResponded"] = postgresGroupViewerHasResponded(c.Request.Context(), repository, event, visitor)
+	}
 	if event.Type == pgstore.EventTypeSignup {
-		value, err := postgresEventModel(event)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
-			return
-		}
 		blocks, err := repository.ListSignupBlocks(c.Request.Context(), event.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-signup-blocks"})
@@ -423,11 +442,28 @@ func postgresGetResponses(c *gin.Context) {
 		response.Availability = filterResponseSlots(response.Availability, query.TimeMin, query.TimeMax)
 		response.IfNeeded = filterResponseSlots(response.IfNeeded, query.TimeMin, query.TimeMax)
 		stripSensitiveUserFields(response.User)
-		response.Email = ""
-		if response.User != nil {
-			response.User.Email = ""
-		}
 		responseMap[key] = response
+	}
+	if event.Type == pgstore.EventTypeGroup {
+		value, err := postgresEventModel(event)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
+			return
+		}
+		attendees, err := repository.ListAttendees(c.Request.Context(), event.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-attendees"})
+			return
+		}
+		postgresGroupEmailVisibility(c.Request.Context(), value, visitor, attendees, responseMap)
+	} else {
+		for key, response := range responseMap {
+			response.Email = ""
+			if response.User != nil {
+				response.User.Email = ""
+			}
+			responseMap[key] = response
+		}
 	}
 	c.JSON(http.StatusOK, responseMap)
 }
@@ -474,26 +510,30 @@ func postgresEditEvent(c *gin.Context) {
 		}
 	}
 	c.Request.Body = io.NopCloser(bytes.NewReader(body))
-	var update models.Event
-	if err := c.Bind(&update); err != nil {
+	var input postgresEventInput
+	if err := c.Bind(&input); err != nil {
 		return
 	}
+	update := input.Event
 	if update.Name == "" || update.Type == "" {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if update.DaysOnly == nil || !*update.DaysOnly {
+	requestGroup := update.Type == models.GROUP
+	if !requestGroup && (update.DaysOnly == nil || !*update.DaysOnly) {
 		fields, err := normalizeTimedEventPayloadFields(timedEventPayloadFields{ActiveSlots: update.ActiveSlots, EventTimezone: update.EventTimezone, SlotGeneration: update.SlotGeneration, TimedRecurrence: update.TimedRecurrence})
 		if err != nil {
 			c.JSON(http.StatusBadRequest, responses.Error{Error: err.Error()})
 			return
 		}
 		update.ActiveSlots, update.EventTimezone, update.SlotGeneration, update.TimedRecurrence = fields.ActiveSlots, fields.EventTimezone, fields.SlotGeneration, fields.TimedRecurrence
-	} else if len(update.Dates) == 0 {
+	} else if !requestGroup && len(update.Dates) == 0 {
 		c.JSON(http.StatusBadRequest, responses.Error{Error: "days-only-events-require-dates"})
 		return
 	}
-	postgresOwnerMutation(c, false, func(ctx context.Context, tx *pgstore.Repository, event *pgstore.Event) error {
+	var groupPlan postgresGroupEmailPlan
+	groupEventShortID := ""
+	applied := postgresOwnerMutation(c, false, func(ctx context.Context, tx *pgstore.Repository, event *pgstore.Event) error {
 		current, err := postgresEventModel(event)
 		if err != nil {
 			return err
@@ -506,19 +546,36 @@ func postgresEditEvent(c *gin.Context) {
 		}
 		update.Id, update.ShortId, update.OwnerId, update.NumResponses, update.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
 		update.SignUpBlocks = nil
+		update.Attendees = nil
+		update.HasResponded = nil
 		// Lifecycle state is changed only through the dedicated owner actions.
 		update.IsArchived, update.IsDeleted = nil, nil
 		isSignup := event.Type == pgstore.EventTypeSignup
+		isGroup := event.Type == pgstore.EventTypeGroup
 		eventType := string(update.Type)
 		if isSignup {
 			update.Type, update.IsSignUpForm = models.SPECIFIC_DATES, utils.TruePtr()
 			eventType = pgstore.EventTypeSignup
+		}
+		if isGroup {
+			eventType = pgstore.EventTypeGroup
 		}
 		payload, err := json.Marshal(update)
 		if err != nil {
 			return err
 		}
 		event.Name, event.Type, event.Payload, event.ScheduleVersion = update.Name, eventType, payload, 1
+		if isGroup {
+			// Diff the requested attendee set, send the added and update emails
+			// after commit, and remove departed members' responses so the
+			// response count stays correct.
+			plan, err := postgresApplyGroupAttendeeEdits(ctx, tx, event, input.Attendees)
+			if err != nil {
+				return err
+			}
+			groupPlan = plan
+			groupEventShortID = event.ShortID
+		}
 		if err := tx.UpdateEvent(ctx, event); err != nil {
 			return err
 		}
@@ -533,6 +590,9 @@ func postgresEditEvent(c *gin.Context) {
 		}
 		return nil
 	})
+	if applied && groupEventShortID != "" {
+		sendPostgresGroupUpdateEmails(groupPlan.ownerName, groupPlan.groupName, postgresGroupURL(groupEventShortID), groupPlan.added, groupPlan.kept)
+	}
 }
 
 func postgresSaveSchedule(c *gin.Context)  { postgresUpdateSchedule(c, false) }
@@ -891,6 +951,9 @@ func postgresCreationEnabled(c *gin.Context) bool {
 	if payload.IsSignUpForm {
 		return true
 	}
+	if payload.Type == models.GROUP {
+		return true
+	}
 	if payload.Type != models.SPECIFIC_DATES && payload.Type != models.DOW {
 		return false
 	}
@@ -898,12 +961,14 @@ func postgresCreationEnabled(c *gin.Context) bool {
 }
 
 func postgresCreateEvent(c *gin.Context) {
-	var event models.Event
-	if err := c.Bind(&event); err != nil {
+	var input postgresEventInput
+	if err := c.Bind(&input); err != nil {
 		return
 	}
+	event := input.Event
 	isSignup := event.IsSignUpForm != nil && *event.IsSignUpForm
-	if event.Name == "" || (!isSignup && event.Type != models.SPECIFIC_DATES && event.Type != models.DOW) {
+	isGroup := event.Type == models.GROUP
+	if event.Name == "" || (!isSignup && !isGroup && event.Type != models.SPECIFIC_DATES && event.Type != models.DOW) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -911,6 +976,9 @@ func postgresCreateEvent(c *gin.Context) {
 		// Signup forms are not timed polls; their block schedule is the contract.
 		event.Type = models.SPECIFIC_DATES
 		event.IsSignUpForm = utils.TruePtr()
+	} else if isGroup {
+		// Availability groups carry the legacy timed canvas fields but persist
+		// their membership separately, so they skip timed validation.
 	} else if event.DaysOnly == nil || !*event.DaysOnly {
 		fields, err := normalizeTimedEventPayloadFields(timedEventPayloadFields{ActiveSlots: event.ActiveSlots, EventTimezone: event.EventTimezone, SlotGeneration: event.SlotGeneration, TimedRecurrence: event.TimedRecurrence})
 		if err != nil {
@@ -926,8 +994,11 @@ func postgresCreateEvent(c *gin.Context) {
 	if isSignup && event.SignUpBlocks != nil {
 		initialBlocks = *event.SignUpBlocks
 	}
-	// Blocks own their own table; the payload must not carry a second copy.
+	// Blocks and attendees own their own tables; the payload must not carry a
+	// second copy.
 	event.SignUpBlocks = nil
+	event.Attendees = nil
+	event.HasResponded = nil
 	event.Id, event.ShortId, event.OwnerId, event.NumResponses, event.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
 	encoded, err := json.Marshal(event)
 	if err != nil {
@@ -948,6 +1019,13 @@ func postgresCreateEvent(c *gin.Context) {
 	eventType := string(event.Type)
 	if isSignup {
 		eventType = pgstore.EventTypeSignup
+	}
+	invitees := input.Attendees
+	ownerEmail := ""
+	ownerName := "Somebody"
+	if isGroup && signedIn {
+		ownerEmail = postgresAccountEmail(c.Request.Context(), externalUserID)
+		ownerName = postgresGroupOwnerName(c.Request.Context(), &externalUserID)
 	}
 	stored := &pgstore.Event{Name: event.Name, Type: eventType, ScheduleVersion: 1, CreatorPosthogID: event.CreatorPosthogId, Payload: encoded}
 	if signedIn {
@@ -977,6 +1055,21 @@ func postgresCreateEvent(c *gin.Context) {
 				return err
 			}
 		}
+		if isGroup {
+			if ownerEmail != "" {
+				if err := tx.AddAttendee(ctx, &pgstore.Attendee{EventID: stored.ID, Email: ownerEmail, Declined: utils.FalsePtr()}); err != nil {
+					return err
+				}
+			}
+			for _, email := range invitees {
+				if strings.TrimSpace(email) == "" {
+					continue
+				}
+				if err := tx.AddAttendee(ctx, &pgstore.Attendee{EventID: stored.ID, Email: email, Declined: utils.FalsePtr()}); err != nil {
+					return err
+				}
+			}
+		}
 		var err error
 		visitor, err = tx.CreateEventVisitorIdentity(ctx, stored.ID)
 		if err != nil {
@@ -996,6 +1089,9 @@ func postgresCreateEvent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-create-event"})
 		return
+	}
+	if isGroup {
+		sendPostgresGroupInviteEmails(ownerName, stored.Name, postgresGroupURL(stored.ShortID), invitees)
 	}
 	setPostgresCredentialCookie(c, stored.ShortID, visitor.PublicID, credential)
 	setPostgresOwnerCookie(c, stored.ShortID, ownerToken)

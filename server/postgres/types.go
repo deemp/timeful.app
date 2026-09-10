@@ -11,6 +11,7 @@ const (
 	EventTypeSpecificDates = "specific_dates"
 	EventTypeDayOfWeek     = "dow"
 	EventTypeSignup        = "signup"
+	EventTypeGroup         = "group"
 
 	RespondentKindAccount = "account"
 	RespondentKindGuest   = "guest"
