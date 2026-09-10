@@ -99,11 +99,11 @@ func ResolveForSignIn(ctx context.Context, profile Profile) (*pgstore.Account, b
 		externalUserID = legacy.Id.Hex()
 		initial = accountFromLegacy(legacy)
 	}
-	account, err = repository.FindOrCreateAccount(ctx, externalUserID, initial)
+	account, created, err := repository.FindOrCreateAccountByEmail(ctx, email, externalUserID, initial)
 	if err != nil {
 		return nil, false, err
 	}
-	return account, true, nil
+	return account, created, nil
 }
 
 // IsNewUser reports whether neither a PostgreSQL account nor a retained legacy

@@ -57,6 +57,16 @@ func (r *Repository) WithTransaction(ctx context.Context, fn func(context.Contex
 	return tx.Commit(ctx)
 }
 
+// withTransaction runs fn in a single transaction. A repository that is already
+// transaction-scoped runs fn in its existing transaction so a lock taken by fn
+// spans the work instead of being rejected or silently split across statements.
+func (r *Repository) withTransaction(ctx context.Context, fn func(context.Context, *Repository) error) error {
+	if _, ok := r.db.(*pgxpool.Pool); !ok {
+		return fn(ctx, r)
+	}
+	return r.WithTransaction(ctx, fn)
+}
+
 // WithTransaction runs fn against the package-global pool in one transaction.
 func WithTransaction(ctx context.Context, fn func(context.Context, *Repository) error) error {
 	repository, err := DefaultRepository()

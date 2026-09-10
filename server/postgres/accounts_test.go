@@ -2,8 +2,11 @@ package postgres
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -164,4 +167,114 @@ func TestAccountRepositoryIncrementsUsageCounter(t *testing.T) {
 	if err != nil || stored.NumEventsCreated != 1 {
 		t.Fatalf("usage counter = %v %#v", err, stored)
 	}
+}
+
+func TestFindOrCreateAccountByEmailReusesExistingAccount(t *testing.T) {
+	ctx, repo, _ := newAccountsTestRepository(t)
+	first, created, err := repo.FindOrCreateAccountByEmail(ctx, "reuse@example.com", "555555555555555555555555", Account{Email: "reuse@example.com", FirstName: "First"})
+	if err != nil || !created {
+		t.Fatalf("first call = %v, created=%v; want a created account", err, created)
+	}
+	second, created, err := repo.FindOrCreateAccountByEmail(ctx, "REUSE@EXAMPLE.COM", "666666666666666666666666", Account{Email: "reuse@example.com", FirstName: "Second"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created {
+		t.Fatal("case-insensitive repeat must reuse the existing account")
+	}
+	if second.ID != first.ID || second.FirstName != "First" {
+		t.Fatalf("repeat changed the account: %#v vs %#v", first, second)
+	}
+	var identities, accounts int
+	if err := repo.db.QueryRow(ctx, `SELECT (SELECT count(*) FROM platform_identities), (SELECT count(*) FROM accounts)`).Scan(&identities, &accounts); err != nil {
+		t.Fatal(err)
+	}
+	if identities != 1 || accounts != 1 {
+		t.Fatalf("repeat created extra rows: identities=%d accounts=%d", identities, accounts)
+	}
+}
+
+// TestFindOrCreateAccountByEmailConcurrentSignIns proves that concurrent
+// first-time sign-ins for one email serialize behind the advisory lock and
+// create exactly one account and platform identity, with no failed request.
+func TestFindOrCreateAccountByEmailConcurrentSignIns(t *testing.T) {
+	uri := os.Getenv("POSTGRES_APPLICATION_URI")
+	if uri == "" {
+		t.Skip("POSTGRES_APPLICATION_URI is required")
+	}
+	ctx := context.Background()
+	config, err := pgxpool.ParseConfig(uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.ConnConfig.Database != "timeful-test" && !strings.HasPrefix(config.ConnConfig.Database, "timeful-test-") {
+		t.Fatal("requires an isolated test database")
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	repo := NewRepository(pool)
+
+	email := "concurrent-email-" + randomHex(t, 8) + "@example.com"
+	const workers = 8
+	externalUserIDs := make([]string, workers)
+	for i := range externalUserIDs {
+		externalUserIDs[i] = randomHex(t, 12)
+	}
+	t.Cleanup(func() {
+		if _, err := pool.Exec(context.Background(), `DELETE FROM accounts WHERE platform_identity_id IN (SELECT id FROM platform_identities WHERE external_user_id = ANY($1))`, externalUserIDs); err != nil {
+			t.Errorf("delete concurrent accounts: %v", err)
+		}
+		if _, err := pool.Exec(context.Background(), `DELETE FROM platform_identities WHERE external_user_id = ANY($1)`, externalUserIDs); err != nil {
+			t.Errorf("delete concurrent identities: %v", err)
+		}
+	})
+
+	results := make([]*Account, workers)
+	failures := make([]error, workers)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			results[i], _, failures[i] = repo.FindOrCreateAccountByEmail(ctx, email, externalUserIDs[i], Account{Email: email, FirstName: "Racer"})
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	var winner *Account
+	for i := range results {
+		if failures[i] != nil {
+			t.Fatalf("worker %d failed: %v", i, failures[i])
+		}
+		if results[i] == nil {
+			t.Fatalf("worker %d returned no account", i)
+		}
+		if winner == nil {
+			winner = results[i]
+		} else if results[i].ID != winner.ID {
+			t.Fatalf("concurrent sign-ins resolved different accounts: %s vs %s", winner.ID, results[i].ID)
+		}
+	}
+	var accounts, identities int
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM accounts a JOIN platform_identities p ON p.id = a.platform_identity_id WHERE lower(a.email) = lower($1)), (SELECT count(*) FROM platform_identities WHERE external_user_id = ANY($2))`, email, externalUserIDs).Scan(&accounts, &identities); err != nil {
+		t.Fatal(err)
+	}
+	if accounts != 1 || identities != 1 {
+		t.Fatalf("concurrent first-time sign-ins created accounts=%d identities=%d", accounts, identities)
+	}
+}
+
+func randomHex(t *testing.T, size int) string {
+	t.Helper()
+	value := make([]byte, size)
+	if _, err := rand.Read(value); err != nil {
+		t.Fatal(err)
+	}
+	return hex.EncodeToString(value)
 }

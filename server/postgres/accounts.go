@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // Account is the authoritative PostgreSQL identity and profile for a legacy or
@@ -86,6 +88,45 @@ ON CONFLICT (platform_identity_id) DO UPDATE SET platform_identity_id = EXCLUDED
 		return nil, err
 	}
 	return r.GetAccountByExternalUserID(ctx, externalUserID)
+}
+
+// FindOrCreateAccountByEmail resolves the single account for a case-insensitive
+// email or creates it when none exists. Concurrent first-time sign-ins for the
+// same email are serialized by a transaction-scoped advisory lock, so only one
+// account and platform identity can be created; the request that loses the race
+// is returned the winner's account instead of inserting a duplicate. Distinct
+// accounts whose emails already compare equal are left untouched, because email
+// is deliberately not unique. The boolean reports whether this call created the
+// account.
+func (r *Repository) FindOrCreateAccountByEmail(ctx context.Context, email, externalUserID string, initial Account) (*Account, bool, error) {
+	if email == "" {
+		return nil, false, errors.New("account email is required")
+	}
+	var account *Account
+	var created bool
+	err := r.withTransaction(ctx, func(ctx context.Context, tx *Repository) error {
+		if _, err := tx.db.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended(lower($1), 0))`, email); err != nil {
+			return err
+		}
+		existing, err := tx.GetAccountByEmail(ctx, email)
+		if err == nil {
+			account = existing
+			return nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		account, err = tx.FindOrCreateAccount(ctx, externalUserID, initial)
+		if err != nil {
+			return err
+		}
+		created = true
+		return nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	return account, created, nil
 }
 
 // UpdateAccountProfile writes the authoritative profile fields. Calendar

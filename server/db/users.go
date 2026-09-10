@@ -105,7 +105,13 @@ func EnsureIntegrationUser(userId string) (*models.User, error) {
 	}
 	user := &models.User{Id: objectID}
 	if _, err := UsersCollection.InsertOne(context.Background(), user); err != nil {
-		return nil, err
+		if !mongo.IsDuplicateKeyError(err) {
+			return nil, err
+		}
+		// A concurrent first authenticated request created the document between
+		// the lookup above and this insert. The conflicting insert is the
+		// idempotent success, so return the document the winner created.
+		return getMongoUserById(userId), nil
 	}
 	return user, nil
 }
