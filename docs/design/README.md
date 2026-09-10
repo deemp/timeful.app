@@ -28,19 +28,22 @@ Design records describe architectural choices that constrain implementation, whi
 
 ## Architecture Records
 
-| ID                                     | Scope                   | Title                                                                          |
-| -------------------------------------- | ----------------------- | ------------------------------------------------------------------------------ |
-| [ADR-001](architecture/adr/ADR-001.md) | Frontend                | Frontend Boundary Models and Canonical Internal Shapes                         |
-| [ADR-002](architecture/adr/ADR-002.md) | Frontend                | Frontend Timezone Decoding and Fixed-Offset Boundaries                         |
-| [ADR-003](architecture/adr/ADR-003.md) | Frontend                | Frontend Freemium Operational Gating                                           |
-| [ADR-004](architecture/adr/ADR-004.md) | Frontend                | Frontend Temporal Runtime Model                                                |
-| [ADR-005](architecture/adr/ADR-005.md) | Frontend                | Frontend Civil-Date and End-of-Day Model                                       |
-| [ADR-006](architecture/adr/ADR-006.md) | Frontend                | Frontend Temporal Collection Semantics                                         |
-| [ADR-007](architecture/adr/ADR-007.md) | Frontend                | Frontend Semantic Styling Tokens                                               |
-| [ADR-008](architecture/adr/ADR-008.md) | Frontend                | Frontend Event Ownership Semantics                                             |
-| [ADR-009](architecture/adr/ADR-009.md) | Frontend                | Frontend Guest Response Ownership Semantics                                    |
-| [ADR-010](architecture/adr/ADR-010.md) | Frontend, Backend       | Source-Confirmed Access Transfers                                              |
-| [ADR-011](architecture/adr/ADR-011.md) | Backend, Infrastructure | PostgreSQL Owns Core Records While MongoDB Retains Integrations                |
-| [ADR-012](architecture/adr/ADR-012.md) | Backend, Infrastructure | Resolve Legacy Accounts By external_user_id And Rewrite Migrated Relationships |
-| [ADR-013](architecture/adr/ADR-013.md) | Backend, Infrastructure | Cut Over By Resumable Backfill With A Short Write Freeze                       |
-| [ADR-014](architecture/adr/ADR-014.md) | Backend, Infrastructure | Quarantine Legacy Guest Credentials And Ambiguous Ownership                    |
+| ID                                     | Scope                   | Title                                                                                      |
+| -------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------ |
+| [ADR-001](architecture/adr/ADR-001.md) | Frontend                | Frontend Boundary Models and Canonical Internal Shapes                                     |
+| [ADR-002](architecture/adr/ADR-002.md) | Frontend                | Frontend Timezone Decoding and Fixed-Offset Boundaries                                     |
+| [ADR-003](architecture/adr/ADR-003.md) | Frontend                | Frontend Freemium Operational Gating                                                       |
+| [ADR-004](architecture/adr/ADR-004.md) | Frontend                | Frontend Temporal Runtime Model                                                            |
+| [ADR-005](architecture/adr/ADR-005.md) | Frontend                | Frontend Civil-Date and End-of-Day Model                                                   |
+| [ADR-006](architecture/adr/ADR-006.md) | Frontend                | Frontend Temporal Collection Semantics                                                     |
+| [ADR-007](architecture/adr/ADR-007.md) | Frontend                | Frontend Semantic Styling Tokens                                                           |
+| [ADR-008](architecture/adr/ADR-008.md) | Frontend                | Frontend Event Ownership Semantics                                                         |
+| [ADR-009](architecture/adr/ADR-009.md) | Frontend                | Frontend Guest Response Ownership Semantics                                                |
+| [ADR-010](architecture/adr/ADR-010.md) | Frontend, Backend       | Source-Confirmed Access Transfers                                                          |
+| [ADR-011](architecture/adr/ADR-011.md) | Backend, Infrastructure | PostgreSQL Owns Core Records While MongoDB Retains Integrations                            |
+| [ADR-012](architecture/adr/ADR-012.md) | Backend, Infrastructure | Resolve Legacy Accounts By external_user_id And Rewrite Migrated Relationships             |
+| [ADR-013](architecture/adr/ADR-013.md) | Backend, Infrastructure | Cut Over By Resumable Backfill With A Short Write Freeze                                   |
+| [ADR-014](architecture/adr/ADR-014.md) | Backend, Infrastructure | Quarantine Legacy Guest Credentials And Ambiguous Ownership                                |
+| [ADR-015](architecture/adr/ADR-015.md) | Backend, Infrastructure | Encrypt Provider Credentials At Rest With Authenticated AES-256-GCM                        |
+| [ADR-016](architecture/adr/ADR-016.md) | Backend, Infrastructure | PostgreSQL Owns Retained Calendar, OTP, And Daily-Log Data And Friend Requests Are Retired |
+| [ADR-017](architecture/adr/ADR-017.md) | Backend, Infrastructure | Backfill Retained Data On The Migration Ledger And Remove MongoDB In Dependency Order      |

@@ -7,6 +7,9 @@ It implements the [PostgreSQL Core Migration Contracts](postgres-core-migration-
 The tooling and its isolated rehearsal are delivered by TASK-0190.06; no live deployment or production data migration is performed by that task.
 A live cutover is a separately scheduled operational action with a named operator and an approved change window.
 
+This runbook covers the core-record backfill only.
+[PostgreSQL Retained-Data Migration Contracts](postgres-retained-data-contracts.md) supersedes this runbook's statements that calendar, OTP, friend-request, and daily-log collections stay in MongoDB, and governs the retained-data backfill and the final MongoDB removal.
+
 ## Tooling
 
 The migration lives at `server/scripts/20260910_mongo_events_to_postgres/` and runs as a dated one-off command.

@@ -13,6 +13,10 @@ Table and column names introduced here are contractual targets for later subtask
 Its statements that "MongoDB remains authoritative for legacy events, authenticated creation, groups, signup forms, folders, account adoption, and dashboard event loading" describe the repository before core cutover and stop applying to each migrated record once that record is served from PostgreSQL.
 Where this document and the compatibility contract disagree about a PostgreSQL-owned record, this document governs the migration boundary and the compatibility contract continues to govern observable API behavior.
 
+[PostgreSQL Retained-Data Migration Contracts](postgres-retained-data-contracts.md) supersedes this document's treatment of calendar integration fields, OTP challenges, historical daily user logs, friend requests, and reporting analytics.
+The statements here that those fields stay in MongoDB describe the state before the retained-data cutover and stop applying to each record kind once that contract migrates it.
+The retained-data contract governs their PostgreSQL destinations, the encrypted credential boundary, the retained-data backfill, and the removal of MongoDB.
+
 The [Event Owner Edit Token](../../docs/terminology/glossary.md#event-owner-edit-token) rules in the compatibility contract continue to apply.
 Legacy MongoDB owner authorization is preserved on MongoDB-served records and is never promoted into PostgreSQL authority.
 
