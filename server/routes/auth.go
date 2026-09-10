@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"timeful/server/accounts"
 	"timeful/server/db"
 	"timeful/server/errs"
 	"timeful/server/eventsource"
@@ -180,17 +181,42 @@ func signInHelper(c *gin.Context, token auth.TokenResponse, tokenOrigin models.T
 
 	primaryAccountKey := utils.GetCalendarAccountKey(email, calendarType)
 
-	// Create user object to create new user or update existing user
-	userData := models.User{
-		Email:     email,
-		FirstName: firstName,
-		LastName:  lastName,
-		Picture:   picture,
+	ctx := context.Background()
 
-		PrimaryAccountKey: &primaryAccountKey,
-
+	// PostgreSQL is authoritative for account identity and profile. A matching
+	// legacy MongoDB account is adopted instead of duplicated.
+	account, _, err := accounts.ResolveForSignIn(ctx, accounts.Profile{
+		Email:          email,
+		FirstName:      firstName,
+		LastName:       lastName,
+		Picture:        picture,
 		TimezoneOffset: timezoneOffset,
-		TokenOrigin:    tokenOrigin,
+	})
+	if err != nil {
+		logger.StdErr.Printf("Failed to resolve account for %s: %v", email, err)
+		return models.User{}, err
+	}
+
+	// A custom name set by the user is preserved; otherwise the provider name
+	// wins.
+	if account.HasCustomName == nil || !*account.HasCustomName {
+		account.FirstName = firstName
+		account.LastName = lastName
+	}
+	if picture != "" {
+		account.Picture = picture
+	}
+	account.Email = email
+	account.TimezoneOffset = timezoneOffset
+	if err := accounts.UpdateProfile(ctx, account); err != nil {
+		logger.StdErr.Panicln(err)
+	}
+
+	// Calendar connections, tokens, and preferences stay in the retained
+	// MongoDB integration document keyed by the same account identifier.
+	integration, err := accounts.EnsureIntegrationDocument(ctx, account.ExternalUserID)
+	if err != nil {
+		logger.StdErr.Panicln(err)
 	}
 
 	calendarAccount := models.CalendarAccount{
@@ -203,88 +229,39 @@ func signInHelper(c *gin.Context, token auth.TokenResponse, tokenOrigin models.T
 	}
 	canonicalKey := utils.GetCalendarAccountKey(email, calendarType)
 
-	var userId primitive.ObjectID
-	existing := db.GetUserByEmail(email)
-	// If user doesn't exist, create a new user
-	if existing == nil {
-		// Fetch subcalendars
+	// Reuse subcalendars already stored for this connection when present.
+	var oldSubCalendars *map[string]models.SubCalendar
+	if integration.CalendarAccounts != nil {
+		if legacyKey := utils.ActualCalendarAccountMapKey(integration, email, calendarType); legacyKey != "" {
+			if oldAcc, ok := integration.CalendarAccounts[legacyKey]; ok && oldAcc.SubCalendars != nil {
+				oldSubCalendars = oldAcc.SubCalendars
+			}
+		} else if existingAcc, ok := integration.CalendarAccounts[canonicalKey]; ok && existingAcc.SubCalendars != nil {
+			oldSubCalendars = existingAcc.SubCalendars
+		}
+	}
+	if oldSubCalendars != nil {
+		calendarAccount.SubCalendars = oldSubCalendars
+	} else {
 		subCalendars, err := calendar.GetCalendarProvider(calendarAccount).GetCalendarList()
 		if err == nil {
 			calendarAccount.SubCalendars = &subCalendars
 		}
+	}
 
-		// Set calendar accounts
-		userData.CalendarAccounts = map[string]models.CalendarAccount{
-			canonicalKey: calendarAccount,
-		}
-
-		// Create user
-		res, err := db.UsersCollection.InsertOne(context.Background(), userData)
-		if err != nil {
-			logger.StdErr.Panicln(err)
-		}
-
-		userId = res.InsertedID.(primitive.ObjectID)
-
-		// slackbot.SendTextMessage(fmt.Sprintf(":wave: %s %s (%s) has joined Timeful!", firstName, lastName, email))
-	} else {
-		user := existing
-		userId = user.Id
-
-		// If user has custom name, do not override first name and last name
-		if user.HasCustomName != nil && *user.HasCustomName {
-			userData.FirstName = ""
-			userData.LastName = ""
-		}
-
-		legacyKey := utils.ActualCalendarAccountMapKey(user, email, calendarType)
-
-		var oldSubCalendars *map[string]models.SubCalendar
-		if legacyKey != "" {
-			if oldAcc, ok := user.CalendarAccounts[legacyKey]; ok && oldAcc.SubCalendars != nil {
-				oldSubCalendars = oldAcc.SubCalendars
-			}
-		} else if user.CalendarAccounts != nil {
-			if existingAcc, ok := user.CalendarAccounts[canonicalKey]; ok && existingAcc.SubCalendars != nil {
-				oldSubCalendars = existingAcc.SubCalendars
-			}
-		}
-
-		var calAccounts map[string]models.CalendarAccount
-		if user.CalendarAccounts == nil {
-			calAccounts = make(map[string]models.CalendarAccount)
-		} else {
-			calAccounts = make(map[string]models.CalendarAccount, len(user.CalendarAccounts))
-			for k, v := range user.CalendarAccounts {
-				calAccounts[k] = v
-			}
-		}
-		if legacyKey != "" && legacyKey != canonicalKey {
-			delete(calAccounts, legacyKey)
-		}
-
-		if oldSubCalendars != nil {
-			calendarAccount.SubCalendars = oldSubCalendars
-		} else {
-			subCalendars, err := calendar.GetCalendarProvider(calendarAccount).GetCalendarList()
-			if err == nil {
-				calendarAccount.SubCalendars = &subCalendars
-			}
-		}
-
-		calAccounts[canonicalKey] = calendarAccount
-		userData.CalendarAccounts = calAccounts
-		userData.Email = email
-
-		// Update user if exists
-		_, err := db.UsersCollection.UpdateByID(
-			context.Background(),
-			userId,
-			bson.M{"$set": userData},
-		)
-		if err != nil {
-			logger.StdErr.Panicln(err)
-		}
+	calAccounts := integration.CalendarAccounts
+	if calAccounts == nil {
+		calAccounts = make(map[string]models.CalendarAccount)
+	}
+	if legacyKey := utils.ActualCalendarAccountMapKey(integration, email, calendarType); legacyKey != "" && legacyKey != canonicalKey {
+		delete(calAccounts, legacyKey)
+	}
+	calAccounts[canonicalKey] = calendarAccount
+	integration.CalendarAccounts = calAccounts
+	integration.PrimaryAccountKey = &primaryAccountKey
+	integration.TokenOrigin = tokenOrigin
+	if err := db.UpdateUserIntegrationFields(integration); err != nil {
+		logger.StdErr.Panicln(err)
 	}
 
 	if exists, userId := listmonk.DoesUserExist(email); exists {
@@ -295,11 +272,10 @@ func signInHelper(c *gin.Context, token auth.TokenResponse, tokenOrigin models.T
 
 	// Set session variables
 	session := sessions.Default(c)
-	session.Set("userId", userId.Hex())
+	session.Set("userId", account.ExternalUserID)
 	session.Save()
 
-	userData.Id = userId
-	return userData, nil
+	return *db.MergeAccountProfile(integration, account), nil
 }
 
 // @Summary Signs user out
@@ -352,9 +328,8 @@ func checkEmail(c *gin.Context) {
 	}
 
 	email := strings.ToLower(strings.TrimSpace(payload.Email))
-	isNewUser := db.GetUserByEmail(email) == nil
 
-	c.JSON(http.StatusOK, gin.H{"isNewUser": isNewUser})
+	c.JSON(http.StatusOK, gin.H{"isNewUser": accounts.IsNewUser(email)})
 }
 
 // @Summary Sends an OTP code to the given email
@@ -469,42 +444,38 @@ func verifyOtp(c *gin.Context) {
 	// OTP verified — delete it
 	db.OtpCodesCollection.DeleteOne(context.Background(), bson.M{"_id": otpDoc.Id})
 
-	// Find or create user
-	var userId primitive.ObjectID
-	existing := db.GetUserByEmail(email)
+	firstName := strings.TrimSpace(payload.FirstName)
+	lastName := strings.TrimSpace(payload.LastName)
 
-	if existing == nil {
-		firstName := strings.TrimSpace(payload.FirstName)
-		lastName := strings.TrimSpace(payload.LastName)
+	// OTP challenge storage stays in MongoDB, but successful authentication
+	// resolves an authoritative PostgreSQL account.
+	ctx := context.Background()
+	account, created, err := accounts.ResolveForSignIn(ctx, accounts.Profile{
+		Email:          email,
+		FirstName:      firstName,
+		LastName:       lastName,
+		TimezoneOffset: *payload.TimezoneOffset,
+	})
+	if err != nil {
+		logger.StdErr.Panicln(err)
+	}
 
-		userData := models.User{
-			Email:          email,
-			FirstName:      firstName,
-			LastName:       lastName,
-			TimezoneOffset: *payload.TimezoneOffset,
-			TokenOrigin:    models.WEB,
-		}
-
-		res, err := db.UsersCollection.InsertOne(context.Background(), userData)
-		if err != nil {
-			logger.StdErr.Panicln(err)
-		}
-		userId = res.InsertedID.(primitive.ObjectID)
-
+	if created {
 		if exists, listmonkUserId := listmonk.DoesUserExist(email); exists {
 			listmonk.AddUserToListmonk(email, firstName, lastName, "", listmonkUserId, true)
 		} else {
 			listmonk.AddUserToListmonk(email, firstName, lastName, "", nil, true)
 		}
-	} else {
-		userId = existing.Id
 	}
 
 	// Set session — same mechanism as OAuth sign-in
 	session := sessions.Default(c)
-	session.Set("userId", userId.Hex())
+	session.Set("userId", account.ExternalUserID)
 	session.Save()
 
-	user := db.GetUserById(userId.Hex())
-	c.JSON(http.StatusOK, user)
+	integration, err := accounts.EnsureIntegrationDocument(ctx, account.ExternalUserID)
+	if err != nil {
+		logger.StdErr.Panicln(err)
+	}
+	c.JSON(http.StatusOK, db.MergeAccountProfile(integration, account))
 }

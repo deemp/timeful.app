@@ -131,7 +131,7 @@ services:
         "test",
         "./routes",
         "-run",
-        "TestGetEventFiltersUnnamedGuestResponses|TestGetResponsesFiltersUnnamedGuestResponses|TestGetResponsesBlindAvailabilityUsesFilteredGuestResponseMap|TestGetEventKeepsSignedInRowsWithBlankStoredResponseName|TestGetEventKeepsLegacyOuterKeySignedInSignUpRows|TestGetResponsesPrefersNewestCanonicalGuestDuplicate|TestAnonymousTimedEventCompatibilityContract|TestAnonymousDatesOnlyEventCompatibilityContract|TestAnonymousEventEditCompatibilityContract|TestAnonymousGuestResponseOwnershipCompatibilityContract",
+        "TestGetEventFiltersUnnamedGuestResponses|TestGetResponsesFiltersUnnamedGuestResponses|TestGetResponsesBlindAvailabilityUsesFilteredGuestResponseMap|TestGetEventKeepsSignedInRowsWithBlankStoredResponseName|TestGetEventKeepsLegacyOuterKeySignedInSignUpRows|TestGetResponsesPrefersNewestCanonicalGuestDuplicate|TestAnonymousTimedEventCompatibilityContract|TestAnonymousDatesOnlyEventCompatibilityContract|TestAnonymousEventEditCompatibilityContract|TestAnonymousGuestResponseOwnershipCompatibilityContract|TestAccountOtpSignInUsesPostgresAuthority|TestAccountExistingSessionAdoptionResolvesAccount|TestAccountDuplicateEmailDoesNotMerge",
         "-count=1",
       ]
     depends_on:

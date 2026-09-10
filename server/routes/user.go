@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"timeful/server/accounts"
 	"timeful/server/db"
 	"timeful/server/errs"
 	"timeful/server/eventsource"
@@ -81,12 +82,18 @@ func updateName(c *gin.Context) {
 		return
 	}
 
-	authUser := utils.GetAuthUser(c)
+	account := utils.GetAuthAccount(c)
+	if account == nil {
+		c.JSON(http.StatusUnauthorized, responses.Error{Error: errs.UserDoesNotExist})
+		return
+	}
+	account.FirstName = payload.FirstName
+	account.LastName = payload.LastName
+	account.HasCustomName = utils.TruePtr()
 
-	_, err := db.UsersCollection.UpdateByID(context.Background(), authUser.Id, bson.M{
-		"$set": bson.M{"firstName": payload.FirstName, "lastName": payload.LastName, "hasCustomName": true},
-	})
-	if err != nil {
+	// The profile is PostgreSQL-authoritative; the retained MongoDB document is
+	// never written from this path.
+	if err := accounts.UpdateProfile(c.Request.Context(), account); err != nil {
 		logger.StdErr.Panicln(err)
 	}
 
@@ -135,10 +142,7 @@ func updateCalendarOptions(c *gin.Context) {
 	}
 
 	// Update database
-	_, err := db.UsersCollection.UpdateByID(context.Background(), authUser.Id, bson.M{
-		"$set": bson.M{"calendarOptions": authUser.CalendarOptions},
-	})
-	if err != nil {
+	if err := db.UpdateUserIntegrationFields(authUser); err != nil {
 		logger.StdErr.Panicln(err)
 	}
 
@@ -326,11 +330,9 @@ func getCalendars(c *gin.Context) {
 	calendarEvents, editedCalendarAccounts := calendar.GetUsersCalendarEvents(user, accountsSet, payload.TimeMin, payload.TimeMax)
 
 	if editedCalendarAccounts {
-		db.UsersCollection.FindOneAndUpdate(
-			context.Background(),
-			bson.M{"_id": user.Id},
-			bson.M{"$set": user},
-		)
+		if err := db.UpdateUserIntegrationFields(user); err != nil {
+			logger.StdErr.Panicln(err)
+		}
 	}
 
 	c.JSON(http.StatusOK, calendarEvents)
@@ -581,12 +583,10 @@ func addCalendarAccount(c *gin.Context, args addCalendarAccountArgs) {
 	}
 	authUser.CalendarAccounts[canonicalKey] = calendarAccount
 
-	// Perform mongo update
-	db.UsersCollection.FindOneAndUpdate(
-		context.Background(),
-		bson.M{"_id": authUser.Id},
-		bson.M{"$set": authUser},
-	)
+	// Retained integration fields only; the profile stays in PostgreSQL.
+	if err := db.UpdateUserIntegrationFields(authUser); err != nil {
+		logger.StdErr.Panicln(err)
+	}
 }
 
 // @Summary Removes an existing calendar account
@@ -654,12 +654,7 @@ func toggleCalendar(c *gin.Context) {
 		account.Enabled = payload.Enabled
 		authUser.CalendarAccounts[calendarAccountKey] = account
 
-		_, err := db.UsersCollection.UpdateOne(context.Background(), bson.M{
-			"_id": authUser.Id,
-		}, bson.M{
-			"$set": authUser,
-		})
-		if err != nil {
+		if err := db.UpdateUserIntegrationFields(authUser); err != nil {
 			logger.StdErr.Panicln(err)
 			return
 		}
@@ -699,12 +694,7 @@ func toggleSubCalendar(c *gin.Context) {
 			(*account.SubCalendars)[payload.SubCalendarId] = subCalendar
 			authUser.CalendarAccounts[calendarAccountKey] = account
 
-			_, err := db.UsersCollection.UpdateOne(context.Background(), bson.M{
-				"_id": authUser.Id,
-			}, bson.M{
-				"$set": authUser,
-			})
-			if err != nil {
+			if err := db.UpdateUserIntegrationFields(authUser); err != nil {
 				logger.StdErr.Panicln(err)
 				return
 			}
@@ -749,6 +739,14 @@ func searchContacts(c *gin.Context) {
 func deleteUser(c *gin.Context) {
 	userInterface, _ := c.Get("authUser")
 	user := userInterface.(*models.User)
+
+	// Remove the authoritative PostgreSQL account first, then the retained
+	// integration document.
+	if account := utils.GetAuthAccount(c); account != nil {
+		if err := accounts.DeleteAccount(c.Request.Context(), account.ExternalUserID); err != nil {
+			logger.StdErr.Panicln(err)
+		}
+	}
 
 	_, err := db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": user.Id})
 	if err != nil {

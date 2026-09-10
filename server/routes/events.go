@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"timeful/server/accounts"
 	"timeful/server/db"
 	"timeful/server/errs"
 	"timeful/server/eventsource"
@@ -429,7 +430,9 @@ func createEvent(c *gin.Context) {
 	// var creator string
 	if signedIn {
 		// creator = fmt.Sprintf("%s %s (%s)", user.FirstName, user.LastName, user.Email)
-		db.UsersCollection.UpdateOne(context.Background(), bson.M{"_id": ownerId}, bson.M{"$inc": bson.M{"numEventsCreated": 1}})
+		if err := accounts.IncrementEventsCreated(context.Background(), ownerId.Hex()); err != nil {
+			logger.StdErr.Println(err)
+		}
 	} else {
 		// creator = "Guest :face_with_open_eyes_and_hand_over_mouth:"
 	}
@@ -2230,7 +2233,9 @@ func importEvent(c *gin.Context) {
 	)
 
 	// Increment user's NumEventsCreated
-	db.UsersCollection.UpdateOne(context.Background(), bson.M{"_id": user.Id}, bson.M{"$inc": bson.M{"numEventsCreated": 1}})
+	if err := accounts.IncrementEventsCreated(context.Background(), user.Id.Hex()); err != nil {
+		logger.StdErr.Println(err)
+	}
 
 	c.JSON(http.StatusCreated, gin.H{"eventId": eventsource.MongoPublicID(newId.Hex()), "shortId": eventsource.MongoPublicID(shortId)})
 }

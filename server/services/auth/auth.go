@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"timeful/server/db"
 	"timeful/server/logger"
@@ -233,11 +231,9 @@ func RefreshUserTokenIfNecessary(u *models.User, accounts models.Set[string]) {
 
 	// Update user object if accounts were updated
 	if numAccountsToUpdate > 0 {
-		db.UsersCollection.FindOneAndUpdate(
-			context.Background(),
-			bson.M{"_id": u.Id},
-			bson.M{"$set": u},
-		)
+		if err := db.UpdateUserIntegrationFields(u); err != nil {
+			logger.StdErr.Println(err)
+		}
 	}
 }
 

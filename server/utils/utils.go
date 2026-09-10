@@ -23,6 +23,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"timeful/server/logger"
 	"timeful/server/models"
+	pgstore "timeful/server/postgres"
 )
 
 // Returns whether running on production server
@@ -63,6 +64,16 @@ func GetAuthUser(c *gin.Context) *models.User {
 	userInterface, _ := c.Get("authUser")
 	user := userInterface.(*models.User)
 	return user
+}
+
+// Returns the authoritative PostgreSQL account for the current session.
+func GetAuthAccount(c *gin.Context) *pgstore.Account {
+	accountInterface, ok := c.Get("authAccount")
+	if !ok {
+		return nil
+	}
+	account, _ := accountInterface.(*pgstore.Account)
+	return account
 }
 
 // Gets the access token expire date from an "expiresIn" int representing the number of seconds
