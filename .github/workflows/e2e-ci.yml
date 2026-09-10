@@ -194,11 +194,24 @@ jobs:
           E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
         run: nix run .#e2e -- --project=chromium-desktop --project=chromium-mobile --project=chromium-production-desktop --project=chromium-production-mobile
 
-      - name: Run PostgreSQL browser lifecycle test
+      # Firefox runs as a single invocation per project so the CI-default
+      # worker count (workers: 1) is untouched. The desktop run enables
+      # PostgreSQL anonymous event creation so its PostgreSQL-gated specs
+      # (postgres plugin, owner authority, visitor identities, access
+      # transfer) execute instead of skipping. The touch spec seeds guest
+      # responses through the standalone request fixture, which carries no
+      # PostgreSQL creation credential, so it keeps the default Mongo-backed
+      # creation mode.
+      - name: Run Firefox desktop browser E2E suite
         env:
           E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: "true"
           E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
-        run: nix run .#e2e -- --project=firefox-desktop specs/timed-event-postgres-plugin-firefox.spec.ts
+        run: nix run .#e2e -- --project=firefox-desktop
+
+      - name: Run Firefox touch browser E2E suite
+        env:
+          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
+        run: nix run .#e2e -- --project=firefox-touch
 
       - name: Upload Playwright failure artifacts
         if: failure()

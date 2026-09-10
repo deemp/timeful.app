@@ -5,12 +5,12 @@ Each workflow validates one area of the repository, and Dependabot opens weekly 
 
 ## Workflows
 
-| Workflow    | File              | Purpose                                                                                                                                                      |
-| ----------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Markdown CI | `markdown-ci.yml` | Checks Markdown formatting and linting, and lints all workflow files with `actionlint`                                                                       |
-| Frontend CI | `frontend-ci.yml` | Lints, type-checks, unit-tests, and builds the frontend                                                                                                      |
-| Backend CI  | `backend-ci.yml`  | Runs the Go server tests against an isolated MongoDB and PostgreSQL Compose stack                                                                            |
-| E2E CI      | `e2e-ci.yml`      | Runs the browser E2E suite against the isolated Compose test stack, covering the Chromium desktop and mobile projects and the PostgreSQL plugin Firefox spec |
+| Workflow    | File              | Purpose                                                                                                                                                           |
+| ----------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Markdown CI | `markdown-ci.yml` | Checks Markdown formatting and linting, and lints all workflow files with `actionlint`                                                                            |
+| Frontend CI | `frontend-ci.yml` | Lints, type-checks, unit-tests, and builds the frontend                                                                                                           |
+| Backend CI  | `backend-ci.yml`  | Runs the Go server tests against an isolated MongoDB and PostgreSQL Compose stack                                                                                 |
+| E2E CI      | `e2e-ci.yml`      | Runs the browser E2E suite against the isolated Compose test stack, covering the Chromium desktop and mobile projects plus the Firefox desktop and touch projects |
 
 Markdown CI triggers on Markdown changes and on changes to any file matching `.github/workflows/*.yml`, so every workflow edit is validated in CI.
 Dependabot is configured in `.github/dependabot.yml` with weekly updates for the `github-actions` ecosystem and the npm ecosystems for the root, frontend, and e2e directories.
