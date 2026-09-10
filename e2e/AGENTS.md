@@ -46,9 +46,13 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 
 ### Fast local runs
 
-- Local runs default to two workers; CI defaults to one.
+- Local runs default to two workers.
   Use `--workers=4` to try more concurrency or `--workers=1` for sequential diagnosis; Firefox has no additional project-level cap.
   Existing serial test groups still run their own tests in order.
+- E2E CI runs the Chromium, Firefox desktop, and Firefox touch suites as three parallel matrix jobs, each on its own runner with its own isolated test stack.
+  Chromium and Firefox desktop run at two workers; Firefox touch stays at one worker because it matches a single serial spec file.
+  The Firefox desktop job sets `E2E_FRONTEND=bundled` so the recorded PostgreSQL access-transfer journeys stay within budget at two workers, while the other suites keep the default dev-server frontend.
+  The Chromium job is the only matrix job that saves the shared Nix, Go, npm, and migrator-image caches, so concurrent same-key saves cannot race.
 - Run a focused spec with `npm run test:e2e -- --project=firefox-desktop specs/timed-event-reprojection-firefox.spec.ts`, or select a title with `-g "<test title>"`.
 - Ordinary projects start Vite without a production build.
   Production-style checks live in `styling-production.spec.ts` and run in `chromium-production-desktop` and `chromium-production-mobile`, which share the `production-assets` build dependency.

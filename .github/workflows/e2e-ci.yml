@@ -30,10 +30,55 @@ concurrency:
 
 jobs:
   browser-e2e:
+    name: browser-e2e (${{ matrix.suite }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
     timeout-minutes: 60
+
+    # One job per browser suite, each on its own runner with its own isolated
+    # `timeful-test` Compose stack on the fixed isolated ports, so parallel
+    # jobs never share ports or a database. Duplicated setup compute is the
+    # deliberate trade-off: wall-clock is set by the slowest single suite
+    # instead of the sum of all suites.
+    strategy:
+      # Keep going when one suite fails so every suite still reports its result
+      # and uploads its failure artifacts.
+      fail-fast: false
+      matrix:
+        include:
+          # Chromium also owns the single-writer cache saves: every job
+          # restores the Nix, Go, npm, and image caches, but only this entry
+          # saves them, so concurrent same-key saves cannot race.
+          - suite: chromium
+            projects: >-
+              --project=chromium-desktop
+              --project=chromium-mobile
+              --project=chromium-production-desktop
+              --project=chromium-production-mobile
+            workers: "2"
+            frontend: ""
+            postgres-anonymous: "false"
+            save-cache: true
+          # PostgreSQL anonymous event creation is a stack-level setting read at
+          # global setup, so this suite stays its own job and never shares an
+          # invocation with the Mongo-backed suites. Bundled mode keeps the
+          # heavier access-transfer journeys within budget at two workers.
+          - suite: firefox-desktop
+            projects: --project=firefox-desktop
+            workers: "2"
+            frontend: bundled
+            postgres-anonymous: "true"
+            save-cache: false
+          # The touch suite matches a single serial spec file that cannot
+          # parallelize further, and it keeps Mongo-backed creation because its
+          # spec seeds guest responses through the standalone request fixture.
+          - suite: firefox-touch
+            projects: --project=firefox-touch
+            workers: "1"
+            frontend: ""
+            postgres-anonymous: "false"
+            save-cache: false
 
     steps:
       - name: Check out repository
@@ -47,9 +92,14 @@ jobs:
             keep-env-derivations = true
             keep-outputs = true
 
+      # Every matrix job restores the Nix store; only the designated
+      # single-writer job saves it back, so parallel jobs cannot race on the
+      # same cache key. `save` and `purge` are both gated on the designated
+      # writer because the action purges before it checks the save guard.
       - name: Restore and save Nix store
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
+          save: ${{ matrix['save-cache'] }}
           # restore and save a cache using this key
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           # if there's no cache hit, restore a cache by this prefix
@@ -58,8 +108,10 @@ jobs:
           # before trying to save a new cache
           # 1G = 1073741824
           gc-max-store-size-linux: 5G
-          # do purge caches
-          purge: true
+          # purge only on the designated single-writer job: the purge runs
+          # before the save guard, so a restore-only job must not purge caches
+          # it is not about to replace
+          purge: ${{ matrix['save-cache'] }}
           # purge all versions of the cache
           purge-prefixes: nix-${{ runner.os }}-
           # created more than this number of seconds ago
@@ -83,7 +135,9 @@ jobs:
       # The testbase target bakes no RUN layer at all (the E2E test container
       # mounts a cached GOMODCACHE volume instead), so the gha cache only
       # carries small blobs; buildx gha re-uploads every layer blob on each
-      # run, so large layers would make cache I/O the bottleneck.
+      # run, so large layers would make cache I/O the bottleneck. Only the
+      # designated single-writer job exports to the cache; every job still
+      # imports from it.
       - name: Set up Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
@@ -94,7 +148,7 @@ jobs:
           target: testbase
           tags: timeful-test-server-route-test
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ matrix['save-cache'] && 'type=gha,mode=max' || '' }}
           load: true
 
       # The migrator image is cached as a docker save/load tarball instead of
@@ -102,9 +156,10 @@ jobs:
       # never RUN-step results (the goose install), so every run recompiled
       # goose for ~55s. The tarball is keyed on the Dockerfile and migrations;
       # a miss rebuilds via Compose and saves ~70MB, a hit loads in seconds.
+      # Every job restores it; only the designated single-writer job saves it.
       - name: Restore migrator image
         id: migrator-image
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .migrator-image.tar
           key: migrator-image-linux-${{ hashFiles('server/Dockerfile', 'server/migrations/**') }}
@@ -117,6 +172,13 @@ jobs:
             docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml build postgres-test-migrate
             docker save timeful-test-postgres-test-migrate -o .migrator-image.tar
           fi
+
+      - name: Save migrator image
+        if: matrix['save-cache'] && steps.migrator-image.outputs.cache-primary-key != steps.migrator-image.outputs.cache-matched-key
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .migrator-image.tar
+          key: ${{ steps.migrator-image.outputs.cache-primary-key }}
 
       - name: Restore Go build cache
         id: go-build-cache
@@ -143,10 +205,11 @@ jobs:
 
       # The E2E steps' `nix run .#e2e` runs `npm ci` in frontend/ and e2e/,
       # which normally takes ~10s but a slow registry edge was observed taking
-      # 5m. Serve tarballs from a cached npm store instead, using the same
-      # restore/save pattern as the Go build cache above.
+      # 5m. Serve tarballs from a cached npm store instead. Every job restores
+      # it; only the designated single-writer job saves it back below.
       - name: Restore npm cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: npm-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json', 'e2e/package-lock.json') }}
@@ -188,36 +251,24 @@ jobs:
 
       # Playwright writes each run's artifacts (traces, screenshots, videos)
       # under E2E_ARTIFACTS_DIR (see e2e/config/tooling.ts); the upload step
-      # below collects them after failures.
-      - name: Run Chromium browser E2E suite
+      # below collects them after failures. `--workers` overrides the CI
+      # default of one worker per project. `E2E_FRONTEND=bundled` makes the
+      # webServer build and preview a test-mode frontend, and the PostgreSQL
+      # creation flag only takes effect in the firefox-desktop entry.
+      - name: Run ${{ matrix.suite }} browser E2E suite
         env:
           E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
-        run: nix run .#e2e -- --project=chromium-desktop --project=chromium-mobile --project=chromium-production-desktop --project=chromium-production-mobile
+          E2E_FRONTEND: ${{ matrix.frontend }}
+          E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: ${{ matrix['postgres-anonymous'] }}
+        run: nix run .#e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }}
 
-      # Firefox runs as a single invocation per project so the CI-default
-      # worker count (workers: 1) is untouched. The desktop run enables
-      # PostgreSQL anonymous event creation so its PostgreSQL-gated specs
-      # (postgres plugin, owner authority, visitor identities, access
-      # transfer) execute instead of skipping. The touch spec seeds guest
-      # responses through the standalone request fixture, which carries no
-      # PostgreSQL creation credential, so it keeps the default Mongo-backed
-      # creation mode.
-      - name: Run Firefox desktop browser E2E suite
-        env:
-          E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED: "true"
-          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
-        run: nix run .#e2e -- --project=firefox-desktop
-
-      - name: Run Firefox touch browser E2E suite
-        env:
-          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
-        run: nix run .#e2e -- --project=firefox-touch
-
+      # Parallel jobs upload under distinct names so the artifacts do not
+      # collide.
       - name: Upload Playwright failure artifacts
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: playwright-failure-artifacts
+          name: playwright-failure-artifacts-${{ matrix.suite }}
           path: ${{ runner.temp }}/e2e-artifacts
           retention-days: 7
           if-no-files-found: ignore
@@ -225,12 +276,14 @@ jobs:
       # Copy the warmed caches back out of the external volumes so the explicit
       # save steps below upload them for the next run. Runs after the E2E
       # steps so the isolated server's `go run` compile work is captured too.
+      # Only the designated single-writer job copies out and saves; the other
+      # jobs restore and seed their own volumes without writing caches back.
       # Skips exact primary-key hits (nothing new to save) and refuses to copy
       # out an empty volume, so an aborted run can never save an empty entry
       # over a key.
       - name: Copy warmed Go caches out of the external volumes
         id: go-cache-copyout
-        if: always()
+        if: always() && matrix['save-cache']
         run: |
           mkdir -p .go-build-cache .go-mod-cache
           if [ "${{ steps.go-build-cache.outputs.cache-primary-key }}" != "${{ steps.go-build-cache.outputs.cache-matched-key }}" ] \
@@ -253,18 +306,25 @@ jobs:
           fi
 
       - name: Save Go build cache
-        if: always() && steps.go-cache-copyout.outputs.build == 'true'
+        if: always() && matrix['save-cache'] && steps.go-cache-copyout.outputs.build == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .go-build-cache
           key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
 
       - name: Save Go module cache
-        if: always() && steps.go-cache-copyout.outputs.mod == 'true'
+        if: always() && matrix['save-cache'] && steps.go-cache-copyout.outputs.mod == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .go-mod-cache
           key: ${{ steps.go-mod-cache.outputs.cache-primary-key }}
+
+      - name: Save npm cache
+        if: always() && matrix['save-cache'] && steps.npm-cache.outputs.cache-primary-key != steps.npm-cache.outputs.cache-matched-key
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: ${{ steps.npm-cache.outputs.cache-primary-key }}
 
       - name: Dump one-shot service logs on failure
         if: failure()
