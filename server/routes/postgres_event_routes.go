@@ -659,6 +659,14 @@ type postgresResponseInput struct {
 	Availability   []primitive.DateTime `json:"availability"`
 	IfNeeded       []primitive.DateTime `json:"ifNeeded"`
 	SignUpBlockIDs []string             `json:"signUpBlockIds"`
+
+	// Availability-group calendar fields. ManualAvailability stays raw so the
+	// boundary can accept both the legacy millisecond-keyed map and the
+	// frontend ZonedDateTime-keyed transport encoding.
+	UseCalendarAvailability *bool                   `json:"useCalendarAvailability"`
+	EnabledCalendars        *map[string][]string    `json:"enabledCalendars"`
+	CalendarOptions         *models.CalendarOptions `json:"calendarOptions"`
+	ManualAvailability      json.RawMessage         `json:"manualAvailability"`
 }
 
 func postgresUpdateResponse(c *gin.Context) { postgresMutateResponse(c, "save") }
@@ -697,6 +705,10 @@ func postgresMutateResponse(c *gin.Context, operation string) {
 	}
 	if event.Type == pgstore.EventTypeSignup {
 		postgresMutateSignupResponse(c, repository, event, visitor, input, operation)
+		return
+	}
+	if event.Type == pgstore.EventTypeGroup {
+		postgresMutateGroupResponse(c, repository, event, visitor, input, operation)
 		return
 	}
 	publicID := input.ResponseID

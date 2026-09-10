@@ -1,4 +1,3 @@
-import { encodeVisitorResponseSubmission } from "@/composables/event/responseSubmissionBoundary"
 import {
   selectedVisitorResponse,
   selectVisitorResponse,
@@ -51,6 +50,8 @@ import {
 } from "./types"
 import {
   encodeEventResponseSubmissionPayload,
+  encodeVisitorGroupResponseSubmission,
+  encodeVisitorResponseSubmission,
   type EncodedEventResponseSubmissionPayload,
   type GuestResponseMutationResult,
   toEventResponseSubmissionPayload,
@@ -127,6 +128,7 @@ export interface UseAvailabilityDataOptions {
   groupCalendarEventsByDay: ComputedRef<Record<string, CalendarEventsByDay>>
   bufferTime: Ref<CalendarOptions["bufferTime"]>
   workingHours: Ref<CalendarOptions["workingHours"]>
+  sharedCalendarAccounts?: Ref<SharedCalendarAccounts>
   getAvailabilityFromCalendarEvents: (input: {
     calendarEventsByDay?: CalendarEventsByDay
     includeTouchedAvailability?: boolean
@@ -808,15 +810,33 @@ export function useAvailabilityData(opts: UseAvailabilityDataOptions) {
           .filter(Boolean)
           .join(" ")
       const name = guestPayload.name || fallbackName
+      const visitorPayload = opts.isGroup.value
+        ? encodeVisitorGroupResponseSubmission({
+            availability: availabilityArray.value,
+            ifNeeded: ifNeededArray.value,
+            responseId,
+            name,
+            email: guestPayload.email,
+            sharedCalendarAccounts:
+              sharedCalendarAccounts ??
+              opts.sharedCalendarAccounts?.value ??
+              {},
+            manualAvailability: manualAvailability.value,
+            calendarOptions: {
+              bufferTime: opts.bufferTime.value,
+              workingHours: opts.workingHours.value,
+            },
+          })
+        : encodeVisitorResponseSubmission({
+            availability: availabilityArray.value,
+            ifNeeded: ifNeededArray.value,
+            responseId,
+            name,
+            email: guestPayload.email,
+          })
       const result = await post<{ responseId: string }>(
         withEventVisitorIdentity(`/events/${eventId}/response`),
-        encodeVisitorResponseSubmission({
-          availability: availabilityArray.value,
-          ifNeeded: ifNeededArray.value,
-          responseId,
-          name,
-          email: guestPayload.email,
-        }),
+        visitorPayload,
       )
       selectVisitorResponse(eventId, result.responseId)
       opts.refreshEvent()

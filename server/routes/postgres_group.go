@@ -8,16 +8,22 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"timeful/server/accounts"
+	"timeful/server/db"
 	"timeful/server/errs"
 	"timeful/server/models"
 	pgstore "timeful/server/postgres"
+	"timeful/server/respondents"
 	"timeful/server/responses"
+	"timeful/server/services/calendar"
 	"timeful/server/services/listmonk"
 	"timeful/server/utils"
 )
@@ -309,4 +315,435 @@ func postgresDeclineInvite(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{})
+}
+
+// groupManualAvailability is the day-window map an availability group stores per
+// response. Each key is the millisecond instant a day starts and each value
+// holds the available instants inside that day.
+type groupManualAvailability = map[primitive.DateTime][]primitive.DateTime
+
+// decodeGroupManualAvailability normalizes the two JSON encodings the group
+// transport can produce: the legacy millisecond-keyed map whose values are
+// RFC3339 strings, and the frontend ZonedDateTime-keyed encoding whose values
+// are epoch milliseconds. Omitted or null input yields a nil map so an update
+// preserves the stored availability.
+func decodeGroupManualAvailability(raw json.RawMessage) (groupManualAvailability, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || string(trimmed) == "null" {
+		return nil, nil
+	}
+	var encoded map[string][]json.RawMessage
+	if err := json.Unmarshal(trimmed, &encoded); err != nil {
+		return nil, err
+	}
+	result := make(groupManualAvailability, len(encoded))
+	for key, values := range encoded {
+		day, err := parseGroupAvailabilityInstant(key)
+		if err != nil {
+			return nil, err
+		}
+		instants := make([]primitive.DateTime, 0, len(values))
+		for _, value := range values {
+			instant, ok, err := parseGroupAvailabilityValue(value)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				instants = append(instants, instant)
+			}
+		}
+		result[day] = instants
+	}
+	return result, nil
+}
+
+func parseGroupAvailabilityInstant(value string) (primitive.DateTime, error) {
+	trimmed := strings.TrimSpace(value)
+	if millis, err := strconv.ParseInt(trimmed, 10, 64); err == nil {
+		return primitive.DateTime(millis), nil
+	}
+	instant, err := parseGroupAvailabilityTime(trimmed)
+	if err != nil {
+		return 0, err
+	}
+	return primitive.NewDateTimeFromTime(instant), nil
+}
+
+func parseGroupAvailabilityValue(raw json.RawMessage) (primitive.DateTime, bool, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || string(trimmed) == "null" {
+		return 0, false, nil
+	}
+	var millis int64
+	if err := json.Unmarshal(trimmed, &millis); err == nil {
+		return primitive.DateTime(millis), true, nil
+	}
+	var encoded string
+	if err := json.Unmarshal(trimmed, &encoded); err != nil {
+		return 0, false, err
+	}
+	instant, err := parseGroupAvailabilityTime(encoded)
+	if err != nil {
+		return 0, false, err
+	}
+	return primitive.NewDateTimeFromTime(instant), true, nil
+}
+
+// parseGroupAvailabilityTime accepts RFC3339 instants and Temporal's RFC9557
+// ZonedDateTime string form whose trailing [timeZone] annotation Go cannot parse
+// on its own.
+func parseGroupAvailabilityTime(value string) (time.Time, error) {
+	trimmed := strings.TrimSpace(value)
+	if index := strings.LastIndex(trimmed, "["); index != -1 {
+		trimmed = trimmed[:index]
+	}
+	return time.Parse(time.RFC3339Nano, trimmed)
+}
+
+// mergeGroupManualAvailability applies the legacy day-window replacement: an
+// existing day inside a payload day's [start, start+window) span is replaced by
+// the payload day, and payload days that replace nothing are appended. Deletions
+// during iteration match the legacy map behavior so partially overlapping days
+// resolve the same way.
+func mergeGroupManualAvailability(window time.Duration, existing, incoming groupManualAvailability) groupManualAvailability {
+	merged := make(groupManualAvailability, len(existing)+len(incoming))
+	for day, times := range existing {
+		merged[day] = times
+	}
+	replacements := make(groupManualAvailability, len(incoming))
+	for day, times := range incoming {
+		replacements[day] = times
+	}
+	for day := range merged {
+		for payloadDay, availableTimes := range replacements {
+			endTime := payloadDay.Time().Add(window)
+			if day.Time().Compare(payloadDay.Time()) >= 0 && day.Time().Compare(endTime) <= 0 {
+				delete(merged, day)
+				merged[payloadDay] = availableTimes
+				delete(replacements, payloadDay)
+				break
+			}
+		}
+		if len(replacements) == 0 {
+			break
+		}
+	}
+	for day, times := range replacements {
+		merged[day] = times
+	}
+	return merged
+}
+
+// canonicalGroupResponseName resolves the guest display name for a group
+// mutation, preferring the supplied name and falling back to the stored name so
+// an explicit-selection edit may omit the unchanged name.
+func canonicalGroupResponseName(supplied string, value *models.Response) string {
+	if name := canonicalGuestName(supplied); name != "" {
+		return name
+	}
+	if value == nil {
+		return ""
+	}
+	return canonicalGuestName(value.Name)
+}
+
+// postgresSetGroupDecline writes the attendee decline state for the respondent's
+// account email. A respondent with no resolved account, or who is not an
+// attendee, is left untouched. Responding clears the decline state and leaving
+// sets it, matching legacy group behavior.
+func postgresSetGroupDecline(ctx context.Context, tx *pgstore.Repository, eventID string, stored *pgstore.Response, visitor *postgresVisitor, declined bool) error {
+	email := ""
+	if visitor != nil && visitor.externalUserID != "" {
+		email = postgresAccountEmail(ctx, visitor.externalUserID)
+	}
+	if email == "" && stored != nil && stored.AccountUserID != nil {
+		email = postgresAccountEmail(ctx, *stored.AccountUserID)
+	}
+	if email == "" {
+		return nil
+	}
+	if err := tx.SetAttendeeDeclined(ctx, eventID, email, declined); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+	return nil
+}
+
+// postgresMutateGroupResponse applies the explicit-selection contract to an
+// availability group. Account respondents persist with their account identity;
+// anonymous respondents persist with the shared canonical guest name. Saving a
+// response clears the respondent's attendee decline state and deleting it sets
+// the decline state (leaving the group). Calendar-derived mode, selected
+// calendars, copied calendar preferences, and the day-window merged manual
+// availability are persisted in the response payload.
+func postgresMutateGroupResponse(c *gin.Context, repository *pgstore.Repository, event *pgstore.Event, visitor *postgresVisitor, input postgresResponseInput, operation string) {
+	publicID := input.ResponseID
+	manualAvailability, err := decodeGroupManualAvailability(input.ManualAvailability)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, responses.Error{Error: "invalid-manual-availability"})
+		return
+	}
+	eventModel, err := postgresEventModel(event)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
+		return
+	}
+	manualWindow := time.Duration(0)
+	if eventModel.Duration != nil {
+		manualWindow = time.Duration(*eventModel.Duration) * time.Hour
+	}
+	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
+		locked, err := tx.LockEvent(ctx, event.ID)
+		if err != nil {
+			return err
+		}
+		if err := postgresWritableEvent(locked); err != nil {
+			return err
+		}
+		stored := &pgstore.Response{EventID: event.ID, EventVisitorIdentityID: visitor.identity.ID}
+		var value *models.Response
+		if input.CreateResponse {
+			if !visitor.authorized {
+				return guestForbidden{"visitor-credential-required"}
+			}
+		} else {
+			stored, err = tx.GetResponseByPublicID(ctx, event.ID, input.ResponseID)
+			if err != nil {
+				return err
+			}
+			authorized, err := visitor.controls(ctx, tx, stored.EventVisitorIdentityID)
+			if err != nil {
+				return err
+			}
+			if !authorized {
+				return guestForbidden{"response-credential-required"}
+			}
+			value, _, err = postgresResponseModel(*stored)
+			if err != nil {
+				return err
+			}
+		}
+		if value == nil {
+			value = &models.Response{}
+		}
+		if operation == "delete" {
+			if err := tx.DeleteResponse(ctx, stored.ID); err != nil {
+				return err
+			}
+			locked.NumResponses--
+			if err := tx.UpdateEvent(ctx, locked); err != nil {
+				return err
+			}
+			return postgresSetGroupDecline(ctx, tx, locked.ID, stored, visitor, true)
+		}
+		if operation == "rename" {
+			validated := respondents.ValidateGuestName(input.NewName)
+			if validated.Code != respondents.GuestNameValid {
+				return guestNameError{guestNameValidationErrorMessage(validated.Code)}
+			}
+			value.Name = validated.Name
+			if stored.RespondentKind == pgstore.RespondentKindGuest {
+				stored.CanonicalGuestName = &validated.Name
+			}
+		} else {
+			if input.CreateResponse {
+				if visitor.externalUserID != "" {
+					accountUserID := visitor.externalUserID
+					stored.RespondentKind = pgstore.RespondentKindAccount
+					stored.AccountUserID = &accountUserID
+					stored.CanonicalGuestName = nil
+					value.Email = postgresAccountEmail(ctx, visitor.externalUserID)
+				} else {
+					if err := applyPostgresGroupGuestName(stored, value, input.Name); err != nil {
+						return err
+					}
+					value.Email = input.Email
+				}
+			} else {
+				switch stored.RespondentKind {
+				case pgstore.RespondentKindAccount:
+					if stored.AccountUserID == nil || *stored.AccountUserID == "" {
+						accountUserID := visitor.externalUserID
+						stored.AccountUserID = &accountUserID
+					}
+					if stored.AccountUserID != nil {
+						value.Email = postgresAccountEmail(ctx, *stored.AccountUserID)
+					}
+				default:
+					if err := applyPostgresGroupGuestName(stored, value, input.Name); err != nil {
+						return err
+					}
+					value.Email = input.Email
+				}
+			}
+			value.Availability, value.IfNeeded = normalizeTimedResponseAvailabilitySlots(input.Availability, input.IfNeeded)
+			existing := groupManualAvailability(nil)
+			if value.ManualAvailability != nil {
+				existing = groupManualAvailability(*value.ManualAvailability)
+			}
+			merged := mergeGroupManualAvailability(manualWindow, existing, manualAvailability)
+			value.ManualAvailability = &merged
+			value.UseCalendarAvailability = input.UseCalendarAvailability
+			value.EnabledCalendars = input.EnabledCalendars
+			value.CalendarOptions = input.CalendarOptions
+		}
+		stored.Payload, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		if input.CreateResponse {
+			if err := tx.CreateResponse(ctx, stored); err != nil {
+				return err
+			}
+			publicID = stored.PublicID
+			locked.NumResponses++
+			if err := tx.UpdateEvent(ctx, locked); err != nil {
+				return err
+			}
+		} else if err := tx.UpdateResponse(ctx, stored); err != nil {
+			return err
+		}
+		if operation == "save" {
+			return postgresSetGroupDecline(ctx, tx, locked.ID, stored, visitor, false)
+		}
+		return nil
+	})
+	if err != nil {
+		postgresMutationError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"responseId": publicID, "eventVisitorId": visitor.identity.PublicID})
+}
+
+func applyPostgresGroupGuestName(stored *pgstore.Response, value *models.Response, supplied string) error {
+	validated := respondents.ValidateGuestName(canonicalGroupResponseName(supplied, value))
+	if validated.Code != respondents.GuestNameValid {
+		return guestNameError{guestNameValidationErrorMessage(validated.Code)}
+	}
+	stored.RespondentKind = pgstore.RespondentKindGuest
+	stored.AccountUserID = nil
+	stored.CanonicalGuestName = &validated.Name
+	value.Name = validated.Name
+	return nil
+}
+
+// postgresGetCalendarAvailabilities resolves each PostgreSQL group response's
+// account through the explicit legacy mapping to the retained MongoDB calendar
+// connection, then returns the response's enabled calendar events keyed by the
+// opaque response publicId so clients can match them to the PostgreSQL response
+// map. Other members' event names are redacted, matching legacy behavior.
+func postgresGetCalendarAvailabilities(c *gin.Context) {
+	query := struct {
+		TimeMin time.Time `form:"timeMin" binding:"required"`
+		TimeMax time.Time `form:"timeMax" binding:"required"`
+	}{}
+	if err := c.BindQuery(&query); err != nil {
+		return
+	}
+	repository := postgresRepository(c)
+	if repository == nil {
+		return
+	}
+	event := postgresEvent(c, repository)
+	if event == nil {
+		return
+	}
+	if event.Type != pgstore.EventTypeGroup {
+		c.JSON(http.StatusBadRequest, responses.Error{Error: errs.EventNotGroup})
+		return
+	}
+	visitor, err := resolvePostgresVisitor(c, repository, event)
+	if err != nil {
+		postgresMutationError(c, err)
+		return
+	}
+	stored, err := repository.ListResponses(c.Request.Context(), event.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-responses"})
+		return
+	}
+	type calendarRequest struct {
+		publicID      string
+		authorized    bool
+		user          *models.User
+		enabledSet    models.Set[string]
+		enabledSubIDs models.Set[string]
+	}
+	requests := make([]calendarRequest, 0, len(stored))
+	for _, response := range stored {
+		if response.AccountUserID == nil || *response.AccountUserID == "" {
+			continue
+		}
+		var value models.Response
+		if err := json.Unmarshal(response.Payload, &value); err != nil {
+			continue
+		}
+		if !utils.Coalesce(value.UseCalendarAvailability) {
+			continue
+		}
+		user := db.GetUserById(*response.AccountUserID)
+		if user == nil {
+			continue
+		}
+		enabledAccounts := make([]string, 0)
+		enabledSubIDs := make([]string, 0)
+		for accountKey, subIDs := range utils.Coalesce(value.EnabledCalendars) {
+			enabledAccounts = append(enabledAccounts, accountKey)
+			enabledSubIDs = append(enabledSubIDs, subIDs...)
+		}
+		authorized, err := visitor.controls(c.Request.Context(), repository, response.EventVisitorIdentityID)
+		if err != nil {
+			postgresMutationError(c, err)
+			return
+		}
+		requests = append(requests, calendarRequest{
+			publicID:      response.PublicID,
+			authorized:    authorized,
+			user:          user,
+			enabledSet:    utils.ArrayToSet(enabledAccounts),
+			enabledSubIDs: utils.ArrayToSet(enabledSubIDs),
+		})
+	}
+	type calendarResult struct {
+		publicID string
+		events   map[string]calendar.CalendarEventsWithError
+	}
+	results := make(chan calendarResult, len(requests))
+	for _, request := range requests {
+		request := request
+		go func() {
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					results <- calendarResult{publicID: request.publicID}
+				}
+			}()
+			events, _ := calendar.GetUsersCalendarEvents(request.user, request.enabledSet, query.TimeMin, query.TimeMax)
+			results <- calendarResult{publicID: request.publicID, events: events}
+		}()
+	}
+	authorizedByPublicID := make(map[string]bool, len(requests))
+	enabledByPublicID := make(map[string]models.Set[string], len(requests))
+	for _, request := range requests {
+		authorizedByPublicID[request.publicID] = request.authorized
+		enabledByPublicID[request.publicID] = request.enabledSubIDs
+	}
+	result := make(map[string][]models.CalendarEvent, len(requests))
+	for i := 0; i < len(requests); i++ {
+		calendarEvents := <-results
+		events := make([]models.CalendarEvent, 0)
+		for _, entry := range calendarEvents.events {
+			events = append(events, entry.CalendarEvents...)
+		}
+		filtered := make([]models.CalendarEvent, 0, len(events))
+		for _, event := range events {
+			if _, ok := enabledByPublicID[calendarEvents.publicID][event.CalendarId]; !ok {
+				continue
+			}
+			if !authorizedByPublicID[calendarEvents.publicID] {
+				event.Summary = "BUSY"
+			}
+			filtered = append(filtered, event)
+		}
+		result[calendarEvents.publicID] = filtered
+	}
+	c.JSON(http.StatusOK, result)
 }

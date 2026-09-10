@@ -388,6 +388,7 @@ const avail = useAvailabilityData({
   groupCalendarEventsByDay: calEvents.groupCalendarEventsByDay,
   bufferTime: calEvents.bufferTime,
   workingHours: calEvents.workingHours,
+  sharedCalendarAccounts: calEvents.sharedCalendarAccounts,
   getAvailabilityFromCalendarEvents:
     calEvents.getAvailabilityFromCalendarEvents,
   refreshEvent: () => {

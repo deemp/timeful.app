@@ -35,6 +35,7 @@ import { fetchUserFolders } from "@/utils/services/FolderService"
 import { toScheduleOverlapEvent } from "@/composables/schedule_overlap/types"
 import {
   encodeEventResponseSubmissionPayload,
+  encodeVisitorGroupResponseSubmission,
   encodeVisitorSignUpResponseSubmission,
   toEventResponseSubmissionPayload,
   toGroupResponseSubmissionPayload,
@@ -1051,6 +1052,46 @@ describe("transport and timezone regression boundaries", () => {
     expect(payload.calendarOptions).toEqual(
       toRawCalendarOptions(calendarOptions),
     )
+    expect(
+      payload.manualAvailability["2026-01-03T00:00:00+00:00[UTC]"],
+    ).toEqual([epochMs("2026-01-03T09:00:00Z")])
+  })
+
+  it("merges group calendar and manual availability into the visitor selection payload", () => {
+    const calendarOptions = {
+      bufferTime: { enabled: true, time: 15 },
+      workingHours: { enabled: true, startTime: 9, endTime: 17 },
+    }
+
+    const payload = encodeVisitorGroupResponseSubmission({
+      availability: [zdt("2026-01-03T09:00:00Z")],
+      ifNeeded: [],
+      responseId: "response-1",
+      name: "Ada",
+      email: "ada@example.com",
+      sharedCalendarAccounts: {
+        "ada@example.com_google": {
+          enabled: true,
+          subCalendars: { primary: { enabled: true } },
+        },
+      },
+      manualAvailability: new ZdtMap([
+        [
+          zdt("2026-01-03T00:00:00Z"),
+          new ZdtSet([zdt("2026-01-03T09:00:00Z")]),
+        ],
+      ]),
+      calendarOptions,
+    })
+
+    expect(payload).toMatchObject({
+      responseId: "response-1",
+      createResponse: false,
+      availability: ["2026-01-03T09:00:00Z"],
+      useCalendarAvailability: true,
+      enabledCalendars: { "ada@example.com_google": ["primary"] },
+      calendarOptions: toRawCalendarOptions(calendarOptions),
+    })
     expect(
       payload.manualAvailability["2026-01-03T00:00:00+00:00[UTC]"],
     ).toEqual([epochMs("2026-01-03T09:00:00Z")])

@@ -53,11 +53,9 @@ export interface GuestResponseMutationResult {
   guestCredentials?: GuestResponseCredentials
 }
 
-export interface GroupResponseSubmissionPayload {
-  guest?: false
+export interface GroupResponseSubmissionPayload extends GroupAvailabilityPayloadBase {
   manualAvailability: Record<string, number[]>
   calendarOptions: RawCalendarOptions
-  [key: string]: unknown
 }
 
 export interface SignUpBlockResponseSubmissionPayload {
@@ -188,6 +186,39 @@ export function encodeVisitorResponseSubmission(input: {
     createResponse: !input.responseId,
     name: validateGuestName(input.name).normalizedName,
     email: input.email,
+  }
+}
+
+export interface VisitorGroupResponseSubmissionPayload
+  extends
+    ReturnType<typeof encodeVisitorResponseSubmission>,
+    GroupAvailabilityPayloadBase {
+  manualAvailability: Record<string, number[]>
+  calendarOptions: RawCalendarOptions
+}
+
+// encodeVisitorGroupResponseSubmission keeps the explicit-selection visitor
+// contract and adds the availability-group manual availability and
+// calendar-derived fields so PostgreSQL group responses persist the same data as
+// legacy group responses.
+export function encodeVisitorGroupResponseSubmission(input: {
+  availability: Temporal.ZonedDateTime[]
+  ifNeeded: Temporal.ZonedDateTime[]
+  responseId?: string
+  name: string
+  email?: string
+  sharedCalendarAccounts: SharedCalendarAccounts
+  manualAvailability: ZdtMap<ZdtSet>
+  calendarOptions: CalendarOptions
+}): VisitorGroupResponseSubmissionPayload {
+  const groupPayload = toGroupResponseSubmissionPayload({
+    sharedCalendarAccounts: input.sharedCalendarAccounts,
+    manualAvailability: input.manualAvailability,
+    calendarOptions: input.calendarOptions,
+  })
+  return {
+    ...encodeVisitorResponseSubmission(input),
+    ...groupPayload,
   }
 }
 
