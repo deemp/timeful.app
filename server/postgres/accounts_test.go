@@ -169,6 +169,74 @@ func TestAccountRepositoryIncrementsUsageCounter(t *testing.T) {
 	}
 }
 
+// TestFindOrCreateAccountDoesNotUpdateExistingRow proves that re-running the
+// account backfill against an existing account leaves the stored row untouched
+// instead of performing a needless update on conflict.
+func TestFindOrCreateAccountDoesNotUpdateExistingRow(t *testing.T) {
+	ctx, repo, tx := newAccountsTestRepository(t)
+	if _, err := repo.FindOrCreateAccount(ctx, "777777777777777777777777", Account{Email: "no-op@example.com", FirstName: "Original"}); err != nil {
+		t.Fatal(err)
+	}
+	var accountBefore, identityBefore string
+	if err := tx.QueryRow(ctx, `SELECT ctid::text FROM accounts`).Scan(&accountBefore); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.QueryRow(ctx, `SELECT ctid::text FROM platform_identities`).Scan(&identityBefore); err != nil {
+		t.Fatal(err)
+	}
+	repeated, err := repo.FindOrCreateAccount(ctx, "777777777777777777777777", Account{Email: "ignored@example.com", FirstName: "Ignored"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var accountAfter, identityAfter string
+	if err := tx.QueryRow(ctx, `SELECT ctid::text FROM accounts`).Scan(&accountAfter); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.QueryRow(ctx, `SELECT ctid::text FROM platform_identities`).Scan(&identityAfter); err != nil {
+		t.Fatal(err)
+	}
+	if repeated.FirstName != "Original" {
+		t.Fatalf("repeat upsert changed the account: %#v", repeated)
+	}
+	if accountBefore != accountAfter {
+		t.Fatalf("repeat upsert performed a needless account update: ctid %s -> %s", accountBefore, accountAfter)
+	}
+	if identityBefore != identityAfter {
+		t.Fatalf("repeat upsert performed a needless platform identity update: ctid %s -> %s", identityBefore, identityAfter)
+	}
+}
+
+// TestUpdateAccountProfilePreservesUsageCounter proves that a profile update
+// cannot change or reset the authoritative usage counter.
+func TestUpdateAccountProfilePreservesUsageCounter(t *testing.T) {
+	ctx, repo, _ := newAccountsTestRepository(t)
+	account, err := repo.FindOrCreateAccount(ctx, "888888888888888888888888", Account{Email: "counter@example.com", FirstName: "Before"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.IncrementAccountEventsCreated(ctx, account.ExternalUserID); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.IncrementAccountEventsCreated(ctx, account.ExternalUserID); err != nil {
+		t.Fatal(err)
+	}
+	account.FirstName = "After"
+	account.NumEventsCreated = 0 // A stale merged value must not reset the stored counter.
+	if err := repo.UpdateAccountProfile(ctx, account); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := repo.GetAccountByExternalUserID(ctx, account.ExternalUserID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.FirstName != "After" {
+		t.Fatalf("profile update did not persist: %#v", stored)
+	}
+	if stored.NumEventsCreated != 2 {
+		t.Fatalf("profile update changed the usage counter: got %d want 2", stored.NumEventsCreated)
+	}
+}
+
 func TestFindOrCreateAccountByEmailReusesExistingAccount(t *testing.T) {
 	ctx, repo, _ := newAccountsTestRepository(t)
 	first, created, err := repo.FindOrCreateAccountByEmail(ctx, "reuse@example.com", "555555555555555555555555", Account{Email: "reuse@example.com", FirstName: "First"})

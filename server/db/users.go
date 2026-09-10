@@ -142,6 +142,28 @@ func UpdateUserIntegrationFields(user *models.User) error {
 	return err
 }
 
+// RemoveUserCalendarAccount removes one calendar connection key from the
+// retained integration document. It is the key-removal half of the
+// integration-only write boundary, so removing a calendar never rewrites the
+// PostgreSQL-owned profile.
+func RemoveUserCalendarAccount(userId primitive.ObjectID, calendarAccountKey string) error {
+	if calendarAccountKey == "" {
+		return errors.New("calendar account key is required")
+	}
+	_, err := UsersCollection.UpdateOne(context.Background(), bson.M{"_id": userId}, bson.A{
+		bson.M{"$set": bson.M{
+			"calendarAccounts": bson.M{
+				"$setField": bson.M{
+					"field": calendarAccountKey,
+					"input": "$$ROOT.calendarAccounts",
+					"value": "$$REMOVE",
+				},
+			},
+		}},
+	})
+	return err
+}
+
 // accountByExternalUserID resolves the authoritative PostgreSQL account. A
 // deliberately uninitialized pool reports the pre-cutover state and a missing
 // account row reports a genuine not-found; both return no account. Every other

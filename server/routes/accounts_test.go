@@ -105,6 +105,15 @@ func decodeAccountString(t *testing.T, data map[string]json.RawMessage, key stri
 	return value
 }
 
+func decodeAccountInt(t *testing.T, data map[string]json.RawMessage, key string) int {
+	t.Helper()
+	var value int
+	if err := json.Unmarshal(data[key], &value); err != nil {
+		t.Fatalf("decode %s: %v", key, err)
+	}
+	return value
+}
+
 func insertOtpCode(t *testing.T, email, code string) {
 	t.Helper()
 	ctx := context.Background()
@@ -333,6 +342,107 @@ func TestAccountDuplicateEmailDoesNotMerge(t *testing.T) {
 	}
 	if count != 2 {
 		t.Fatalf("equal-email accounts must stay distinct, got %d", count)
+	}
+}
+
+// TestAccountCalendarRemovalWritesIntegrationOnly proves that removing a
+// calendar account removes only the retained integration field and leaves the
+// PostgreSQL profile, including the usage counter, unchanged.
+func TestAccountCalendarRemovalWritesIntegrationOnly(t *testing.T) {
+	router := newAccountContractRouter(t)
+	client := newAccountContractClient(t, router)
+
+	email := "calendar-removal-" + primitive.NewObjectID().Hex() + "@example.com"
+	primaryKey := email + "_google"
+	legacy := models.User{
+		Id:                primitive.NewObjectID(),
+		Email:             email,
+		FirstName:         "Legacy",
+		LastName:          "User",
+		PrimaryAccountKey: &primaryKey,
+		CalendarAccounts: map[string]models.CalendarAccount{
+			primaryKey: {CalendarType: models.GoogleCalendarType, Email: email},
+		},
+	}
+	if _, err := db.UsersCollection.InsertOne(context.Background(), legacy); err != nil {
+		t.Fatal(err)
+	}
+	externalUserID := legacy.Id.Hex()
+	t.Cleanup(func() {
+		_, _ = db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": legacy.Id})
+		deleteAccountTestFixtures(t, externalUserID)
+	})
+
+	client.request(http.MethodPost, "/test/account-contract/sign-in/"+externalUserID, nil, http.StatusOK)
+	// The first authenticated request adopts the legacy document's profile.
+	client.request(http.MethodGet, "/api/user/profile", nil, http.StatusOK)
+	repository := repositoryForTest(t)
+	account, err := repository.GetAccountByExternalUserID(context.Background(), externalUserID)
+	if err != nil {
+		t.Fatalf("session did not adopt a PostgreSQL account: %v", err)
+	}
+	if err := repository.IncrementAccountEventsCreated(context.Background(), account.ExternalUserID); err != nil {
+		t.Fatal(err)
+	}
+
+	client.request(http.MethodDelete, "/api/user/remove-calendar-account", map[string]any{
+		"email": email, "calendarType": models.GoogleCalendarType,
+	}, http.StatusOK)
+
+	var retained models.User
+	if err := db.UsersCollection.FindOne(context.Background(), bson.M{"_id": legacy.Id}).Decode(&retained); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := retained.CalendarAccounts[primaryKey]; ok {
+		t.Fatalf("calendar account still present in retained document: %#v", retained.CalendarAccounts)
+	}
+	if len(retained.CalendarAccounts) != 0 {
+		t.Fatalf("removal changed other integration fields: %#v", retained.CalendarAccounts)
+	}
+
+	stored, err := repository.GetAccountByExternalUserID(context.Background(), externalUserID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Email != email || stored.FirstName != "Legacy" || stored.NumEventsCreated != 1 {
+		t.Fatalf("calendar removal changed the PostgreSQL profile: %#v", stored)
+	}
+}
+
+// TestAccountProfileCounterIsPostgresAuthoritative proves that the profile
+// reports the PostgreSQL usage counter instead of a MongoDB-derived count, and
+// that a profile update cannot change it.
+func TestAccountProfileCounterIsPostgresAuthoritative(t *testing.T) {
+	router := newAccountContractRouter(t)
+	client := newAccountContractClient(t, router)
+	email := "counter-" + primitive.NewObjectID().Hex() + "@example.com"
+
+	verifyOtpSignIn(t, client, email, "123456")
+	repository := repositoryForTest(t)
+	account, err := repository.GetAccountByEmail(context.Background(), email)
+	if err != nil {
+		t.Fatalf("account not created in PostgreSQL: %v", err)
+	}
+	objectID := accountObjectID(t, account.ExternalUserID)
+	t.Cleanup(func() {
+		_, _ = db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": objectID})
+		deleteAccountTestFixtures(t, account.ExternalUserID)
+	})
+
+	for i := 0; i < 2; i++ {
+		if err := repository.IncrementAccountEventsCreated(context.Background(), account.ExternalUserID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	read := client.request(http.MethodGet, "/api/user/profile", nil, http.StatusOK)
+	if got := decodeAccountInt(t, read, "numEventsCreated"); got != 2 {
+		t.Fatalf("profile numEventsCreated = %d, want the PostgreSQL counter 2", got)
+	}
+
+	client.request(http.MethodPatch, "/api/user/name", map[string]any{"firstName": "Custom", "lastName": "Person"}, http.StatusOK)
+	read = client.request(http.MethodGet, "/api/user/profile", nil, http.StatusOK)
+	if got := decodeAccountInt(t, read, "numEventsCreated"); got != 2 {
+		t.Fatalf("profile update changed numEventsCreated to %d", got)
 	}
 }
 

@@ -57,10 +57,8 @@ func getProfile(c *gin.Context) {
 	userInterface, _ := c.Get("authUser")
 	user := userInterface.(*models.User)
 
-	// Get number of events created this month
-	eventsCreatedThisMonth := db.GetEventsCreatedThisMonth(user.Id)
-	user.NumEventsCreated = eventsCreatedThisMonth
-
+	// The usage counter is PostgreSQL-authoritative. The retained MongoDB
+	// document must not supply or override numEventsCreated.
 	db.UpdateDailyUserLog(user)
 
 	c.JSON(http.StatusOK, user)
@@ -611,17 +609,10 @@ func removeCalendarAccount(c *gin.Context) {
 		calendarAccountKey = utils.GetCalendarAccountKey(payload.Email, payload.CalendarType)
 	}
 
-	db.UsersCollection.UpdateByID(context.Background(), authUser.Id, bson.A{
-		bson.M{"$set": bson.M{
-			"calendarAccounts": bson.M{
-				"$setField": bson.M{
-					"field": calendarAccountKey,
-					"input": "$$ROOT.calendarAccounts",
-					"value": "$$REMOVE",
-				},
-			},
-		}},
-	})
+	// Retained integration field removal only; the profile stays in PostgreSQL.
+	if err := db.RemoveUserCalendarAccount(authUser.Id, calendarAccountKey); err != nil {
+		logger.StdErr.Panicln(err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{})
 }

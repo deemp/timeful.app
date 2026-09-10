@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"crypto/rand"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -130,24 +129,6 @@ func GetAttendees(eventId string) []models.Attendee {
 	}
 
 	return attendees
-}
-
-func GetEventsCreatedThisMonth(userId primitive.ObjectID) int {
-	// Get the start of this month
-	now := time.Now()
-	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-
-	result, err := EventsCollection.CountDocuments(context.Background(), bson.M{
-		"ownerId": userId,
-		"_id": bson.M{
-			"$gte": primitive.NewObjectIDFromTimestamp(startOfMonth),
-		},
-	})
-	if err != nil {
-		logger.StdErr.Panicln(err)
-	}
-
-	return int(result)
 }
 
 // Crockford base32 alphabet, omitting the ambiguous I, L, O, and U

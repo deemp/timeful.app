@@ -83,7 +83,7 @@ func (r *Repository) FindOrCreateAccount(ctx context.Context, externalUserID str
 	if _, err := r.db.Exec(ctx, `INSERT INTO accounts
  (platform_identity_id, email, first_name, last_name, picture, has_custom_name, timezone_offset, num_events_created)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (platform_identity_id) DO UPDATE SET platform_identity_id = EXCLUDED.platform_identity_id`,
+ON CONFLICT (platform_identity_id) DO NOTHING`,
 		platform.ID, initial.Email, initial.FirstName, initial.LastName, initial.Picture, initial.HasCustomName, initial.TimezoneOffset, initial.NumEventsCreated); err != nil {
 		return nil, err
 	}

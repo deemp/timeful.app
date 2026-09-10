@@ -10,9 +10,15 @@ func (r *Repository) FindOrCreatePlatformIdentity(ctx context.Context, externalU
 		return nil, errors.New("authenticated external user ID is required")
 	}
 	value := &PlatformIdentity{}
-	err := r.db.QueryRow(ctx, `INSERT INTO platform_identities (external_user_id) VALUES ($1)
- ON CONFLICT (external_user_id) DO UPDATE SET external_user_id = EXCLUDED.external_user_id
- RETURNING id, external_user_id, created_at`, externalUserID).Scan(&value.ID, &value.ExternalUserID, &value.CreatedAt)
+	err := r.db.QueryRow(ctx, `WITH inserted AS (
+ INSERT INTO platform_identities (external_user_id) VALUES ($1)
+ ON CONFLICT (external_user_id) DO NOTHING
+ RETURNING id, external_user_id, created_at
+)
+SELECT id, external_user_id, created_at FROM inserted
+UNION ALL
+SELECT id, external_user_id, created_at FROM platform_identities WHERE external_user_id = $1
+LIMIT 1`, externalUserID).Scan(&value.ID, &value.ExternalUserID, &value.CreatedAt)
 	return value, err
 }
 
