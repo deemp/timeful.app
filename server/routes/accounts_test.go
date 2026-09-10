@@ -39,6 +39,17 @@ func newAccountContractRouter(t *testing.T) *gin.Engine {
 	InitAuth(apiRouter)
 	InitUser(apiRouter)
 	InitUsers(apiRouter)
+
+	// Test-only session seeding must be registered before the router starts
+	// serving so the route table is immutable while requests are handled.
+	router.POST("/test/account-contract/sign-in/:id", func(c *gin.Context) {
+		session := sessions.Default(c)
+		session.Set("userId", c.Param("id"))
+		if err := session.Save(); err != nil {
+			t.Error(err)
+		}
+		c.JSON(http.StatusOK, gin.H{})
+	})
 	return router
 }
 
@@ -105,6 +116,31 @@ func insertOtpCode(t *testing.T, email, code string) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() {
+		_, _ = db.OtpCodesCollection.DeleteMany(context.Background(), bson.M{"email": email})
+	})
+}
+
+// deleteAccountTestFixtures removes every created PostgreSQL account and its
+// platform identity. The repository deliberately retains platform identities in
+// production, so tests that create them must clean them up explicitly to stay
+// rerunnable against a retained database.
+func deleteAccountTestFixtures(t *testing.T, externalUserIDs ...string) {
+	t.Helper()
+	repository, err := pgstore.DefaultRepository()
+	if err != nil {
+		t.Errorf("resolve repository for account cleanup: %v", err)
+		return
+	}
+	ctx := context.Background()
+	for _, externalUserID := range externalUserIDs {
+		if err := repository.DeleteAccountByExternalUserID(ctx, externalUserID); err != nil {
+			t.Errorf("delete account %s: %v", externalUserID, err)
+		}
+		if _, err := pgstore.Pool.Exec(ctx, `DELETE FROM platform_identities WHERE external_user_id = $1`, externalUserID); err != nil {
+			t.Errorf("delete platform identity %s: %v", externalUserID, err)
+		}
+	}
 }
 
 func verifyOtpSignIn(t *testing.T, client *accountContractClient, email, code string) map[string]json.RawMessage {
@@ -137,10 +173,10 @@ func TestAccountOtpSignInUsesPostgresAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("account not created in PostgreSQL: %v", err)
 	}
+	objectID := accountObjectID(t, account.ExternalUserID)
 	t.Cleanup(func() {
-		_, _ = db.OtpCodesCollection.DeleteMany(context.Background(), bson.M{"email": email})
-		_, _ = db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": accountObjectID(t, account.ExternalUserID)})
-		_ = repository.DeleteAccountByExternalUserID(context.Background(), account.ExternalUserID)
+		_, _ = db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": objectID})
+		deleteAccountTestFixtures(t, account.ExternalUserID)
 	})
 
 	// The retained integration document must not carry profile authority.
@@ -204,16 +240,17 @@ func TestAccountExistingSessionAdoptionResolvesAccount(t *testing.T) {
 	router := newAccountContractRouter(t)
 	client := newAccountContractClient(t, router)
 
-	primaryKey := "legacy@example.com_google"
+	email := "legacy-" + primitive.NewObjectID().Hex() + "@example.com"
+	primaryKey := email + "_google"
 	legacy := models.User{
 		Id:                primitive.NewObjectID(),
-		Email:             "legacy@example.com",
+		Email:             email,
 		FirstName:         "Legacy",
 		LastName:          "User",
 		TimezoneOffset:    120,
 		PrimaryAccountKey: &primaryKey,
 		CalendarAccounts: map[string]models.CalendarAccount{
-			primaryKey: {CalendarType: models.GoogleCalendarType, Email: "legacy@example.com"},
+			primaryKey: {CalendarType: models.GoogleCalendarType, Email: email},
 		},
 	}
 	if _, err := db.UsersCollection.InsertOne(context.Background(), legacy); err != nil {
@@ -222,18 +259,7 @@ func TestAccountExistingSessionAdoptionResolvesAccount(t *testing.T) {
 	externalUserID := legacy.Id.Hex()
 	t.Cleanup(func() {
 		_, _ = db.UsersCollection.DeleteOne(context.Background(), bson.M{"_id": legacy.Id})
-		if repository, err := pgstore.DefaultRepository(); err == nil {
-			_ = repository.DeleteAccountByExternalUserID(context.Background(), externalUserID)
-		}
-	})
-
-	router.POST("/test/account-contract/sign-in/:id", func(c *gin.Context) {
-		session := sessions.Default(c)
-		session.Set("userId", c.Param("id"))
-		if err := session.Save(); err != nil {
-			t.Error(err)
-		}
-		c.JSON(http.StatusOK, gin.H{})
+		deleteAccountTestFixtures(t, externalUserID)
 	})
 
 	client.request(http.MethodPost, "/test/account-contract/sign-in/"+externalUserID, nil, http.StatusOK)
@@ -241,7 +267,7 @@ func TestAccountExistingSessionAdoptionResolvesAccount(t *testing.T) {
 	if got := decodeAccountString(t, profile, "firstName"); got != "Legacy" {
 		t.Fatalf("adopted profile firstName = %q", got)
 	}
-	if got := decodeAccountString(t, profile, "email"); got != "legacy@example.com" {
+	if got := decodeAccountString(t, profile, "email"); got != email {
 		t.Fatalf("adopted profile email = %q", got)
 	}
 	var calendarAccounts map[string]json.RawMessage
@@ -289,13 +315,11 @@ func TestAccountDuplicateEmailDoesNotMerge(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	retainedIDs := bson.A{accountObjectID(t, older.ExternalUserID), accountObjectID(t, newer.ExternalUserID)}
 	t.Cleanup(func() {
-		_ = repository.DeleteAccountByExternalUserID(context.Background(), older.ExternalUserID)
-		_ = repository.DeleteAccountByExternalUserID(context.Background(), newer.ExternalUserID)
-		if _, err := db.UsersCollection.DeleteMany(context.Background(), bson.M{"_id": bson.M{"$in": bson.A{
-			accountObjectID(t, older.ExternalUserID), accountObjectID(t, newer.ExternalUserID),
-		}}}); err != nil {
-			t.Fatal(err)
+		deleteAccountTestFixtures(t, older.ExternalUserID, newer.ExternalUserID)
+		if _, err := db.UsersCollection.DeleteMany(context.Background(), bson.M{"_id": bson.M{"$in": retainedIDs}}); err != nil {
+			t.Errorf("delete retained users: %v", err)
 		}
 	})
 

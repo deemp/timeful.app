@@ -367,7 +367,7 @@ Mongo-backed route tests and browser E2E use the isolated Compose overlay.
 It runs `mongo-test` and `postgres-test` in the `timeful-test` project and uses test-only volumes, never either development database volume. `.env.test` supplies the complete server and PostgreSQL role configuration.
 E2E creates a fresh `timeful-test-*` PostgreSQL database for each run.
 
-Route tests:
+Backend tests:
 
 ```sh
 cp .env.test.example .env.test
@@ -375,6 +375,8 @@ docker volume create timeful-test-go-build-cache timeful-test-go-mod-cache
 POSTGRES_TEST_DATABASE=timeful-test-postgres docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml up -d mongo-test postgres-test postgres-test-bootstrap postgres-test-migrate
 POSTGRES_TEST_DATABASE=timeful-test-postgres docker compose --env-file .env.test -f compose.yaml -f compose.test.yaml run --rm server-route-test
 ```
+
+`server-route-test` runs `go test ./... -count=1`, so the route suite, the PostgreSQL account repository, and the account backfill packages all run against the isolated stack.
 
 Do not gate this sequence on `docker compose wait postgres-test-migrate`.
 Compose `wait` only lists running containers, so the one-shot migrate container has usually already exited by the time the command runs and the command fails with `no containers for project`.

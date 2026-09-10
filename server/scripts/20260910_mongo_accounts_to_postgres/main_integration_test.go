@@ -34,7 +34,9 @@ func TestMigrateAccountsIsResumableAndIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mongoClient.Disconnect(ctx)
+	// Register disconnects as cleanups so they run after the fixture cleanup
+	// below; a plain defer would close the clients before the deletes execute.
+	t.Cleanup(func() { _ = mongoClient.Disconnect(ctx) })
 	database := mongoClient.Database(baseDatabase + "_account_backfill")
 	if err := database.Drop(ctx); err != nil {
 		t.Fatal(err)
@@ -44,7 +46,7 @@ func TestMigrateAccountsIsResumableAndIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer pool.Close()
+	t.Cleanup(pool.Close)
 
 	first := models.User{Id: primitive.NewObjectID(), Email: "backfill-one@example.com", FirstName: "One"}
 	second := models.User{Id: primitive.NewObjectID(), Email: "backfill-two@example.com", FirstName: "Two"}
@@ -55,9 +57,15 @@ func TestMigrateAccountsIsResumableAndIdempotent(t *testing.T) {
 	}
 	externalIDs := []string{first.Id.Hex(), second.Id.Hex()}
 	t.Cleanup(func() {
-		_ = database.Drop(ctx)
-		_, _ = pool.Exec(ctx, `DELETE FROM accounts WHERE platform_identity_id IN (SELECT id FROM platform_identities WHERE external_user_id = ANY($1))`, externalIDs)
-		_, _ = pool.Exec(ctx, `DELETE FROM platform_identities WHERE external_user_id = ANY($1)`, externalIDs)
+		if err := database.Drop(ctx); err != nil {
+			t.Errorf("drop backfill source database: %v", err)
+		}
+		if _, err := pool.Exec(ctx, `DELETE FROM accounts WHERE platform_identity_id IN (SELECT id FROM platform_identities WHERE external_user_id = ANY($1))`, externalIDs); err != nil {
+			t.Errorf("delete backfill accounts: %v", err)
+		}
+		if _, err := pool.Exec(ctx, `DELETE FROM platform_identities WHERE external_user_id = ANY($1)`, externalIDs); err != nil {
+			t.Errorf("delete backfill platform identities: %v", err)
+		}
 	})
 
 	config := configuration{apply: true, batchSize: 1, mongoDB: baseDatabase + "_account_backfill", postgresURI: postgresURI}
