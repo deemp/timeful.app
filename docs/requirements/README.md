@@ -232,6 +232,7 @@ For guidance on authoring functional requirements, read [`functional/README.md`]
 | [FR-120](functional/fr/FR-120.md) | Separate non-consecutive [Projected Date Columns](../terminology/glossary.md#projected-date-column) with a [Sub-grid Gap](../terminology/glossary.md#sub-grid-gap)                                                                  | frontend          |
 | [FR-121](functional/fr/FR-121.md) | Serve migrated core records from a single authoritative store                                                                                                                                                                       | backend           |
 | [FR-122](functional/fr/FR-122.md) | Resolve retained MongoDB records to the authoritative account                                                                                                                                                                       | backend           |
+| [FR-123](functional/fr/FR-123.md) | Delete an account                                                                                                                                                                                                                   | frontend, backend |
 
 ## Quality Requirements
 

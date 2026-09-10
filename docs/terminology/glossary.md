@@ -384,6 +384,13 @@ It can be associated with [Event Visitor Identities](#event-visitor-identity) fo
 
 Authoritative context: [FR-079](../requirements/functional/fr/FR-079.md).
 
+### Account Profile
+
+The account's profile fields: email, first name, last name, picture, timezone offset, custom-name preference, and usage counter.
+It is distinct from the [Platform Visitor Identity](#platform-visitor-identity).
+
+Authoritative context: [FR-123](../requirements/functional/fr/FR-123.md).
+
 ### Authenticated Platform Visitor
 
 A [Platform Visitor](#platform-visitor) signed in with a [Platform Visitor Identity](#platform-visitor-identity).
@@ -499,6 +506,14 @@ Authoritative context: [FR-007](../requirements/functional/fr/FR-007.md).
 A registration or sign-in link sent by email that authenticates its recipient for the linked flow.
 
 Authoritative context: [FR-031](../requirements/functional/fr/FR-031.md) and [FR-032](../requirements/functional/fr/FR-032.md).
+
+## Integrations
+
+### Calendar Connection
+
+A linked external calendar together with the provider credentials and visibility preferences the account uses to read it.
+
+Authoritative context: [FR-123](../requirements/functional/fr/FR-123.md).
 
 ## Responses
 
