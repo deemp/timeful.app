@@ -190,3 +190,30 @@ export function encodeVisitorResponseSubmission(input: {
     email: input.email,
   }
 }
+
+export interface VisitorSignUpResponseSubmissionPayload {
+  responseId?: string
+  createResponse: boolean
+  signUpBlockIds: string[]
+  name?: string
+  email?: string
+}
+
+// encodeVisitorSignUpResponseSubmission maps a sign-up block selection onto the
+// PostgreSQL explicit-selection contract: a new response carries
+// createResponse=true, and any later submission carries the target responseId so
+// the server edits instead of overwriting by name.
+export function encodeVisitorSignUpResponseSubmission(input: {
+  responseId?: string
+  signUpBlockId: string
+  name?: string
+  email?: string
+}): VisitorSignUpResponseSubmissionPayload {
+  return {
+    responseId: input.responseId,
+    createResponse: !input.responseId,
+    signUpBlockIds: [input.signUpBlockId],
+    name: input.name ? validateGuestName(input.name).normalizedName : undefined,
+    email: input.email,
+  }
+}

@@ -292,17 +292,13 @@ func guestPublicID(t *testing.T, repository *pgstore.Repository, eventID string)
 }
 
 // TestPostgresSignupLifecycleAndAuthorization proves archive/unarchive and
-// deletion operate on PostgreSQL with existing owner authorization, that
-// strangers are rejected, and that signup response mutation stays guarded until
-// its dedicated subtask.
+// deletion operate on PostgreSQL with existing owner authorization, and that
+// strangers are rejected.
 func TestPostgresSignupLifecycleAndAuthorization(t *testing.T) {
 	router := signedInPostgresEventRouter(t)
 	owner, _ := createSignedInAccount(t, router)
 	eventID, _, _ := createSignupPostgresEvent(t, owner, "Lifecycle signup "+primitive.NewObjectID().Hex(), nil)
 	path := "/api/events/" + eventID
-
-	// Signup response mutation is out of scope for this subtask.
-	owner.request(http.MethodPost, path+"/response", map[string]any{"createResponse": true, "name": "Ada"}, http.StatusNotImplemented)
 
 	owner.request(http.MethodPost, path+"/archive", map[string]bool{"archive": true}, http.StatusOK)
 	archived := owner.request(http.MethodGet, path, nil, http.StatusOK)
@@ -362,4 +358,240 @@ func TestPostgresSignupDashboardListsRespondedForm(t *testing.T) {
 	if got := dashboardEventField(t, row, "_id"); got != eventID {
 		t.Fatalf("responded signup _id = %q, want %q", got, eventID)
 	}
+}
+
+// TestPostgresSignupAccountResponseLifecycle proves a signed-in account can
+// create, update block membership, and delete a signup response through the
+// explicit-selection contract, that the read exposes its publicId with canEdit,
+// and that signup responses do not change num_responses.
+func TestPostgresSignupAccountResponseLifecycle(t *testing.T) {
+	router := signedInPostgresEventRouter(t)
+	owner, ownerAccount := createSignedInAccount(t, router)
+	eventID, _, blocks := createSignupPostgresEvent(t, owner, "Account signup "+primitive.NewObjectID().Hex(), []map[string]any{
+		signupBlockPayload("Morning", intPtr(2), "2026-01-05T09:00:00Z", "2026-01-05T10:00:00Z"),
+		signupBlockPayload("Afternoon", intPtr(2), "2026-01-05T13:00:00Z", "2026-01-05T14:00:00Z"),
+	})
+	path := "/api/events/" + eventID
+
+	created := owner.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{blocks[0].ID},
+	}, http.StatusOK)
+	responseID := decodeAccountString(t, created, "responseId")
+	if responseID == "" {
+		t.Fatal("account signup creation did not return a response identifier")
+	}
+
+	read := owner.request(http.MethodGet, path, nil, http.StatusOK)
+	responses := decodeSignupReadResponses(t, read)
+	account, ok := responses[ownerAccount.ExternalUserID]
+	if !ok {
+		t.Fatalf("account signup response missing from read: %#v", responses)
+	}
+	if account.PublicID != responseID {
+		t.Fatalf("read publicId = %q, want %q", account.PublicID, responseID)
+	}
+	if !account.CanEdit {
+		t.Fatal("account signup response must be editable by its account")
+	}
+	if ids := account.SignUpBlockIDs; len(ids) != 1 || ids[0] != blocks[0].ID {
+		t.Fatalf("account signup block ids = %#v", ids)
+	}
+	var numResponses int
+	if err := json.Unmarshal(read["numResponses"], &numResponses); err != nil {
+		t.Fatal(err)
+	}
+	if numResponses != 0 {
+		t.Fatalf("signup responses changed numResponses to %d", numResponses)
+	}
+
+	owner.request(http.MethodPost, path+"/response", map[string]any{
+		"responseId":     responseID,
+		"signUpBlockIds": []string{blocks[1].ID},
+	}, http.StatusOK)
+	read = owner.request(http.MethodGet, path, nil, http.StatusOK)
+	account = decodeSignupReadResponses(t, read)[ownerAccount.ExternalUserID]
+	if ids := account.SignUpBlockIDs; len(ids) != 1 || ids[0] != blocks[1].ID {
+		t.Fatalf("updated account signup block ids = %#v", ids)
+	}
+
+	owner.request(http.MethodDelete, path+"/response", map[string]any{"responseId": responseID}, http.StatusOK)
+	read = owner.request(http.MethodGet, path, nil, http.StatusOK)
+	if _, ok := decodeSignupReadResponses(t, read)[ownerAccount.ExternalUserID]; ok {
+		t.Fatal("deleted account signup response survived")
+	}
+}
+
+// TestPostgresSignupGuestResponseLifecycle proves an anonymous guest can create,
+// update block membership, rename, and delete a signup response through the
+// explicit-selection contract, that reads expose its publicId with canEdit only
+// to the owning visitor, and that duplicate guest names map to the existing
+// duplicate-name error.
+func TestPostgresSignupGuestResponseLifecycle(t *testing.T) {
+	router := signedInPostgresEventRouter(t)
+	owner, _ := createSignedInAccount(t, router)
+	eventID, stored, blocks := createSignupPostgresEvent(t, owner, "Guest signup "+primitive.NewObjectID().Hex(), []map[string]any{
+		signupBlockPayload("Morning", intPtr(2), "2026-01-05T09:00:00Z", "2026-01-05T10:00:00Z"),
+		signupBlockPayload("Afternoon", intPtr(2), "2026-01-05T13:00:00Z", "2026-01-05T14:00:00Z"),
+	})
+	path := "/api/events/" + eventID
+
+	guest := newAccountContractClient(t, router)
+	guestRead := guest.request(http.MethodGet, path, nil, http.StatusOK)
+	if decodeAccountString(t, guestRead, "eventVisitorId") == "" {
+		t.Fatal("guest read did not return an event visitor identity")
+	}
+	created := guest.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "  Ada Lovelace  ",
+		"email":          "ada@example.com",
+	}, http.StatusOK)
+	responseID := decodeAccountString(t, created, "responseId")
+	if responseID == "" {
+		t.Fatal("guest signup creation did not return a response identifier")
+	}
+
+	repository := repositoryForTest(t)
+	ctx := context.Background()
+	storedResponse, err := repository.GetSignupResponseByPublicID(ctx, stored.ID, responseID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if storedResponse.RespondentKind != pgstore.RespondentKindGuest || storedResponse.CanonicalGuestName == nil || *storedResponse.CanonicalGuestName != "Ada Lovelace" {
+		t.Fatalf("stored guest response = %#v", storedResponse)
+	}
+
+	ownerRead := owner.request(http.MethodGet, path, nil, http.StatusOK)
+	ownerGuest, ok := decodeSignupReadResponses(t, ownerRead)["Ada Lovelace"]
+	if !ok {
+		t.Fatal("owner read missing canonical guest signup response")
+	}
+	if ownerGuest.PublicID != responseID {
+		t.Fatalf("owner read publicId = %q, want %q", ownerGuest.PublicID, responseID)
+	}
+	if ownerGuest.CanEdit {
+		t.Fatal("owner gained edit authority over an unrelated guest response")
+	}
+
+	guestRead = guest.request(http.MethodGet, path, nil, http.StatusOK)
+	ownGuest := decodeSignupReadResponses(t, guestRead)["Ada Lovelace"]
+	if !ownGuest.CanEdit {
+		t.Fatal("guest did not receive canEdit for its own response")
+	}
+
+	guest.request(http.MethodPost, path+"/response", map[string]any{
+		"responseId":     responseID,
+		"signUpBlockIds": []string{blocks[1].ID},
+		"name":           "Ada Lovelace",
+	}, http.StatusOK)
+	storedResponse, err = repository.GetSignupResponseByPublicID(ctx, stored.ID, responseID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(storedResponse.BlockIDs) != 1 || storedResponse.BlockIDs[0] != blocks[1].ID {
+		t.Fatalf("guest block membership not updated: %#v", storedResponse.BlockIDs)
+	}
+
+	guest.request(http.MethodPost, path+"/rename-user", map[string]any{"responseId": responseID, "newName": "Grace Hopper"}, http.StatusOK)
+	ownerRead = owner.request(http.MethodGet, path, nil, http.StatusOK)
+	ownerResponses := decodeSignupReadResponses(t, ownerRead)
+	if _, ok := ownerResponses["Grace Hopper"]; !ok {
+		t.Fatal("renamed guest response missing from read")
+	}
+	if _, ok := ownerResponses["Ada Lovelace"]; ok {
+		t.Fatal("old guest name survived rename")
+	}
+
+	duplicate := newAccountContractClient(t, router)
+	duplicate.request(http.MethodGet, path, nil, http.StatusOK)
+	duplicate.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "Grace Hopper",
+	}, http.StatusBadRequest)
+
+	guest.request(http.MethodDelete, path+"/response", map[string]any{"responseId": responseID}, http.StatusOK)
+	ownerRead = owner.request(http.MethodGet, path, nil, http.StatusOK)
+	if _, ok := decodeSignupReadResponses(t, ownerRead)["Grace Hopper"]; ok {
+		t.Fatal("deleted guest signup response survived")
+	}
+}
+
+// TestPostgresSignupResponseAuthorization proves a public event visitor
+// identifier never authorizes mutating another visitor's signup response and
+// that the explicit-selection contract rejects ambiguous mutations.
+func TestPostgresSignupResponseAuthorization(t *testing.T) {
+	router := signedInPostgresEventRouter(t)
+	owner, _ := createSignedInAccount(t, router)
+	eventID, _, blocks := createSignupPostgresEvent(t, owner, "Authorized signup "+primitive.NewObjectID().Hex(), []map[string]any{
+		signupBlockPayload("Morning", intPtr(2), "2026-01-05T09:00:00Z", "2026-01-05T10:00:00Z"),
+	})
+	path := "/api/events/" + eventID
+
+	guest := newAccountContractClient(t, router)
+	guestRead := guest.request(http.MethodGet, path, nil, http.StatusOK)
+	guestVisitorID := decodeAccountString(t, guestRead, "eventVisitorId")
+	created := guest.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "Ada Lovelace",
+	}, http.StatusOK)
+	responseID := decodeAccountString(t, created, "responseId")
+
+	stranger := newAccountContractClient(t, router)
+	strangerPath := path + "?eventVisitorId=" + guestVisitorID
+	stranger.request(http.MethodGet, strangerPath, nil, http.StatusOK)
+	stranger.request(http.MethodPost, path+"/response?eventVisitorId="+guestVisitorID, map[string]any{
+		"responseId":     responseID,
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "Stolen",
+	}, http.StatusForbidden)
+	stranger.request(http.MethodDelete, path+"/response?eventVisitorId="+guestVisitorID, map[string]any{"responseId": responseID}, http.StatusForbidden)
+	stranger.request(http.MethodPost, path+"/rename-user?eventVisitorId="+guestVisitorID, map[string]any{"responseId": responseID, "newName": "Mallory"}, http.StatusForbidden)
+
+	guest.request(http.MethodPost, path+"/response", map[string]any{
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "Ambiguous",
+	}, http.StatusBadRequest)
+	guest.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"responseId":     responseID,
+		"signUpBlockIds": []string{blocks[0].ID},
+	}, http.StatusBadRequest)
+	guest.request(http.MethodDelete, path+"/response", map[string]any{}, http.StatusBadRequest)
+}
+
+// TestPostgresSignupCapacityAndBlockValidation proves capacity is enforced
+// atomically at the route boundary and that a block from another event is
+// reported as a bad request.
+func TestPostgresSignupCapacityAndBlockValidation(t *testing.T) {
+	router := signedInPostgresEventRouter(t)
+	owner, _ := createSignedInAccount(t, router)
+	eventID, _, blocks := createSignupPostgresEvent(t, owner, "Capacity signup "+primitive.NewObjectID().Hex(), []map[string]any{
+		signupBlockPayload("Morning", intPtr(1), "2026-01-05T09:00:00Z", "2026-01-05T10:00:00Z"),
+		signupBlockPayload("Afternoon", intPtr(1), "2026-01-05T13:00:00Z", "2026-01-05T14:00:00Z"),
+	})
+	path := "/api/events/" + eventID
+
+	first := newAccountContractClient(t, router)
+	first.request(http.MethodGet, path, nil, http.StatusOK)
+	first.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "Ada Lovelace",
+	}, http.StatusOK)
+
+	second := newAccountContractClient(t, router)
+	second.request(http.MethodGet, path, nil, http.StatusOK)
+	second.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{blocks[0].ID},
+		"name":           "Grace Hopper",
+	}, http.StatusConflict)
+	second.request(http.MethodPost, path+"/response", map[string]any{
+		"createResponse": true,
+		"signUpBlockIds": []string{"00000000-0000-0000-0000-000000000000"},
+		"name":           "Grace Hopper",
+	}, http.StatusBadRequest)
 }

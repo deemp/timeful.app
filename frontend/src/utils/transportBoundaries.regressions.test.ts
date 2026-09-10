@@ -35,6 +35,7 @@ import { fetchUserFolders } from "@/utils/services/FolderService"
 import { toScheduleOverlapEvent } from "@/composables/schedule_overlap/types"
 import {
   encodeEventResponseSubmissionPayload,
+  encodeVisitorSignUpResponseSubmission,
   toEventResponseSubmissionPayload,
   toGroupResponseSubmissionPayload,
   toSignUpBlockResponseSubmissionPayload,
@@ -316,6 +317,37 @@ describe("transport and timezone regression boundaries", () => {
         },
       }).name,
     ).toBe("Ada")
+  })
+
+  it("creates a sign-up response when no response is selected", () => {
+    expect(
+      encodeVisitorSignUpResponseSubmission({
+        signUpBlockId: "block_1",
+        name: "  Ada  ",
+        email: "ada@example.com",
+      }),
+    ).toEqual({
+      responseId: undefined,
+      createResponse: true,
+      signUpBlockIds: ["block_1"],
+      name: "Ada",
+      email: "ada@example.com",
+    })
+  })
+
+  it("selects an existing sign-up response by id instead of creating", () => {
+    expect(
+      encodeVisitorSignUpResponseSubmission({
+        responseId: "response_1",
+        signUpBlockId: "block_2",
+      }),
+    ).toEqual({
+      responseId: "response_1",
+      createResponse: false,
+      signUpBlockIds: ["block_2"],
+      name: undefined,
+      email: undefined,
+    })
   })
 
   it("exposes an explicit time seed alongside decoded event dates", () => {

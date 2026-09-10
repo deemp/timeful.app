@@ -1301,7 +1301,8 @@ paths:
         type: string
       - description: Object containing info about the event response to update; PostgreSQL
           events require responseId or createResponse=true and return responseId with
-          eventVisitorId
+          eventVisitorId; signup form blocks require explicit-selection authority
+          and validate membership under atomic capacity
         in: body
         name: payload
         required: true
@@ -1353,7 +1354,12 @@ paths:
           description: OK
         "400":
           description: select-response-or-explicitly-create when a PostgreSQL mutation
-            omits both responseId and createResponse
+            omits both responseId and createResponse, or signup-block-not-found
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "409":
+          description: signup-slot-full when a selected signup block is already at
+            capacity
           schema:
             $ref: '#/definitions/responses.Error'
       summary: Updates the current user's availability
@@ -1847,6 +1853,12 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "404":
+          description: Folder not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Failed to delete folder
           schema:
@@ -1918,6 +1930,12 @@ paths:
           description: OK
         "400":
           description: Invalid user ID or folder ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Folder not found
           schema:
             additionalProperties:
               type: string

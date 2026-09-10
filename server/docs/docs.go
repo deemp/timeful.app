@@ -1297,7 +1297,7 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "description": "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId",
+                        "description": "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId; signup form blocks require explicit-selection authority and validate membership under atomic capacity",
                         "name": "payload",
                         "in": "body",
                         "required": true,
@@ -1370,7 +1370,13 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "400": {
-                        "description": "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse",
+                        "description": "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse, or signup-block-not-found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "signup-slot-full when a selected signup block is already at capacity",
                         "schema": {
                             "$ref": "#/definitions/responses.Error"
                         }
@@ -2177,6 +2183,15 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "404": {
+                        "description": "Folder not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Failed to delete folder",
                         "schema": {
@@ -2231,6 +2246,15 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid user ID or folder ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Folder not found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

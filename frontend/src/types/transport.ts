@@ -75,7 +75,10 @@ export type RawResponse = Schemas["models.Response"] & {
   guestOwnershipMode?: "legacy" | "token"
 }
 export type RawSignUpBlock = Schemas["models.SignUpBlock"]
-export type RawSignUpResponse = Schemas["models.SignUpResponse"]
+export type RawSignUpResponse = Schemas["models.SignUpResponse"] & {
+  publicId?: string
+  canEdit?: boolean
+}
 export type RawCalendarAccount = Schemas["models.CalendarAccount"]
 export type RawCalendarEvent = Schemas["models.CalendarEvent"]
 export type RawCalendarOptions = Schemas["models.CalendarOptions"]

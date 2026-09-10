@@ -1005,9 +1005,10 @@ func getResponses(c *gin.Context) {
 // @Produce json
 // @Param eventId path string true "Event ID"
 // @Param eventVisitorId query string false "PostgreSQL browser Event Visitor Identity public ID"
-// @Param payload body object{responseId=string,createResponse=bool,availability=[]string,ifNeeded=[]string,guest=bool,name=string,email=string,useCalendarAvailability=bool,enabledCalendars=map[string][]string,manualAvailability=map[string][]string,calendarOptions=models.CalendarOptions,signUpBlockIds=[]string} true "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId"
+// @Param payload body object{responseId=string,createResponse=bool,availability=[]string,ifNeeded=[]string,guest=bool,name=string,email=string,useCalendarAvailability=bool,enabledCalendars=map[string][]string,manualAvailability=map[string][]string,calendarOptions=models.CalendarOptions,signUpBlockIds=[]string} true "Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId; signup form blocks require explicit-selection authority and validate membership under atomic capacity"
 // @Success 200
-// @Failure 400 {object} responses.Error "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse"
+// @Failure 400 {object} responses.Error "select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse, or signup-block-not-found"
+// @Failure 409 {object} responses.Error "signup-slot-full when a selected signup block is already at capacity"
 // @Router /events/{eventId}/response [post]
 func updateEventResponse(c *gin.Context) {
 	payload := struct {

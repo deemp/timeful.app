@@ -1224,7 +1224,7 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            /** @description Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId */
+            /** @description Object containing info about the event response to update; PostgreSQL events require responseId or createResponse=true and return responseId with eventVisitorId; signup form blocks require explicit-selection authority and validate membership under atomic capacity */
             requestBody: {
                 content: {
                     "application/json": {
@@ -1255,8 +1255,17 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse */
+                /** @description select-response-or-explicitly-create when a PostgreSQL mutation omits both responseId and createResponse, or signup-block-not-found */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["responses.Error"];
+                    };
+                };
+                /** @description signup-slot-full when a selected signup block is already at capacity */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2169,6 +2178,17 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Folder not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            [key: string]: string;
+                        };
+                    };
+                };
                 /** @description Failed to delete folder */
                 500: {
                     headers: {
@@ -2214,6 +2234,17 @@ export interface paths {
                 };
                 /** @description Invalid user ID or folder ID */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            [key: string]: string;
+                        };
+                    };
+                };
+                /** @description Folder not found */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
