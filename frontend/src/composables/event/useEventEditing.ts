@@ -67,7 +67,10 @@ export function useEventEditing(opts: UseEventEditingOptions) {
     const so = opts.scheduleOverlapRef.value
     if (!so) return
     const ev = opts.event.value
-    if (!opts.authUser.value || ev?.eventVisitorId) {
+    if (
+      !opts.authUser.value ||
+      (ev?.eventVisitorId && !opts.userHasResponded.value)
+    ) {
       so.clearSelectedGuestOwnership()
       opts.curGuestId.value = ""
     }

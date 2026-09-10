@@ -230,7 +230,7 @@
                     </v-btn>
                   </div>
                   <div
-                    v-else-if="
+                    v-if="
                       !isPhone &&
                       (!isSignUp || canEditAvailability) &&
                       !isReadOnlyEvent
@@ -1284,6 +1284,10 @@ const canEditMetadata = computed(() =>
 )
 const userHasResponded = computed(() => {
   const ev = loader.event.value
+  // PostgreSQL serves account responses under their opaque public identifiers, so
+  // the server-derived flag is authoritative there; the legacy response-map key
+  // check remains for MongoDB events.
+  if (ev?.hasResponded) return true
   return Boolean(
     authUser.value?._id && ev?.responses && authUser.value._id in ev.responses,
   )

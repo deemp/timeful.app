@@ -65,6 +65,7 @@ interface EventTestState {
   name: string
   type: string
   daysOnly?: boolean
+  hasResponded?: boolean
   dates?: Temporal.PlainDate[]
   responses: Record<string, EventTestResponse>
   blindAvailabilityEnabled: boolean
@@ -3423,6 +3424,52 @@ describe("Event guest edit action", () => {
     expect(wrapper.find("#copy-link-btn").exists()).toBe(false)
   })
 
+  it("renders the availability action for group events so members can add availability", async () => {
+    routeState.value = { name: "group", query: {} }
+    loaderEventState.value = {
+      ...createDefaultEventState(),
+      type: eventTypes.GROUP,
+      responses: {},
+    }
+
+    const wrapper = shallowMount(EventView, {
+      props: {
+        eventId: "dEeaF",
+      },
+      global: {
+        stubs: {
+          ScheduleOverlap: ScheduleOverlapStub,
+          NewDialog: true,
+          GuestDialog: true,
+          SignUpForSlotDialog: true,
+          SignInNotSupportedDialog: true,
+          MarkAvailabilityDialog: true,
+          InvitationDialog: true,
+          HelpDialog: true,
+          EventDescription: true,
+          AccessDenied: true,
+          NotSignedIn: true,
+          RouterLink: true,
+          "v-chip": true,
+          "v-icon": true,
+          "v-card": true,
+          "v-card-title": true,
+          "v-card-text": true,
+          "v-card-actions": true,
+          "v-dialog": true,
+          "v-spacer": true,
+          "v-btn": buttonSemanticStub,
+        },
+      },
+    })
+
+    await flushDeferredMount()
+
+    expect(wrapper.find("#desktop-primary-availability-btn").exists()).toBe(
+      true,
+    )
+  })
+
   it("keeps metadata editing available for events created while not signed in", async () => {
     loaderEventState.value = {
       ...loaderEventState.value,
@@ -3600,6 +3647,52 @@ describe("Event guest edit action", () => {
 
     expect(wrapper.find("#event-description-stub").exists()).toBe(false)
     expect(wrapper.find('[data-invitation-open="true"]').exists()).toBe(true)
+  })
+
+  it("does not auto-open the group invitation dialog for a PostgreSQL viewer reported as responded", async () => {
+    routeState.value = { name: "group", query: {} }
+    loaderEventState.value = {
+      ...createDefaultEventState(),
+      type: eventTypes.GROUP,
+      ownerId: "owner-1",
+      hasResponded: true,
+      responses: {},
+    }
+
+    const wrapper = shallowMount(EventView, {
+      props: {
+        eventId: "dEeaF",
+      },
+      global: {
+        stubs: {
+          ScheduleOverlap: ScheduleOverlapStub,
+          NewDialog: true,
+          GuestDialog: true,
+          SignUpForSlotDialog: true,
+          SignInNotSupportedDialog: true,
+          MarkAvailabilityDialog: true,
+          InvitationDialog: invitationDialogStub,
+          HelpDialog: true,
+          EventDescription: eventDescriptionStub,
+          AccessDenied: true,
+          NotSignedIn: true,
+          RouterLink: true,
+          "v-chip": true,
+          "v-icon": true,
+          "v-card": true,
+          "v-card-title": true,
+          "v-card-text": true,
+          "v-card-actions": true,
+          "v-dialog": true,
+          "v-spacer": true,
+          "v-btn": true,
+        },
+      },
+    })
+
+    await flushDeferredMount()
+
+    expect(wrapper.find('[data-invitation-open="true"]').exists()).toBe(false)
   })
 
   it("owns global listeners from mount through unmount and runs bootstrap on mount", async () => {

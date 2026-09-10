@@ -8,6 +8,7 @@
       :items="searchedContacts"
       item-title="queryString"
       item-value="queryString"
+      data-testid="email-input-combobox"
       class="timeful-solo-field timeful-invalid-field tw:mt-2 tw:text-sm"
       placeholder="Type an email address and press enter..."
       multiple

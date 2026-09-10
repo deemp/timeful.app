@@ -3,7 +3,7 @@
 import { flushPromises, mount } from "@vue/test-utils"
 import { ref } from "vue"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { CalendarAccount, User } from "@/types"
+import type { CalendarAccount, Event, User } from "@/types"
 import {
   buttonStubWithDisabled,
   mergeComponentStubs,
@@ -11,6 +11,7 @@ import {
 } from "@/test/componentStubs"
 import InvitationDialog from "./InvitationDialog.vue"
 import { cloneCalendarAccounts } from "@/components/settings/useCalendarAccountsState"
+import { createLocalStorageMock } from "@/test/localStorage"
 
 const { authUserRef, post, push, replace } = vi.hoisted(() => ({
   authUserRef: { value: null as User | null },
@@ -99,7 +100,7 @@ const CalendarAccountsStub = {
   `,
 }
 
-const mountInvitationDialog = () =>
+const mountInvitationDialog = (groupOverrides: Partial<Event> = {}) =>
   mount(InvitationDialog, {
     props: {
       modelValue: true,
@@ -108,6 +109,7 @@ const mountInvitationDialog = () =>
         _id: "group-1",
         name: "Writers room",
         attendees: [{ email: "guest@example.com" }],
+        ...groupOverrides,
       },
     },
     global: {
@@ -132,6 +134,7 @@ describe("InvitationDialog", () => {
     post.mockReset()
     push.mockReset()
     replace.mockReset()
+    globalThis.localStorage = createLocalStorageMock()
     const calendarAccounts: Record<string, CalendarAccount> = {
       "owner@example.com_google": {
         email: "owner@example.com",
@@ -204,6 +207,38 @@ describe("InvitationDialog", () => {
       authUserRef.value?.calendarAccounts?.["owner@example.com_google"]
         .subCalendars?.["sub-1"].enabled,
     ).toBe(true)
+    expect(wrapper.emitted("refreshEvent")).toEqual([[]])
+    expect(wrapper.emitted("update:modelValue")).toEqual([[false]])
+  })
+
+  it("uses the explicit-selection visitor contract for a PostgreSQL group accept", async () => {
+    localStorage.setItem("timeful.eventVisitor.group-1", "visitor-1")
+    post.mockResolvedValueOnce({ responseId: "response-1" })
+    const wrapper = mountInvitationDialog({ eventVisitorId: "visitor-1" })
+
+    const acceptButton = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("Accept Invitation"))
+    if (acceptButton == null) {
+      throw new Error("Missing Accept Invitation button")
+    }
+    await acceptButton.trigger("click")
+    await flushPromises()
+
+    expect(post).toHaveBeenCalledWith(
+      "/events/group-1/response?eventVisitorId=visitor-1",
+      {
+        guest: false,
+        useCalendarAvailability: true,
+        enabledCalendars: {
+          "owner@example.com_google": ["sub-1"],
+        },
+        createResponse: true,
+      },
+    )
+    expect(localStorage.getItem("timeful.selectedResponse.group-1")).toBe(
+      "response-1",
+    )
     expect(wrapper.emitted("refreshEvent")).toEqual([[]])
     expect(wrapper.emitted("update:modelValue")).toEqual([[false]])
   })

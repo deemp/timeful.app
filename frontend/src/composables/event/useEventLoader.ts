@@ -165,9 +165,10 @@ export function useEventLoader(opts: UseEventLoaderOptions) {
           })
         }
 
-        calendarPermissionGranted.value = !Object.values(
-          calendarEventsMap.value,
-        ).every((c) => Boolean(c.error))
+        const calendarEntries = Object.values(calendarEventsMap.value)
+        calendarPermissionGranted.value =
+          calendarEntries.length === 0 ||
+          !calendarEntries.every((c) => Boolean(c.error))
         logEventBoot("useEventLoader", "fetchAuthUserCalendarEvents:done", {
           weekOffset: curWeekOffset,
           calendars: Object.keys(result).length,

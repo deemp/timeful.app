@@ -187,4 +187,73 @@ describe("useEventEditing", () => {
     expect(submitAvailability).toHaveBeenCalledTimes(1)
     expect(showInfoMock).not.toHaveBeenCalled()
   })
+
+  it("keeps the selected visitor response when a responded PostgreSQL viewer edits availability", () => {
+    const clearSelectedGuestOwnership = vi.fn()
+    const startEditing = vi.fn()
+    const setAvailabilityAutomatically = vi.fn()
+    const scheduleOverlapRef = ref({
+      clearSelectedGuestOwnership,
+      startEditing,
+      setAvailabilityAutomatically,
+    } as unknown as ScheduleOverlapInstance)
+
+    const editing = useEventEditing({
+      event: ref({
+        _id: "evt-1",
+        eventVisitorId: "visitor-1",
+        responses: {},
+      } as Event),
+      eventId: ref("evt-1"),
+      authUser: computed(() => ({ _id: "user-1" })),
+      scheduleOverlapRef,
+      isSignUp: computed(() => false),
+      isGroup: computed(() => true),
+      userHasResponded: computed(() => true),
+      curGuestId: ref("response-1"),
+      addingAvailabilityAsGuest: ref(false),
+      calendarPermissionGranted: ref(true),
+      refreshEvent: vi.fn().mockResolvedValue(undefined),
+    })
+
+    editing.addAvailability()
+
+    expect(clearSelectedGuestOwnership).not.toHaveBeenCalled()
+    expect(startEditing).toHaveBeenCalledTimes(1)
+    expect(setAvailabilityAutomatically).not.toHaveBeenCalled()
+  })
+
+  it("clears the selected visitor response when an unresponded PostgreSQL viewer adds availability", () => {
+    const clearSelectedGuestOwnership = vi.fn()
+    const startEditing = vi.fn()
+    const setAvailabilityAutomatically = vi.fn()
+    const scheduleOverlapRef = ref({
+      clearSelectedGuestOwnership,
+      startEditing,
+      setAvailabilityAutomatically,
+    } as unknown as ScheduleOverlapInstance)
+
+    const editing = useEventEditing({
+      event: ref({
+        _id: "evt-1",
+        eventVisitorId: "visitor-1",
+        responses: {},
+      } as Event),
+      eventId: ref("evt-1"),
+      authUser: computed(() => ({ _id: "user-1" })),
+      scheduleOverlapRef,
+      isSignUp: computed(() => false),
+      isGroup: computed(() => true),
+      userHasResponded: computed(() => false),
+      curGuestId: ref(""),
+      addingAvailabilityAsGuest: ref(false),
+      calendarPermissionGranted: ref(true),
+      refreshEvent: vi.fn().mockResolvedValue(undefined),
+    })
+
+    editing.addAvailability()
+
+    expect(clearSelectedGuestOwnership).toHaveBeenCalledTimes(1)
+    expect(startEditing).toHaveBeenCalledTimes(1)
+  })
 })

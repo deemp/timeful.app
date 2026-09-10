@@ -126,6 +126,10 @@ import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
 import { post, generateEnabledCalendarsPayload } from "@/utils"
+import {
+  withEventVisitorIdentity,
+  selectVisitorResponse,
+} from "@/composables/event/visitorIdentityStorage"
 import { useMainStore } from "@/stores/main"
 import { useDisplayHelpers } from "@/utils/useDisplayHelpers"
 import CalendarAccounts from "@/components/settings/CalendarAccounts.vue"
@@ -182,8 +186,26 @@ const rejectInvitation = () => {
   })
 }
 const acceptInvitation = () => {
-  const payload = generateEnabledCalendarsPayload(calendarAccounts.value)
-  void post(`/events/${props.group?._id ?? ""}/response`, payload).then(() => {
+  const eventId = props.group?._id ?? ""
+  const calendarPayload = generateEnabledCalendarsPayload(
+    calendarAccounts.value,
+  )
+  // PostgreSQL events use the explicit-selection visitor contract; the legacy
+  // path remains for MongoDB-served groups.
+  const usesVisitorContract = Boolean(props.group?.eventVisitorId)
+  const payload = usesVisitorContract
+    ? { ...calendarPayload, createResponse: true }
+    : calendarPayload
+  const path = usesVisitorContract
+    ? withEventVisitorIdentity(`/events/${eventId}/response`)
+    : `/events/${eventId}/response`
+
+  void post<{ responseId?: string }>(path, payload).then((result) => {
+    // Remember the created response so later group availability saves edit it
+    // instead of creating a duplicate.
+    if (usesVisitorContract && result?.responseId) {
+      selectVisitorResponse(eventId, result.responseId)
+    }
     emit("update:modelValue", false)
     emit("refreshEvent")
   })
