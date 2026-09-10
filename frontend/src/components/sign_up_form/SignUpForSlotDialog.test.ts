@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 /* eslint-disable vue/one-component-per-file */
 
-import { defineComponent, ref } from "vue"
+import { defineComponent } from "vue"
 import { mount } from "@vue/test-utils"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
@@ -13,17 +13,23 @@ import {
 import type { Event, SignUpBlockWithResponses } from "@/types"
 import SignUpForSlotDialog from "./SignUpForSlotDialog.vue"
 
+const authUserHolder = vi.hoisted(() => ({
+  value: null as unknown,
+}))
+
 vi.mock("pinia", () => ({
   storeToRefs: (store: { authUser: unknown }) => ({
     authUser: store.authUser,
   }),
 }))
 
-vi.mock("@/stores/main", () => ({
-  useMainStore: () => ({
-    authUser: ref(null),
-  }),
-}))
+vi.mock("@/stores/main", async () => {
+  const { ref } = await import("vue")
+  authUserHolder.value = ref(null)
+  return {
+    useMainStore: () => ({ authUser: authUserHolder.value }),
+  }
+})
 
 const formRefMethods = {
   validate: vi.fn<() => Promise<{ valid: boolean }>>(() =>
@@ -89,6 +95,23 @@ const getSubmitButton = (wrapper: ReturnType<typeof mount>) => {
   return button
 }
 
+const dialogStubs = mergeComponentStubs({
+  "v-btn": VBtnStub,
+  "v-card": passThroughStub,
+  "v-card-text": passThroughStub,
+  "v-card-title": passThroughStub,
+  "v-dialog": passThroughStub,
+  "v-form": createFormStub(formRefMethods),
+  "v-icon": nullStub,
+  "v-spacer": nullStub,
+  "v-text-field": VTextFieldStub,
+  SignUpBlock: passThroughStub,
+})
+
+const setAuthUser = (user: { _id: string } | null) => {
+  ;(authUserHolder.value as { value: unknown }).value = user
+}
+
 describe("SignUpForSlotDialog", () => {
   beforeEach(() => {
     formRefMethods.validate.mockClear()
@@ -103,18 +126,7 @@ describe("SignUpForSlotDialog", () => {
         signUpBlock,
       },
       global: {
-        stubs: mergeComponentStubs({
-          "v-btn": VBtnStub,
-          "v-card": passThroughStub,
-          "v-card-text": passThroughStub,
-          "v-card-title": passThroughStub,
-          "v-dialog": passThroughStub,
-          "v-form": createFormStub(formRefMethods),
-          "v-icon": nullStub,
-          "v-spacer": nullStub,
-          "v-text-field": VTextFieldStub,
-          SignUpBlock: passThroughStub,
-        }),
+        stubs: dialogStubs,
       },
     })
 
@@ -136,5 +148,32 @@ describe("SignUpForSlotDialog", () => {
     expect(wrapper.emitted("submit")).toEqual([
       [{ name: "guest", email: "guest@example.com" }],
     ])
+  })
+
+  it("allows a signed-in visitor to submit without typing a name", async () => {
+    setAuthUser({ _id: "account-1" })
+    try {
+      const wrapper = mount(SignUpForSlotDialog, {
+        props: {
+          modelValue: true,
+          event: baseEvent,
+          signUpBlock,
+        },
+        global: {
+          stubs: dialogStubs,
+        },
+      })
+
+      // The name and email fields are hidden for a signed-in visitor, so the
+      // submit button must not require a typed name.
+      expect(wrapper.findAllComponents(VTextFieldStub)).toHaveLength(0)
+      expect(getSubmitButton(wrapper).attributes("disabled")).toBeUndefined()
+
+      await getSubmitButton(wrapper).trigger("click")
+
+      expect(wrapper.emitted("submit")).toEqual([[{ name: "", email: "" }]])
+    } finally {
+      setAuthUser(null)
+    }
   })
 })

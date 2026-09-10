@@ -132,11 +132,15 @@ const emailRules = computed<Rule[]>(() => [
   (candidate) =>
     !validationRequested.value || !!validateEmail(candidate) || "Invalid email",
 ])
-const canSubmit = computed(
-  () =>
+const canSubmit = computed(() => {
+  if (authUser.value) {
+    return true
+  }
+  return (
     trimmedName.value.length > 0 &&
-    (!props.event.collectEmails || trimmedEmail.value.length > 0),
-)
+    (!props.event.collectEmails || trimmedEmail.value.length > 0)
+  )
+})
 
 const initializeForm = () => {
   name.value = ""
