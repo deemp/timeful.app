@@ -329,7 +329,14 @@ func checkEmail(c *gin.Context) {
 
 	email := strings.ToLower(strings.TrimSpace(payload.Email))
 
-	c.JSON(http.StatusOK, gin.H{"isNewUser": accounts.IsNewUser(email)})
+	isNewUser, err := accounts.IsNewUser(email)
+	if err != nil {
+		logger.StdErr.Printf("failed to check account existence for %s: %v", email, err)
+		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed to check account existence"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"isNewUser": isNewUser})
 }
 
 // @Summary Sends an OTP code to the given email

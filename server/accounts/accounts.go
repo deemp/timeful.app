@@ -107,20 +107,29 @@ func ResolveForSignIn(ctx context.Context, profile Profile) (*pgstore.Account, b
 }
 
 // IsNewUser reports whether neither a PostgreSQL account nor a retained legacy
-// document exists for the email.
-func IsNewUser(email string) bool {
+// document exists for the email. A PostgreSQL failure is returned as an error
+// rather than reported as account-exists or account-missing, so callers never
+// treat a transient database failure as an existence result. The retained
+// legacy document is consulted only while the pool is deliberately
+// uninitialized before account cutover, or when PostgreSQL has no account row.
+func IsNewUser(email string) (bool, error) {
 	email = utils.NormalizeEmail(email)
 	if email == "" {
-		return true
+		return true, nil
 	}
-	if repository, err := pgstore.DefaultRepository(); err == nil {
-		if _, err := repository.GetAccountByEmail(context.Background(), email); err == nil {
-			return false
-		} else if !errors.Is(err, pgx.ErrNoRows) {
-			return false
+	repository, err := pgstore.DefaultRepository()
+	if err != nil {
+		if errors.Is(err, pgstore.ErrPoolUninitialized) {
+			return db.MongoUserByEmail(email) == nil, nil
 		}
+		return false, err
 	}
-	return db.MongoUserByEmail(email) == nil
+	if _, err := repository.GetAccountByEmail(context.Background(), email); err == nil {
+		return false, nil
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return false, err
+	}
+	return db.MongoUserByEmail(email) == nil, nil
 }
 
 // EnsureIntegrationDocument returns the retained MongoDB integration record,

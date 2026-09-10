@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,10 +18,20 @@ import (
 // GetUserById returns the integration document overlaid with the authoritative
 // PostgreSQL account profile. The retained MongoDB document supplies calendar
 // connections, tokens, and preferences only; it never supplies account profile.
-// The returned user is nil when no integration document and no account exist.
+//
+// A PostgreSQL lookup that fails for any reason other than a genuine no-row
+// result yields nil instead of the retained document, so a transient database
+// failure can never promote the retained profile to account authority. The
+// retained document is returned only while the pool is deliberately
+// uninitialized before account cutover, or when PostgreSQL has no account row
+// for a legacy account that predates the backfill.
 func GetUserById(userId string) *models.User {
+	account, err := accountByExternalUserID(userId)
+	if err != nil {
+		logger.StdErr.Printf("account lookup failed for %s: %v", userId, err)
+		return nil
+	}
 	mongoUser := getMongoUserById(userId)
-	account := accountByExternalUserID(userId)
 	if account == nil {
 		return mongoUser
 	}
@@ -28,19 +39,24 @@ func GetUserById(userId string) *models.User {
 }
 
 // GetUserByEmail resolves the authoritative account by case-insensitive email
-// and returns its integration document overlaid with the account profile. It
-// falls back to a retained-only lookup before account cutover.
+// and returns its integration document overlaid with the account profile. A
+// PostgreSQL failure other than a genuine no-row result yields nil instead of
+// the retained document, so the retained profile is never read as a second
+// account authority.
 func GetUserByEmail(email string) *models.User {
 	emailQuery := strings.TrimSpace(email)
 	if emailQuery == "" {
 		return nil
 	}
-	if repository, err := pgstore.DefaultRepository(); err == nil {
-		if account, err := repository.GetAccountByEmail(context.Background(), emailQuery); err == nil {
-			return MergeAccountProfile(getMongoUserById(account.ExternalUserID), account)
-		}
+	account, err := accountByEmail(emailQuery)
+	if err != nil {
+		logger.StdErr.Printf("account lookup failed for %s: %v", emailQuery, err)
+		return nil
 	}
-	return getMongoUserByEmail(emailQuery)
+	if account == nil {
+		return getMongoUserByEmail(emailQuery)
+	}
+	return MergeAccountProfile(getMongoUserById(account.ExternalUserID), account)
 }
 
 // MongoUserById returns the retained integration document without overlaying
@@ -120,16 +136,50 @@ func UpdateUserIntegrationFields(user *models.User) error {
 	return err
 }
 
-func accountByExternalUserID(userId string) *pgstore.Account {
+// accountByExternalUserID resolves the authoritative PostgreSQL account. A
+// deliberately uninitialized pool reports the pre-cutover state and a missing
+// account row reports a genuine not-found; both return no account. Every other
+// PostgreSQL failure is returned so callers never fall back to the retained
+// document or mistake the error for absence.
+func accountByExternalUserID(userId string) (*pgstore.Account, error) {
+	if userId == "" {
+		return nil, nil
+	}
 	repository, err := pgstore.DefaultRepository()
 	if err != nil {
-		return nil
+		if errors.Is(err, pgstore.ErrPoolUninitialized) {
+			return nil, nil
+		}
+		return nil, err
 	}
 	account, err := repository.GetAccountByExternalUserID(context.Background(), userId)
-	if err != nil {
-		return nil
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
 	}
-	return account
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
+}
+
+// accountByEmail applies the same outcome classification as
+// accountByExternalUserID for a case-insensitive email lookup.
+func accountByEmail(email string) (*pgstore.Account, error) {
+	repository, err := pgstore.DefaultRepository()
+	if err != nil {
+		if errors.Is(err, pgstore.ErrPoolUninitialized) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	account, err := repository.GetAccountByEmail(context.Background(), email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
 }
 
 func getMongoUserById(userId string) *models.User {

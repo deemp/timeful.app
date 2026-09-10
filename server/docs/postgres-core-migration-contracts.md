@@ -210,6 +210,14 @@ Account migration is idempotent through `FindOrCreatePlatformIdentity`, so repea
 Distinct MongoDB accounts remain distinct PostgreSQL accounts even when their emails compare equal, because merging accounts would infer an identity the source does not establish.
 Sessions remain cookie-held `userId` hexadecimal values and resolve the PostgreSQL account through this mapping without a session data migration.
 
+### Pre-Cutover Lookup Behavior
+
+The PostgreSQL account store is optional before account cutover, so account profile and existence lookups have one explicit pre-cutover behavior.
+When the PostgreSQL pool is deliberately uninitialized, because `POSTGRES_APPLICATION_URI` is unset and the application never calls `postgres.Init`, those lookups read the retained MongoDB `users` document, which remains the legacy authority for that window.
+Once the pool is initialized, a lookup that fails for any reason other than a genuine no-row result is reported as an error and never falls back to the retained document.
+A runtime lookup failure therefore cannot restore the pre-cutover behavior or make the retained document a second source of account truth.
+A genuine no-row result means the account is absent from PostgreSQL, and only then may a legacy lookup treat the retained document as the pre-backfill record.
+
 ### Migrated Records
 
 Migrated events, responses, blocks, attendees, folders, and memberships receive new PostgreSQL identities.
