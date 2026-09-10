@@ -397,7 +397,8 @@ Keep concurrent tests within one Playwright invocation because separate invocati
 Existing serial test groups preserve their internal ordering.
 Ordinary projects start Vite without building production assets.
 The `chromium-production-desktop` and `chromium-production-mobile` projects depend on a shared fresh production build, and unfiltered `npm run test:e2e` includes them automatically.
-See [fast local runs](../e2e/AGENTS.md#fast-local-runs) for focused commands and the production-asset verification workflow.
+Set `E2E_FRONTEND=bundled` to have the webServer build a fresh test-mode frontend and serve it from a Playwright-owned preview instead of the dev server's unbundled modules; this is an opt-in speedup for the heavier recorded journeys.
+See [fast local runs](../e2e/AGENTS.md#fast-local-runs) for focused commands, the bundled mode, and the production-asset verification workflow.
 
 `TEST_DB_PERSIST` defaults to `false`, removing the test stack and both database volumes after E2E for repeatable runs.
 Set it to `true` to stop only the test server and retain both database states after successful or failed E2E setup for inspection.

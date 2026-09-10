@@ -1,11 +1,11 @@
 ---
 id: TASK-0192
 title: Preserve in-flight grant consent across same-account navigation
-status: In Progress
+status: Done
 assignee:
   - OpenCode
 created_date: '2026-09-10 06:57'
-updated_date: '2026-09-10 07:06'
+updated_date: '2026-09-10 07:31'
 labels: []
 dependencies: []
 references:
@@ -33,17 +33,17 @@ This supersedes the deliberately accepted stale-navigation edge in completed TAS
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Required grant consent remains visible when navigation occurs during inspection for the same signed-in account, without issuing duplicate event inspections.
-- [ ] #2 Sign-out, account switches, sign-out/sign-in to the same account, and component disposal prevent old inspection results from appearing.
-- [ ] #3 Focused regression tests and required frontend checks pass; the recorded PostgreSQL guest approval journey reaches and dismisses the consent dialog.
+- [x] #1 Required grant consent remains visible when navigation occurs during inspection for the same signed-in account, without issuing duplicate event inspections.
+- [x] #2 Sign-out, account switches, sign-out/sign-in to the same account, and component disposal prevent old inspection results from appearing.
+- [x] #3 Focused regression tests and required frontend checks pass; the recorded PostgreSQL guest approval journey reaches and dismisses the consent dialog.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
-- [ ] #4 Changed Markdown files are formatted with npm run format:markdown
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -93,4 +93,19 @@ Exact runnable command and infrastructure timings are in TASK-0191.01.
 - Run Markdown formatting, graphify update ., and diff review after final edits; graph update has not run yet.
 - Finalize only after required checks; no acceptance/DoD boxes have been checked and no commit was created.
 TASK-0191.01 depends on this task; preserve its performance work and the unrelated worktree changes.
+
+### Verification completed — 2026-09-10
+- Focused unit suite: `npm run test:unit -- src/components/event/GrantedAccessConfirmation.test.ts` → 9 passed (retains consent across navigation without repeating in-flight queries; discards in-flight consent after sign-out, account switch, same-account re-sign-in, and unmount; associates only after confirmation).
+- Required frontend checks from `frontend/`: `npm run lint`, `npm run fmt:check`, `npm run typecheck`, `npm run build`, and `npm run test:unit` (145 files / 1071 tests) all pass.
+- Recorded PostgreSQL guest approval journey reaches and dismisses the consent dialog: `E2E_FRONTEND=bundled E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop --workers=2 specs/timed-event-access-transfer-firefox.spec.ts --grep 'Source approves the exact target code for guest access'` → 1 passed in 16.5s (invocation 36.5s).
+- No transport or consent-confirmation contract changed; no Markdown files changed by this task.
+
+### Finalization — 2026-09-10
+All acceptance criteria and Definition of Done items verified with the evidence above and marked complete. Status set to Done.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Fixes a consent-dialog race found while speeding up the recorded PostgreSQL access-transfer E2E journeys. `GrantedAccessConfirmation.vue` previously invalidated in-flight grant-association results on every route watcher cleanup, so navigating between events under the same sign-in could drop a required consent dialog even after the API returned `confirmationRequired: true`. The watcher now tracks a `signInGeneration` that increments only when the signed-in user ID changes or the component scope is disposed, retaining same-account navigation results while rejecting results from prior sign-ins and disposed components; `inspected` still populates before the await so concurrent route-triggered inspections do not duplicate calls. Added 9 focused regression tests (retain across navigation without duplicate inspection; discard after sign-out, account switch, same-account re-sign-in, and unmount). Verified: focused unit tests 9/9; frontend lint, fmt:check, typecheck, build, and full test:unit (1071 tests) pass; recorded PostgreSQL guest approval journey reaches and dismisses the dialog. No transport or consent-contract changes. The same-account retention intentionally supersedes the stale-navigation drop accepted in TASK-0188.02."
+<!-- SECTION:FINAL_SUMMARY:END -->

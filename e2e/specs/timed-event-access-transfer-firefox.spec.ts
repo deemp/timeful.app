@@ -306,8 +306,9 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
         ).toBe(200)
       }
       if (mode === "guest") {
-        expect(guestAccountEmail).toBeDefined()
-        await verifySignIn(target.request, guestAccountEmail!)
+        if (!guestAccountEmail)
+          throw new Error("Expected a seeded guest account")
+        await verifySignIn(target.request, guestAccountEmail)
         await targetPage.goto("/home", { waitUntil: "domcontentloaded" })
         await expect(
           targetPage.getByText(

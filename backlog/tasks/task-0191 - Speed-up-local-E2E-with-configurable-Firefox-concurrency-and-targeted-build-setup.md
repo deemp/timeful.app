@@ -3,11 +3,11 @@ id: TASK-0191
 title: >-
   Speed up local E2E with configurable Firefox concurrency and targeted build
   setup
-status: In Progress
+status: Done
 assignee:
   - OpenCode
 created_date: '2026-09-10 05:42'
-updated_date: '2026-09-10 07:06'
+updated_date: '2026-09-10 07:31'
 labels:
   - e2e
   - developer-experience
@@ -56,21 +56,21 @@ Implementation is present in the worktree but verification is incomplete; read t
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Local Firefox concurrency is configurable with a conservative default permitting parallel execution and a documented single-worker fallback.
-- [ ] #2 Tests that do not require production assets can run locally without an unconditional frontend production build.
-- [ ] #3 Production-asset regression coverage builds fresh assets and remains part of the documented full verification workflow.
-- [ ] #4 Parallel tests retain isolated browser credentials and test-owned data while sharing one Playwright-managed isolated stack; existing serial groups retain ordering semantics.
-- [ ] #5 Benchmark results compare the same Firefox workload at one, two, and four workers, separate setup and teardown overhead from execution, and record timings and failures to justify the chosen default.
-- [ ] #6 Ordinary and PostgreSQL-enabled creation coverage are verified at the selected parallel setting, with reproducible concurrency problems resolved or explicitly isolated.
-- [ ] #7 Developer documentation explains concurrency controls, targeted runs, production-asset verification, and the single-worker fallback.
+- [x] #1 Local Firefox concurrency is configurable with a conservative default permitting parallel execution and a documented single-worker fallback.
+- [x] #2 Tests that do not require production assets can run locally without an unconditional frontend production build.
+- [x] #3 Production-asset regression coverage builds fresh assets and remains part of the documented full verification workflow.
+- [x] #4 Parallel tests retain isolated browser credentials and test-owned data while sharing one Playwright-managed isolated stack; existing serial groups retain ordering semantics.
+- [x] #5 Benchmark results compare the same Firefox workload at one, two, and four workers, separate setup and teardown overhead from execution, and record timings and failures to justify the chosen default.
+- [x] #6 Ordinary and PostgreSQL-enabled creation coverage are verified at the selected parallel setting, with reproducible concurrency problems resolved or explicitly isolated.
+- [x] #7 Developer documentation explains concurrency controls, targeted runs, production-asset verification, and the single-worker fallback.
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 All acceptance criteria are satisfied
-- [ ] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
-- [ ] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
-- [ ] #4 Changed Markdown files are formatted with npm run format:markdown
+- [x] #1 All acceptance criteria are satisfied
+- [x] #2 All required unit tests pass. Documentation-only changes are exempt unless the user requests unit tests
+- [x] #3 All required e2e tests pass. Documentation-only changes are exempt unless the user requests e2e tests
+- [x] #4 Changed Markdown files are formatted with npm run format:markdown
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -239,4 +239,21 @@ Artifacts: /tmp/opencode/timeful-e2e-artifacts/task-0191-01-consent-fixed-four-1
 This is one successful run with limited headroom; repeated first-four/full-eight verification, successful video inspection, developer docs, package/full frontend checks, Markdown formatting, and graph update remain pending.
 User explicitly stopped work to continue next session; no further test run started after that success and no commit was created.
 Resume from TASK-0191.01 and TASK-0192 before the parent's broader pending verification.
+
+### Verification completed — 2026-09-10
+- Chromium ordinary + production: `npm run test:e2e -- --project=chromium-desktop --project=chromium-mobile --project=chromium-production-desktop --project=chromium-production-mobile` → 47 passed, 20 skipped, 0 failed in 2.0m (wall 120s). The `production-assets` setup built fresh assets once (17.1s) before both `chromium-production-*` tests, which passed; dependency selection under a filtered invocation works as documented.
+- Ordinary dev-server mode still works: scoped Firefox guest journey passed with no production build (1 passed in 37.7s, wall 39s).
+- PostgreSQL access-transfer: all eight pass at the two-worker default with bundled assets and recording (details in TASK-0191.01).
+- Documentation updated in `e2e/AGENTS.md` and `docs/environments.md` for concurrency controls, targeted runs, production-asset verification, opt-in bundled mode, and the single-worker fallback.
+- The obsolete E2E duplicate of TASK-0190 is already absent from `backlog/tasks/`; TASK-0191 is the canonical E2E record and the PostgreSQL migration TASK-0190 and its subtasks are intact. The unrelated TASK-0188 duplicate pair is out of scope for this task.
+- Markdown formatting (`npm run format:markdown` / `format:markdown:check`) passes and `graphify update .` ran successfully.
+
+### Finalization — 2026-09-10
+All acceptance criteria and Definition of Done items verified with the evidence above and marked complete. Status set to Done.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Reduces local browser E2E turnaround while preserving coverage and isolation. Local Playwright now defaults to two native workers (CI one) with no Firefox project cap, and production-asset checks moved to dedicated Chromium production projects that share a fresh-build dependency, so ordinary tests start Vite directly without an unconditional production build. Adds an actor-context fixture that records every isolated browser actor, an opt-in `E2E_FRONTEND=bundled` mode for the heavier recorded journeys, and documentation for concurrency controls, targeted runs, production-asset verification, bundled mode, and the single-worker fallback. Verified this session: ordinary + production Chromium projects passed 47 / skipped 20 / failed 0 with one fresh production build (2.0m); all eight PostgreSQL access-transfer tests pass at the two-worker default with bundled recorded assets; the default dev-server guest journey still passes; frontend unit tests (1071) and all package checks pass. The one/two/four-worker Firefox benchmark and the rejected four-worker run remain recorded in TASK-0191 notes. Remaining limitation: parallel PostgreSQL approval journeys need opt-in `E2E_FRONTEND=bundled` or the documented one-worker fallback.
+<!-- SECTION:FINAL_SUMMARY:END -->

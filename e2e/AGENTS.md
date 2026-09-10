@@ -58,7 +58,9 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
   To verify PostgreSQL creation as well, run `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop`.
 - Keep parallelism inside a single Playwright invocation; concurrent invocations conflict over the fixed test-stack project and ports.
   The stack prints setup and teardown durations so infrastructure overhead can be distinguished from test execution.
-- The initial Firefox desktop plus touch benchmark passed at one and two workers, reducing wall time from 337s to 239s at two workers; four workers caused timeouts.
-  PostgreSQL access-transfer coverage is heavier: each approval test opens three isolated pages, and recording every page increases the load.
-  On the benchmark machine, all eight access-transfer tests passed with `--workers=1`, while the three long approval journeys timed out with two workers after multi-session recording was added.
-  Use `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop --workers=1 specs/timed-event-access-transfer-firefox.spec.ts` for the verified fallback while parallel performance remains under investigation.
+- The Firefox desktop plus touch benchmark passed at one and two workers, reducing wall time from 337s to 239s at two workers; four workers caused timeouts and was rejected.
+- PostgreSQL access-transfer coverage is heavier: each approval test opens and records up to three isolated pages, and the default dev server's unbundled modules can push the approval journeys past their 30-second budget at two workers.
+- Set `E2E_FRONTEND=bundled` to make the webServer build a fresh test-mode frontend and serve it from a Playwright-owned preview on the isolated host, port, and proxy, with assets under the invocation artifact directory.
+  Bundled mode is opt-in and does not replace the production-asset projects; the dev server remains the default.
+  On the benchmark machine, all eight access-transfer tests pass at the default two workers with `E2E_FRONTEND=bundled E2E_VIDEO=on`, and the first four pass repeatedly.
+- Use `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop --workers=1 specs/timed-event-access-transfer-firefox.spec.ts` as the sequential fallback when bundled mode is unavailable.
