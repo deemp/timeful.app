@@ -61,8 +61,9 @@ describe("granted access confirmation outside the event page", () => {
       wrapper.unmount()
     },
   )
-  it("marks in-flight queries inspected before navigation and drops stale results", async () => {
+  it("retains required consent across navigation without repeating in-flight queries", async () => {
     mocks.store.authUser = { _id: "account" }
+    mocks.inspect.mockResolvedValue({ confirmationRequired: false })
     let resolve!: (state: { confirmationRequired: boolean }) => void
     mocks.inspect.mockImplementationOnce(
       () =>
@@ -76,9 +77,47 @@ describe("granted access confirmation outside the event page", () => {
     expect(mocks.inspect.mock.calls).toEqual([["EVENT123"], ["ABCDEFGH"]])
     resolve({ confirmationRequired: true })
     await flushPromises()
-    expect(wrapper.text()).not.toContain("EVENT123")
+    expect(wrapper.text()).toContain("EVENT123")
+    mocks.route.params.eventId = "EVENT123"
+    await flushPromises()
+    expect(mocks.inspect.mock.calls).toEqual([["EVENT123"], ["ABCDEFGH"]])
     wrapper.unmount()
   })
+  it.each(["sign-out", "account-switch", "same-account-sign-in", "unmount"])(
+    "discards in-flight consent after %s",
+    async (transition) => {
+      mocks.store.authUser = { _id: "account" }
+      mocks.route.params.eventId = "ABCDEFGH"
+      mocks.inspect.mockResolvedValue({ confirmationRequired: false })
+      let resolve!: (state: { confirmationRequired: boolean }) => void
+      mocks.inspect.mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            resolve = done
+          }),
+      )
+      const wrapper = mount(GrantedAccessConfirmation, { global: { stubs } })
+      if (transition === "unmount") wrapper.unmount()
+      else {
+        mocks.store.authUser =
+          transition === "account-switch" ? { _id: "other" } : undefined
+        await flushPromises()
+        if (transition === "same-account-sign-in") {
+          mocks.store.authUser = { _id: "account" }
+          await flushPromises()
+        }
+      }
+      const inspections = mocks.inspect.mock.calls.length
+      resolve({ confirmationRequired: true })
+      await flushPromises()
+      // The old loop must neither display consent nor inspect its next event.
+      expect(mocks.inspect).toHaveBeenCalledTimes(inspections)
+      if (transition !== "unmount") {
+        expect(wrapper.find("button").exists()).toBe(false)
+        wrapper.unmount()
+      }
+    },
+  )
   it("prompts after sign-in on any page and never associates on dismissal", async () => {
     const wrapper = mount(GrantedAccessConfirmation, { global: { stubs } })
     expect(mocks.inspect).not.toHaveBeenCalled()

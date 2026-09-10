@@ -16,6 +16,12 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Diagnose why the element was missing, hidden, ambiguous, or non-actionable; do not fix a timeout by adding a fixed sleep or by raising timeouts blindly.
 - Re-run the isolated test after each fix; widen back to the full project only once it passes.
 - Use `npm run test:e2e -- --ui` for interactive step-by-step debugging and `DEBUG=pw:api` for protocol-level verbose logging.
+- Use `E2E_VIDEO=on npm run test:e2e -- --trace=on <selection>` to retain videos and traces for successful slow tests as well as failures.
+  By default, both are retained only on failure.
+- Multi-session specs should import `test` from `helpers/actor-context.ts` and use `actorContext("target")` to create isolated contexts with video lifecycle management.
+  Direct `browser.newContext()` calls appear in traces but do not automatically record videos through Playwright Test's `video` option.
+  The fixture attaches videos named by actor and page, including pages closed before the test ends, and deletes recordings for successful tests under the default retention policy.
+  In the access-transfer spec, `video.webm` is the source page, `video-2-target-1.webm` is the target, and `video-3-stranger-1.webm` is the other browser; the API-only context creates no video.
 
 ## Authoring Rules
 
@@ -37,3 +43,28 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Run `npm ci` in this package and in `../frontend` before the first run; the Playwright webServer starts the frontend Vite dev server from `../frontend`, so frontend dependencies must be installed too.
 - `npm run test:e2e` owns the isolated test stack (`mongo-test`, `postgres-test`, `server-test` on 3003) and Vite on 4174; never target the development API on 3002.
 - See `../frontend/AGENTS.md` for required frontend checks and `./inspect/AGENTS.md` for `npm run inspect` diagnostics.
+
+### Fast local runs
+
+- Local runs default to two workers.
+  Use `--workers=4` to try more concurrency or `--workers=1` for sequential diagnosis; Firefox has no additional project-level cap.
+  Existing serial test groups still run their own tests in order.
+- E2E CI runs the Chromium, Firefox desktop, and Firefox touch suites as three parallel matrix jobs, each on its own runner with its own isolated test stack.
+  Chromium and Firefox desktop run at two workers; Firefox touch stays at one worker because it matches a single serial spec file.
+  The Firefox desktop job sets `E2E_FRONTEND=bundled` so the recorded PostgreSQL access-transfer journeys stay within budget at two workers, while the other suites keep the default dev-server frontend.
+  The Chromium job is the only matrix job that saves the shared Nix, Go, npm, and migrator-image caches, so concurrent same-key saves cannot race.
+- Run a focused spec with `npm run test:e2e -- --project=firefox-desktop specs/timed-event-reprojection-firefox.spec.ts`, or select a title with `-g "<test title>"`.
+- Ordinary projects start Vite without a production build.
+  Production-style checks live in `styling-production.spec.ts` and run in `chromium-production-desktop` and `chromium-production-mobile`, which share the `production-assets` build dependency.
+- Run `npm run test:e2e -- --project=chromium-production-desktop --project=chromium-production-mobile` for production-asset verification.
+  Do not use `--no-deps`: the dependency builds fresh assets before the checks.
+- Run `npm run test:e2e` for all projects, including the production build and checks.
+  To verify PostgreSQL creation as well, run `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop`.
+- Keep parallelism inside a single Playwright invocation; concurrent invocations conflict over the fixed test-stack project and ports.
+  The stack prints setup and teardown durations so infrastructure overhead can be distinguished from test execution.
+- The Firefox desktop plus touch benchmark passed at one and two workers, reducing wall time from 337s to 239s at two workers; four workers caused timeouts and was rejected.
+- PostgreSQL access-transfer coverage is heavier: each approval test opens and records up to three isolated pages, and the default dev server's unbundled modules can push the approval journeys past their 30-second budget at two workers.
+- Set `E2E_FRONTEND=bundled` to make the webServer build a fresh test-mode frontend and serve it from a Playwright-owned preview on the isolated host, port, and proxy, with assets under the invocation artifact directory.
+  Bundled mode is opt-in and does not replace the production-asset projects; the dev server remains the default.
+  On the benchmark machine, all eight access-transfer tests pass at the default two workers with `E2E_FRONTEND=bundled E2E_VIDEO=on`, and the first four pass repeatedly.
+- Use `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop --workers=1 specs/timed-event-access-transfer-firefox.spec.ts` as the sequential fallback when bundled mode is unavailable.

@@ -15,7 +15,7 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, onScopeDispose, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import { useMainStore } from "@/stores/main"
 import { browserEventVisitorIdentities } from "@/composables/event/visitorIdentityStorage"
@@ -28,19 +28,23 @@ const current = computed(() => pending.value[0])
 const busy = ref(false)
 const error = ref("")
 const inspected = new Set<string>()
+let signInGeneration = 0
+onScopeDispose(() => {
+  signInGeneration++
+})
 
 watch(
   () => [store.authUser?._id, route.params.eventId],
-  async ([userId], previous, onCleanup) => {
-    let stale = false
-    onCleanup(() => {
-      stale = true
-    })
+  async ([userId], previous) => {
     if (userId !== previous?.[0]) {
+      signInGeneration++
       pending.value = []
       inspected.clear()
     }
     if (!userId) return
+    // Consent is global to this sign-in, so navigation must not discard a
+    // required result for an event already marked inspected.
+    const generation = signInGeneration
     const ids = new Set(
       browserEventVisitorIdentities().map(({ eventId }) => eventId),
     )
@@ -50,12 +54,12 @@ watch(
     )
       ids.add(route.params.eventId)
     for (const id of ids) {
-      if (stale) return
+      if (generation !== signInGeneration) return
       if (inspected.has(id)) continue
       inspected.add(id)
       try {
         const state = await grantAssociation(id)
-        if (stale) return
+        if (generation !== signInGeneration) return
         if (state.confirmationRequired) pending.value.push(id)
       } catch {
         // A missing event or stale browser record does not block sign-in.

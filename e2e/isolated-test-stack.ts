@@ -103,6 +103,16 @@ async function stop(): Promise<void> {
 export default async function isolatedTestStack(): Promise<
   () => Promise<void>
 > {
+  const setupStarted = performance.now()
   await start()
-  return stop
+  console.log(
+    `[e2e stack] setup: ${Math.round(performance.now() - setupStarted)}ms`,
+  )
+  return async () => {
+    const teardownStarted = performance.now()
+    await stop()
+    console.log(
+      `[e2e stack] teardown: ${Math.round(performance.now() - teardownStarted)}ms`,
+    )
+  }
 }

@@ -83,6 +83,7 @@ const props = defineProps<{ event: Event }>()
 const store = useMainStore()
 const dialog = ref(false)
 const busy = ref(false)
+const polling = ref(false)
 const error = ref("")
 const copied = ref(false)
 const currentId = ref("")
@@ -127,6 +128,7 @@ async function run(
   }
 }
 function updateTransfer(entry: SavedTransfer, state: AccessTransfer) {
+  if (!tracked.value.some(({ id }) => id === entry.id)) return
   if (entry.id === currentId.value) current.value = state
   history.value = history.value.filter(({ id }) => id !== entry.id)
   if (state.revocable) {
@@ -163,6 +165,18 @@ async function refresh() {
     }),
   )
   if (failed) throw new Error("Status refresh failed")
+}
+async function poll() {
+  if (busy.value || polling.value) return
+  polling.value = true
+  try {
+    await refresh()
+  } catch {
+    if (!error.value)
+      error.value = "Could not refresh transfer status. Please try again."
+  } finally {
+    polling.value = false
+  }
 }
 function openDialog() {
   if (props.event._id) {
@@ -232,12 +246,7 @@ watch(dialog, (open) => {
   if (timer) clearInterval(timer)
   if (open)
     timer = setInterval(() => {
-      if (!busy.value)
-        void run(
-          refresh,
-          "Could not refresh transfer status. Please try again.",
-          false,
-        )
+      void poll()
     }, 2000)
 })
 onUnmounted(() => {

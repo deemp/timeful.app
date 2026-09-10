@@ -185,6 +185,35 @@ it("allows cancelling an approved transfer and stops tracking it", async () => {
   wrapper.unmount()
 })
 
+it("does not drop a cancel while a status poll is in flight", async () => {
+  let resolveStatus: (value: { state: string }) => void = () => {}
+  const wrapper = render()
+  await click(wrapper, "Continue on another device")
+  await click(wrapper, "Create transfer link")
+  post.mockResolvedValue({ state: "approved" })
+  await vi.advanceTimersByTimeAsync(2000)
+  expect(wrapper.text()).toContain("Approved — waiting for the other browser")
+  post.mockImplementation((url: string) =>
+    url.endsWith("/cancel")
+      ? Promise.resolve({ state: "cancelled" })
+      : new Promise((resolve) => {
+          resolveStatus = resolve
+        }),
+  )
+  await vi.advanceTimersByTimeAsync(2000)
+  await click(wrapper, "Cancel transfer")
+  expect(post).toHaveBeenLastCalledWith(
+    "/events/EVENT123/transfers/transfer/cancel",
+    {},
+  )
+  resolveStatus({ state: "approved" })
+  await flushPromises()
+  expect(wrapper.text()).toContain("Transfer status: Cancelled")
+  expect(wrapper.text()).not.toContain("Cancel transfer")
+  expect(savedTransfers("EVENT123")).toEqual([])
+  wrapper.unmount()
+})
+
 it("retains revocation handles and visible grants on transient status failures", async () => {
   localStorage.setItem("timeful.transfers.EVENT123", JSON.stringify(["grant"]))
   post.mockResolvedValue({ state: "redeemed", revocable: true })
