@@ -16,6 +16,12 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Diagnose why the element was missing, hidden, ambiguous, or non-actionable; do not fix a timeout by adding a fixed sleep or by raising timeouts blindly.
 - Re-run the isolated test after each fix; widen back to the full project only once it passes.
 - Use `npm run test:e2e -- --ui` for interactive step-by-step debugging and `DEBUG=pw:api` for protocol-level verbose logging.
+- Use `E2E_VIDEO=on npm run test:e2e -- --trace=on <selection>` to retain videos and traces for successful slow tests as well as failures.
+  By default, both are retained only on failure.
+- Multi-session specs should import `test` from `helpers/actor-context.ts` and use `actorContext("target")` to create isolated contexts with video lifecycle management.
+  Direct `browser.newContext()` calls appear in traces but do not automatically record videos through Playwright Test's `video` option.
+  The fixture attaches videos named by actor and page, including pages closed before the test ends, and deletes recordings for successful tests under the default retention policy.
+  In the access-transfer spec, `video.webm` is the source page, `video-2-target-1.webm` is the target, and `video-3-stranger-1.webm` is the other browser; the API-only context creates no video.
 
 ## Authoring Rules
 
@@ -37,3 +43,22 @@ Specs live in `e2e/specs/`; `playwright.config.ts`, `isolated-test-stack.ts`, `c
 - Run `npm ci` in this package and in `../frontend` before the first run; the Playwright webServer starts the frontend Vite dev server from `../frontend`, so frontend dependencies must be installed too.
 - `npm run test:e2e` owns the isolated test stack (`mongo-test`, `postgres-test`, `server-test` on 3003) and Vite on 4174; never target the development API on 3002.
 - See `../frontend/AGENTS.md` for required frontend checks and `./inspect/AGENTS.md` for `npm run inspect` diagnostics.
+
+### Fast local runs
+
+- Local runs default to two workers; CI defaults to one.
+  Use `--workers=4` to try more concurrency or `--workers=1` for sequential diagnosis; Firefox has no additional project-level cap.
+  Existing serial test groups still run their own tests in order.
+- Run a focused spec with `npm run test:e2e -- --project=firefox-desktop specs/timed-event-reprojection-firefox.spec.ts`, or select a title with `-g "<test title>"`.
+- Ordinary projects start Vite without a production build.
+  Production-style checks live in `styling-production.spec.ts` and run in `chromium-production-desktop` and `chromium-production-mobile`, which share the `production-assets` build dependency.
+- Run `npm run test:e2e -- --project=chromium-production-desktop --project=chromium-production-mobile` for production-asset verification.
+  Do not use `--no-deps`: the dependency builds fresh assets before the checks.
+- Run `npm run test:e2e` for all projects, including the production build and checks.
+  To verify PostgreSQL creation as well, run `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop`.
+- Keep parallelism inside a single Playwright invocation; concurrent invocations conflict over the fixed test-stack project and ports.
+  The stack prints setup and teardown durations so infrastructure overhead can be distinguished from test execution.
+- The initial Firefox desktop plus touch benchmark passed at one and two workers, reducing wall time from 337s to 239s at two workers; four workers caused timeouts.
+  PostgreSQL access-transfer coverage is heavier: each approval test opens three isolated pages, and recording every page increases the load.
+  On the benchmark machine, all eight access-transfer tests passed with `--workers=1`, while the three long approval journeys timed out with two workers after multi-session recording was added.
+  Use `E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED=true npm run test:e2e -- --project=firefox-desktop --workers=1 specs/timed-event-access-transfer-firefox.spec.ts` for the verified fallback while parallel performance remains under investigation.

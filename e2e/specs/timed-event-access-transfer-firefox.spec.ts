@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
-import { expect, test, type APIRequestContext } from "@playwright/test"
+import { expect, type APIRequestContext } from "@playwright/test"
+import { test } from "../helpers/actor-context"
 
 test.skip(
   process.env.E2E_POSTGRES_ANONYMOUS_EVENT_CREATION_ENABLED !== "true",
@@ -97,12 +98,11 @@ async function signIn(request: APIRequestContext, label: string) {
 for (const mode of ["guest", "owner", "signed-in"] as const) {
   test(`Source approves the exact target code for ${mode} access`, async ({
     page,
-    browser,
-    baseURL,
+    actorContext,
   }) => {
-    const owner = await browser.newContext({ baseURL })
-    const target = await browser.newContext({ baseURL })
-    const stranger = await browser.newContext({ baseURL })
+    const owner = await actorContext("owner")
+    const target = await actorContext("target")
+    const stranger = await actorContext("stranger")
     try {
       const created = await owner.request.post("/api/events", { data: payload })
       expect(created.status()).toBe(201)
@@ -378,11 +378,10 @@ for (const mode of ["guest", "owner", "signed-in"] as const) {
 for (const mode of ["guest", "account-switch"] as const) {
   test(`Approved ${mode} transfer survives target reload and redeems with required consent`, async ({
     page,
-    browser,
-    baseURL,
+    actorContext,
   }) => {
-    const owner = await browser.newContext({ baseURL })
-    const target = await browser.newContext({ baseURL })
+    const owner = await actorContext("owner")
+    const target = await actorContext("target")
     try {
       const { eventId, api, sourceAccount, targetAccount, transferApi, link } =
         await test.step("Seed source access and create a transfer", async () => {
@@ -519,10 +518,9 @@ for (const mode of ["guest", "account-switch"] as const) {
 
 test("Source cancels approved access before the target redeems", async ({
   page,
-  browser,
-  baseURL,
+  actorContext,
 }) => {
-  const target = await browser.newContext({ baseURL })
+  const target = await actorContext("target")
   try {
     const created = await page.request.post("/api/events", { data: payload })
     expect(created.status()).toBe(201)
@@ -572,10 +570,9 @@ test("Source cancels approved access before the target redeems", async ({
 for (const state of ["cancelled", "expired"] as const) {
   test(`A ${state} link cannot grant access`, async ({
     page,
-    browser,
-    baseURL,
+    actorContext,
   }) => {
-    const target = await browser.newContext({ baseURL })
+    const target = await actorContext("target")
     try {
       const created = (await (
         await page.request.post("/api/events", { data: payload })

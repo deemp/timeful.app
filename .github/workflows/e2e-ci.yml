@@ -192,7 +192,7 @@ jobs:
       - name: Run Chromium browser E2E suite
         env:
           E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e-artifacts
-        run: nix run .#e2e -- --project=chromium-desktop --project=chromium-mobile
+        run: nix run .#e2e -- --project=chromium-desktop --project=chromium-mobile --project=chromium-production-desktop --project=chromium-production-mobile
 
       - name: Run PostgreSQL browser lifecycle test
         env:
