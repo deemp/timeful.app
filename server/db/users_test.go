@@ -138,3 +138,109 @@ func TestGetUserByIdGenuineNotFoundUsesRetainedDocument(t *testing.T) {
 		t.Fatalf("genuine not-found email lookup must serve the retained pre-backfill document, got %#v", got)
 	}
 }
+
+// initAccountOverlayPostgres connects the authoritative PostgreSQL store used
+// by the overlay test, reusing an already initialized package pool when a
+// sibling test has one.
+func initAccountOverlayPostgres(t *testing.T) {
+	t.Helper()
+	if os.Getenv("POSTGRES_APPLICATION_URI") == "" {
+		t.Skip("POSTGRES_APPLICATION_URI is required for account overlay tests")
+	}
+	previous := pgstore.Pool
+	var closePool func()
+	if previous == nil {
+		closePool = pgstore.Init()
+	}
+	t.Cleanup(func() {
+		if closePool != nil {
+			closePool()
+		}
+		pgstore.Pool = previous
+	})
+}
+
+// TestGetUserByEmailOverlaysPostgresProfileNotRetained proves that the email
+// lookup returns the authoritative PostgreSQL profile, including the usage
+// counter, and never the conflicting profile fields of a retained document.
+func TestGetUserByEmailOverlaysPostgresProfileNotRetained(t *testing.T) {
+	initAccountAuthorityTestMongo(t)
+	initAccountOverlayPostgres(t)
+	ctx := context.Background()
+
+	repository, err := pgstore.DefaultRepository()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	email := "overlay-" + primitive.NewObjectID().Hex() + "@example.com"
+	externalUserID := primitive.NewObjectID().Hex()
+	account, created, err := repository.FindOrCreateAccountByEmail(ctx, email, externalUserID, pgstore.Account{
+		Email:            email,
+		FirstName:        "Postgres",
+		LastName:         "Profile",
+		Picture:          "https://postgres.example/picture.png",
+		TimezoneOffset:   90,
+		NumEventsCreated: 7,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !created {
+		t.Fatal("expected the overlay test to create a fresh account")
+	}
+	t.Cleanup(func() {
+		_ = repository.DeleteAccountByExternalUserID(context.Background(), account.ExternalUserID)
+	})
+
+	objectID, err := primitive.ObjectIDFromHex(account.ExternalUserID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	insertAccountAuthorityUser(t, models.User{
+		Id:               objectID,
+		Email:            email,
+		FirstName:        "Mongo",
+		LastName:         "Retained",
+		Picture:          "https://mongo.example/picture.png",
+		TimezoneOffset:   -60,
+		NumEventsCreated: 99,
+	})
+
+	assertOverlay := func(lookup string, got *models.User) {
+		t.Helper()
+		if got == nil {
+			t.Fatalf("%s returned no user", lookup)
+		}
+		if got.Id != objectID || got.Email != email {
+			t.Fatalf("%s returned the wrong account: %#v", lookup, got)
+		}
+		if got.FirstName != "Postgres" || got.LastName != "Profile" {
+			t.Fatalf("%s returned a retained name instead of the PostgreSQL profile: %#v", lookup, got)
+		}
+		if got.Picture != "https://postgres.example/picture.png" {
+			t.Fatalf("%s returned a retained picture instead of the PostgreSQL profile: %q", lookup, got.Picture)
+		}
+		if got.TimezoneOffset != 90 {
+			t.Fatalf("%s returned a retained timezone instead of the PostgreSQL profile: %d", lookup, got.TimezoneOffset)
+		}
+		if got.NumEventsCreated != 7 {
+			t.Fatalf("%s returned a retained usage counter instead of the PostgreSQL counter: %d", lookup, got.NumEventsCreated)
+		}
+	}
+
+	assertOverlay("GetUserByEmail", GetUserByEmail(email))
+	assertOverlay("GetUserById", GetUserById(account.ExternalUserID))
+
+	// A PostgreSQL lookup failure must not promote the retained Mongo profile to
+	// account authority for either lookup path.
+	previousPool := pgstore.Pool
+	pgstore.Pool = closedPostgresTestPool(t)
+	t.Cleanup(func() { pgstore.Pool = previousPool })
+	if got := GetUserByEmail(email); got != nil {
+		t.Fatalf("a PostgreSQL error must not serve the retained profile by email, got %#v", got)
+	}
+	if got := GetUserById(account.ExternalUserID); got != nil {
+		t.Fatalf("a PostgreSQL error must not serve the retained profile by identifier, got %#v", got)
+	}
+}
