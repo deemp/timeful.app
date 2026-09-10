@@ -40,6 +40,13 @@ WHERE e.is_deleted = FALSE
       WHERE r.event_id = e.id
         AND (r.account_user_id = $1 OR v.platform_identity_id = p.id)
     )
+    OR EXISTS (
+      SELECT 1
+      FROM event_signup_responses sr
+      LEFT JOIN event_visitor_identities sv ON sv.id = sr.event_visitor_identity_id
+      WHERE sr.event_id = e.id
+        AND (sr.account_user_id = $1 OR sv.platform_identity_id = p.id)
+    )
   )
 ORDER BY e.created_at DESC, e.id DESC`, externalUserID)
 	if err != nil {

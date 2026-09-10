@@ -57,6 +57,12 @@ func postgresEventModel(event *pgstore.Event) (models.Event, error) {
 	value.IsDeleted = &event.IsDeleted
 	value.Name = event.Name
 	value.Type = models.EventType(event.Type)
+	// Signup forms persist a dedicated event kind but keep the legacy wire type
+	// and isSignUpForm flag the frontend routes on.
+	if event.Type == pgstore.EventTypeSignup {
+		value.Type = models.SPECIFIC_DATES
+		value.IsSignUpForm = utils.TruePtr()
+	}
 	value.ScheduleVersion = event.ScheduleVersion
 	value.NumResponses = &event.NumResponses
 	value.CreatorPosthogId = event.CreatorPosthogID
@@ -72,6 +78,163 @@ func postgresResponseModel(stored pgstore.Response) (*models.Response, string, e
 	value.User = nil
 	value.GuestId, value.GuestEditToken, value.GuestEditPolicy, value.GuestOwnershipMode = "", "", "", ""
 	return &value, stored.PublicID, nil
+}
+
+// postgresSignupBlock is the signup-block wire shape: the PostgreSQL UUID is
+// exposed as _id and start/end instants keep the legacy RFC3339 encoding the
+// frontend already consumes.
+type postgresSignupBlock struct {
+	ID        string     `json:"_id"`
+	Name      string     `json:"name,omitempty"`
+	Capacity  *int       `json:"capacity,omitempty"`
+	StartDate *time.Time `json:"startDate,omitempty"`
+	EndDate   *time.Time `json:"endDate,omitempty"`
+}
+
+func postgresSignupBlockPayload(block pgstore.SignupBlock) postgresSignupBlock {
+	return postgresSignupBlock{ID: block.ID, Name: block.Name, Capacity: block.Capacity, StartDate: block.StartDate, EndDate: block.EndDate}
+}
+
+// postgresSignupResponsePayload is the signup-response wire shape. It mirrors the
+// legacy models.SignUpResponse fields while carrying PostgreSQL block UUIDs as
+// strings instead of MongoDB ObjectIDs.
+type postgresSignupResponsePayload struct {
+	SignUpBlockIDs []string     `json:"signUpBlockIds,omitempty"`
+	Name           string       `json:"name,omitempty"`
+	Email          string       `json:"email,omitempty"`
+	UserID         string       `json:"userId,omitempty"`
+	User           *models.User `json:"user,omitempty"`
+}
+
+// postgresSignupInstant accepts either an epoch-millisecond number or an
+// RFC3339 string so the edit endpoint remains compatible with both the legacy
+// models.SignUpBlock encoding and the frontend transport encoding.
+type postgresSignupInstant struct {
+	Value *time.Time
+}
+
+func (instant *postgresSignupInstant) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		return nil
+	}
+	var millis int64
+	if err := json.Unmarshal(data, &millis); err == nil {
+		value := time.UnixMilli(millis).UTC()
+		instant.Value = &value
+		return nil
+	}
+	var raw string
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	value, err := time.Parse(time.RFC3339Nano, raw)
+	if err != nil {
+		return err
+	}
+	instant.Value = &value
+	return nil
+}
+
+// postgresSignupBlockInput decodes a block from the edit payload. PostgreSQL
+// block identities are UUID strings, so this type must not bind through
+// models.SignUpBlock, whose Id is a MongoDB ObjectID.
+type postgresSignupBlockInput struct {
+	ID        string                 `json:"_id"`
+	Name      string                 `json:"name"`
+	Capacity  *int                   `json:"capacity"`
+	StartDate *postgresSignupInstant `json:"startDate"`
+	EndDate   *postgresSignupInstant `json:"endDate"`
+}
+
+func postgresSignupBlocksFromModels(blocks []models.SignUpBlock) []pgstore.SignupBlock {
+	converted := make([]pgstore.SignupBlock, 0, len(blocks))
+	for _, block := range blocks {
+		converted = append(converted, pgstore.SignupBlock{
+			Name:      block.Name,
+			Capacity:  block.Capacity,
+			StartDate: signupModelInstant(block.StartDate),
+			EndDate:   signupModelInstant(block.EndDate),
+		})
+	}
+	return converted
+}
+
+func postgresSignupBlocksFromInput(blocks []postgresSignupBlockInput) []pgstore.SignupBlock {
+	converted := make([]pgstore.SignupBlock, 0, len(blocks))
+	for _, block := range blocks {
+		converted = append(converted, pgstore.SignupBlock{
+			ID:        block.ID,
+			Name:      block.Name,
+			Capacity:  block.Capacity,
+			StartDate: signupInputInstant(block.StartDate),
+			EndDate:   signupInputInstant(block.EndDate),
+		})
+	}
+	return converted
+}
+
+func signupModelInstant(value *primitive.DateTime) *time.Time {
+	if value == nil {
+		return nil
+	}
+	instant := value.Time()
+	return &instant
+}
+
+func signupInputInstant(value *postgresSignupInstant) *time.Time {
+	if value == nil {
+		return nil
+	}
+	return value.Value
+}
+
+// postgresSignupResponses renders the event's signup responses keyed by account
+// hex or canonical guest name, reusing the shared payload identity and
+// guest-name exposure rules. Email visibility follows collectEmails plus owner
+// authority, matching the legacy endpoint.
+func postgresSignupResponses(ctx context.Context, repository *pgstore.Repository, event *pgstore.Event, value models.Event, isOwner bool) (map[string]postgresSignupResponsePayload, error) {
+	stored, err := repository.ListSignupResponses(ctx, event.ID)
+	if err != nil {
+		return nil, err
+	}
+	showEmails := isOwner && utils.Coalesce(value.CollectEmails)
+	result := make(map[string]postgresSignupResponsePayload, len(stored))
+	for _, response := range stored {
+		model := &models.SignUpResponse{Name: response.Name, Email: response.Email}
+		storedKey := response.Name
+		if response.RespondentKind == pgstore.RespondentKindAccount && response.AccountUserID != nil {
+			objectID, err := primitive.ObjectIDFromHex(*response.AccountUserID)
+			if err != nil {
+				continue
+			}
+			model.UserId = objectID
+			storedKey = *response.AccountUserID
+		} else if response.CanonicalGuestName != nil {
+			storedKey = *response.CanonicalGuestName
+		}
+		lookupKey, keep := populateSignUpResponsePayloadIdentity(model, storedKey)
+		if !keep || !shouldExposeGuestSignUpResponsePayload(lookupKey, model) {
+			continue
+		}
+		payload := postgresSignupResponsePayload{
+			SignUpBlockIDs: response.BlockIDs,
+			Name:           model.Name,
+			Email:          model.Email,
+			User:           model.User,
+		}
+		if model.UserId != primitive.NilObjectID {
+			payload.UserID = model.UserId.Hex()
+		}
+		stripSensitiveUserFields(payload.User)
+		if !showEmails {
+			payload.Email = ""
+			if payload.User != nil {
+				payload.User.Email = ""
+			}
+		}
+		result[lookupKey] = payload
+	}
+	return result, nil
 }
 
 func dereference(value *string) string {
@@ -183,6 +346,29 @@ func postgresGetEvent(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
 		return
 	}
+	if event.Type == pgstore.EventTypeSignup {
+		value, err := postgresEventModel(event)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-serialize-event"})
+			return
+		}
+		blocks, err := repository.ListSignupBlocks(c.Request.Context(), event.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-signup-blocks"})
+			return
+		}
+		blockPayloads := make([]postgresSignupBlock, 0, len(blocks))
+		for _, block := range blocks {
+			blockPayloads = append(blockPayloads, postgresSignupBlockPayload(block))
+		}
+		payload["signUpBlocks"] = blockPayloads
+		signupResponses, err := postgresSignupResponses(c.Request.Context(), repository, event, value, visitor.owner)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-signup-responses"})
+			return
+		}
+		payload["signUpResponses"] = signupResponses
+	}
 	payload["eventVisitorId"] = visitor.identity.PublicID
 	payload["canCreateResponse"] = visitor.authorized && !event.IsArchived
 	payload["canManageEvent"] = visitor.owner
@@ -255,17 +441,33 @@ func postgresEditEvent(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	// Extract signup blocks before binding: PostgreSQL block identities are UUID
+	// strings that cannot decode into models.SignUpBlock.Id (a MongoDB ObjectID).
+	var signupBlocks []postgresSignupBlockInput
+	signupBlocksPresent := false
+	if rawBlocks, present := raw["signUpBlocks"]; present {
+		signupBlocksPresent = true
+		if err := json.Unmarshal(rawBlocks, &signupBlocks); err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+		delete(raw, "signUpBlocks")
+		if body, err = json.Marshal(raw); err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+	}
 	c.Request.Body = io.NopCloser(bytes.NewReader(body))
 	var update models.Event
 	if err := c.Bind(&update); err != nil {
 		return
 	}
 	if update.Name == "" || update.Type == "" {
-		c.Status(http.StatusBadRequest)
-		return
-	}
-	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(body, &raw); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -292,14 +494,33 @@ func postgresEditEvent(c *gin.Context) {
 			update.ActiveSlots = current.ActiveSlots
 		}
 		update.Id, update.ShortId, update.OwnerId, update.NumResponses, update.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
+		update.SignUpBlocks = nil
 		// Lifecycle state is changed only through the dedicated owner actions.
 		update.IsArchived, update.IsDeleted = nil, nil
+		isSignup := event.Type == pgstore.EventTypeSignup
+		eventType := string(update.Type)
+		if isSignup {
+			update.Type, update.IsSignUpForm = models.SPECIFIC_DATES, utils.TruePtr()
+			eventType = pgstore.EventTypeSignup
+		}
 		payload, err := json.Marshal(update)
 		if err != nil {
 			return err
 		}
-		event.Name, event.Type, event.Payload, event.ScheduleVersion = update.Name, string(update.Type), payload, 1
-		return tx.UpdateEvent(ctx, event)
+		event.Name, event.Type, event.Payload, event.ScheduleVersion = update.Name, eventType, payload, 1
+		if err := tx.UpdateEvent(ctx, event); err != nil {
+			return err
+		}
+		if isSignup {
+			// An omitted signUpBlocks preserves the existing block set, matching
+			// legacy BSON omitempty behavior; only an explicit list replaces it.
+			if signupBlocksPresent {
+				if _, err := tx.ReplaceSignupBlocks(ctx, event.ID, postgresSignupBlocksFromInput(signupBlocks)); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
 	})
 }
 
@@ -395,6 +616,12 @@ func postgresMutateResponse(c *gin.Context, operation string) {
 	}
 	event := postgresEvent(c, repository)
 	if event == nil {
+		return
+	}
+	if event.Type == pgstore.EventTypeSignup {
+		// Signup response mutation authority arrives with TASK-0190.04.03; this
+		// subtask must not write signup data into postgres_event_responses.
+		postgresEventRouteUnavailable(c)
 		return
 	}
 	visitor, err := resolvePostgresVisitor(c, repository, event)
@@ -522,7 +749,13 @@ func postgresCreationEnabled(c *gin.Context) bool {
 		SlotGeneration  json.RawMessage  `json:"slotGeneration"`
 		TimedRecurrence json.RawMessage  `json:"timedRecurrence"`
 	}
-	if json.Unmarshal(body, &payload) != nil || payload.IsSignUpForm || (payload.Type != models.SPECIFIC_DATES && payload.Type != models.DOW) {
+	if json.Unmarshal(body, &payload) != nil {
+		return false
+	}
+	if payload.IsSignUpForm {
+		return true
+	}
+	if payload.Type != models.SPECIFIC_DATES && payload.Type != models.DOW {
 		return false
 	}
 	return payload.DaysOnly || (len(payload.ActiveSlots) > 0 && len(payload.SlotGeneration) > 0 && len(payload.TimedRecurrence) > 0)
@@ -533,11 +766,16 @@ func postgresCreateEvent(c *gin.Context) {
 	if err := c.Bind(&event); err != nil {
 		return
 	}
-	if event.Name == "" || (event.Type != models.SPECIFIC_DATES && event.Type != models.DOW) {
+	isSignup := event.IsSignUpForm != nil && *event.IsSignUpForm
+	if event.Name == "" || (!isSignup && event.Type != models.SPECIFIC_DATES && event.Type != models.DOW) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if event.DaysOnly == nil || !*event.DaysOnly {
+	if isSignup {
+		// Signup forms are not timed polls; their block schedule is the contract.
+		event.Type = models.SPECIFIC_DATES
+		event.IsSignUpForm = utils.TruePtr()
+	} else if event.DaysOnly == nil || !*event.DaysOnly {
 		fields, err := normalizeTimedEventPayloadFields(timedEventPayloadFields{ActiveSlots: event.ActiveSlots, EventTimezone: event.EventTimezone, SlotGeneration: event.SlotGeneration, TimedRecurrence: event.TimedRecurrence})
 		if err != nil {
 			c.JSON(http.StatusBadRequest, responses.Error{Error: err.Error()})
@@ -548,6 +786,12 @@ func postgresCreateEvent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, responses.Error{Error: "days-only-events-require-dates"})
 		return
 	}
+	var initialBlocks []models.SignUpBlock
+	if isSignup && event.SignUpBlocks != nil {
+		initialBlocks = *event.SignUpBlocks
+	}
+	// Blocks own their own table; the payload must not carry a second copy.
+	event.SignUpBlocks = nil
 	event.Id, event.ShortId, event.OwnerId, event.NumResponses, event.ResponsesMap = primitive.NilObjectID, nil, primitive.NilObjectID, nil, nil
 	encoded, err := json.Marshal(event)
 	if err != nil {
@@ -565,7 +809,11 @@ func postgresCreateEvent(c *gin.Context) {
 		signedIn = false
 		externalUserID = ""
 	}
-	stored := &pgstore.Event{Name: event.Name, Type: string(event.Type), ScheduleVersion: 1, CreatorPosthogID: event.CreatorPosthogId, Payload: encoded}
+	eventType := string(event.Type)
+	if isSignup {
+		eventType = pgstore.EventTypeSignup
+	}
+	stored := &pgstore.Event{Name: event.Name, Type: eventType, ScheduleVersion: 1, CreatorPosthogID: event.CreatorPosthogId, Payload: encoded}
 	if signedIn {
 		stored.OwnerExternalID = &externalUserID
 	}
@@ -574,6 +822,11 @@ func postgresCreateEvent(c *gin.Context) {
 	err = repository.WithTransaction(c.Request.Context(), func(ctx context.Context, tx *pgstore.Repository) error {
 		if err := tx.CreateEvent(ctx, stored); err != nil {
 			return err
+		}
+		if isSignup && len(initialBlocks) > 0 {
+			if _, err := tx.ReplaceSignupBlocks(ctx, stored.ID, postgresSignupBlocksFromModels(initialBlocks)); err != nil {
+				return err
+			}
 		}
 		if signedIn {
 			platform, err := tx.FindOrCreatePlatformIdentity(ctx, externalUserID)
@@ -610,5 +863,5 @@ func postgresCreateEvent(c *gin.Context) {
 	}
 	setPostgresCredentialCookie(c, stored.ShortID, visitor.PublicID, credential)
 	setPostgresOwnerCookie(c, stored.ShortID, ownerToken)
-	c.JSON(http.StatusCreated, gin.H{"eventId": stored.ShortID, "eventVisitorId": visitor.PublicID})
+	c.JSON(http.StatusCreated, gin.H{"eventId": stored.ShortID, "shortId": stored.ShortID, "eventVisitorId": visitor.PublicID})
 }
