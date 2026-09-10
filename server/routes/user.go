@@ -3,6 +3,8 @@ package routes
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -20,6 +22,7 @@ import (
 	"timeful/server/logger"
 	"timeful/server/middleware"
 	"timeful/server/models"
+	pgstore "timeful/server/postgres"
 	"timeful/server/responses"
 	"timeful/server/services/auth"
 	"timeful/server/services/calendar"
@@ -234,7 +237,64 @@ func getEvents(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, events)
+	// Merge PostgreSQL-owned events the account owns or responded to. MongoDB
+	// and PostgreSQL own disjoint records, so each entry appears exactly once.
+	result := make([]any, 0, len(events))
+	for _, event := range events {
+		result = append(result, event)
+	}
+	repository, err := pgstore.DefaultRepository()
+	if err != nil && !errors.Is(err, pgstore.ErrPoolUninitialized) {
+		logger.StdErr.Panicln(err)
+	}
+	if repository != nil {
+		dashboardEvents, err := repository.ListDashboardEvents(c.Request.Context(), userId.Hex())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-events"})
+			return
+		}
+		for _, item := range dashboardEvents {
+			payload, err := postgresDashboardEvent(item.Event, item.Owned, userId.Hex())
+			if err != nil {
+				logger.StdErr.Panicln(err)
+			}
+			result = append(result, payload)
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// postgresDashboardEvent renders a PostgreSQL event in the MongoDB dashboard
+// wire shape. The canonical public identifier is exposed as both _id and
+// shortId so the frontend opens the event without a store prefix and uses it as
+// a stable list key. ownerId carries the account identifier only for owned
+// events, matching legacy owner detection; responded-only events stay anonymous.
+func postgresDashboardEvent(event pgstore.Event, owned bool, externalUserID string) (map[string]any, error) {
+	value, err := postgresEventModel(&event)
+	if err != nil {
+		return nil, err
+	}
+	value.ResponsesMap = nil
+	value.HasResponded = nil
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	result := map[string]any{}
+	if err := json.Unmarshal(encoded, &result); err != nil {
+		return nil, err
+	}
+	result["_id"] = event.ShortID
+	result["shortId"] = event.ShortID
+	ownerID := primitive.NilObjectID.Hex()
+	if owned {
+		if objectID, err := primitive.ObjectIDFromHex(externalUserID); err == nil {
+			ownerID = objectID.Hex()
+		}
+	}
+	result["ownerId"] = ownerID
+	return result, nil
 }
 
 // @Summary Sets the folder for the specified event

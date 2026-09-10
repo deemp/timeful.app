@@ -1,6 +1,6 @@
 import { canEditEventMetadata } from "./eventOwnership"
 import { ref, nextTick, type Ref, type ComputedRef } from "vue"
-import { signInGoogle, signInOutlook } from "@/utils"
+import { signInGoogle, signInOutlook, eventPublicId } from "@/utils"
 import { authTypes, calendarTypes } from "@/constants"
 import isWebview from "is-ua-webview"
 import type { Event, User } from "@/types"
@@ -111,10 +111,7 @@ export function useEventEditing(opts: UseEventEditingOptions) {
   function copyLink() {
     const ev = opts.event.value
     if (!ev) return
-    const eventID = ev._id ?? ""
-    const publicID = /^[0-9A-HJKMNPQRSTVWXYZ]{8}$/.test(eventID)
-      ? eventID
-      : `m_${ev.shortId ?? eventID}`
+    const publicID = eventPublicId(ev)
     void navigator.clipboard.writeText(
       `${window.location.origin}/e/${publicID}`,
     )

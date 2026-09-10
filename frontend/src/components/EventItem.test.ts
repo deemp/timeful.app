@@ -162,19 +162,21 @@ const VCheckboxStub = defineComponent({
   `,
 })
 
-const mountEventItem = () =>
+const defaultEvent = {
+  _id: "evt-1",
+  shortId: "abc123",
+  ownerId: "owner-1",
+  name: "Planning",
+  numResponses: 3,
+  isArchived: false,
+  notificationsEnabled: true,
+  type: eventTypes.SPECIFIC_DATES,
+}
+
+const mountEventItem = (event: typeof defaultEvent = defaultEvent) =>
   mount(EventItem, {
     props: {
-      event: {
-        _id: "evt-1",
-        shortId: "abc123",
-        ownerId: "owner-1",
-        name: "Planning",
-        numResponses: 3,
-        isArchived: false,
-        notificationsEnabled: true,
-        type: eventTypes.SPECIFIC_DATES,
-      },
+      event,
       folderId: "folder-1",
     },
     global: {
@@ -265,6 +267,20 @@ describe("EventItem", () => {
     const wrapper = mountEventItem()
 
     expect(wrapper.text()).toContain("Jan 1")
+  })
+
+  it("copies a PostgreSQL event with its bare short identifier", async () => {
+    const wrapper = mountEventItem({
+      ...defaultEvent,
+      _id: "7Q2M4XKP",
+      shortId: "7Q2M4XKP",
+    })
+
+    await findButtonByText(wrapper, "Copy link").trigger("click")
+
+    expect(clipboardWriteTextMock).toHaveBeenCalledWith(
+      "http://localhost:3000/e/7Q2M4XKP",
+    )
   })
 
   it("keeps owner menus compact and preserves duplicate, copy, archive, and move actions", async () => {

@@ -7,6 +7,7 @@ export * from "./plugin_utils"
 export * from "./appEnv"
 export * from "./landingAvailability"
 export * from "./signInAvailability"
+export * from "./eventIdentity"
 export {
   getEventDateSeeds,
   getEventMembershipDayOfWeekValues,
