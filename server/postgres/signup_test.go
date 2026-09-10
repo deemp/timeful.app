@@ -60,6 +60,7 @@ func newSignupTestRepository(t *testing.T) (context.Context, *Repository, pgx.Tx
 	apply("20260910130000_account_deletion.sql")
 	apply("20260910140000_folders.sql")
 	apply("20260910150000_signup_forms.sql")
+	apply("20260910160000_availability_groups.sql")
 	return ctx, &Repository{db: tx}, tx
 }
 
@@ -117,7 +118,7 @@ func TestSignupMigrationSchemaConstraints(t *testing.T) {
 	eventID := seedSignupEvent(t, ctx, tx, signupTestShortID(t))
 
 	expectSavepointError(t, ctx, tx, func() error {
-		_, err := tx.Exec(ctx, `INSERT INTO postgres_events (short_id, name, type) VALUES ($1, 'Group', 'group')`, signupTestShortID(t))
+		_, err := tx.Exec(ctx, `INSERT INTO postgres_events (short_id, name, type) VALUES ($1, 'Bogus', 'bogus')`, signupTestShortID(t))
 		return err
 	})
 	otherEventID := seedSignupEvent(t, ctx, tx, signupTestShortID(t))

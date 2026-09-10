@@ -262,6 +262,14 @@ WHERE owner_platform_identity_id = $1
 		return err
 	}
 
+	// Release the account's group attendee relations; the email-keyed
+	// memberships survive so the groups keep their invitee lists.
+	if _, err := r.db.Exec(ctx, `UPDATE event_attendees
+SET account_user_id = NULL, updated_at = clock_timestamp()
+WHERE account_user_id = $1`, externalUserID); err != nil {
+		return err
+	}
+
 	if _, err := r.db.Exec(ctx, `DELETE FROM postgres_event_responses
 WHERE account_user_id = $1 OR event_visitor_identity_id = ANY($2)`, externalUserID, visitorIDs); err != nil {
 		return err
