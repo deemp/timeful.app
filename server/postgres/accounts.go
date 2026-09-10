@@ -267,6 +267,10 @@ WHERE account_user_id = $1 OR event_visitor_identity_id = ANY($2)`, externalUser
 	if _, err := r.db.Exec(ctx, `DELETE FROM event_visitor_identities WHERE id = ANY($1)`, visitorIDs); err != nil {
 		return err
 	}
+	// Folder memberships cascade with their account-scoped folders.
+	if _, err := r.db.Exec(ctx, `DELETE FROM folders WHERE account_user_id = $1`, externalUserID); err != nil {
+		return err
+	}
 	if _, err := r.db.Exec(ctx, `DELETE FROM accounts WHERE platform_identity_id = $1`, platformIdentityID); err != nil {
 		return err
 	}

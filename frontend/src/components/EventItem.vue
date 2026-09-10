@@ -261,7 +261,7 @@ const _archiveEvent = () => {
 }
 const moveEventToFolder = (folderId: string | null) => {
   void mainStore.setEventFolder({
-    eventId: props.event._id ?? "",
+    eventId: eventPublicId(props.event),
     folderId,
   })
   showMenu.value = false

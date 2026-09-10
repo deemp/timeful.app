@@ -185,6 +185,7 @@ import draggable from "vuedraggable"
 import { eventTypes, folderColors } from "@/constants"
 import EventItem from "@/components/EventItem.vue"
 import ObjectID from "bson-objectid"
+import { eventPublicId } from "@/utils"
 import { useMainStore } from "@/stores/main"
 import { posthog } from "@/plugins/posthog"
 import type { Event, Folder } from "@/types"
@@ -212,7 +213,7 @@ const allEvents = computed(() => events.value)
 
 const allEventsMap = computed<Record<string, Event>>(() =>
   allEvents.value.reduce<Record<string, Event>>((acc, event) => {
-    if (event._id) acc[event._id] = event
+    acc[eventPublicId(event)] = event
     return acc
   }, {}),
 )
@@ -230,7 +231,7 @@ const sortEvents = (a: Event, b: Event) => {
 const eventsByFolder = computed(() => {
   const result: Record<string, { groups: Event[]; events: Event[] }> = {}
   const allEventIds = new Set(
-    allEvents.value.map((e) => e._id).filter((id): id is string => !!id),
+    allEvents.value.map((event) => eventPublicId(event)),
   )
 
   result["no-folder"] = { groups: [], events: [] }
@@ -338,7 +339,10 @@ const onEnd = (evt: DragEvent) => {
 
   const event = allEvents.value.find((e) => e._id === eventId)
   if (event?._id) {
-    void mainStore.setEventFolder({ eventId: event._id, folderId: newFolderId })
+    void mainStore.setEventFolder({
+      eventId: eventPublicId(event),
+      folderId: newFolderId,
+    })
   }
 }
 

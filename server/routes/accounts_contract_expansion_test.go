@@ -338,6 +338,7 @@ func newAccountEventContractRouter(t *testing.T) *gin.Engine {
 	InitUser(apiRouter)
 	InitUsers(apiRouter)
 	InitEvents(apiRouter)
+	InitFolders(apiRouter)
 	router.POST("/test/account-contract/sign-in/:id", func(c *gin.Context) {
 		session := sessions.Default(c)
 		session.Set("userId", c.Param("id"))

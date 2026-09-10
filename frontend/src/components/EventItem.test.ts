@@ -310,7 +310,7 @@ describe("EventItem", () => {
 
     await findButtonByText(wrapper, "Ideas").trigger("click")
     expect(setEventFolderMock).toHaveBeenCalledWith({
-      eventId: "evt-1",
+      eventId: "m_abc123",
       folderId: "folder-2",
     })
 

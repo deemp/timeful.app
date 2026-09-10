@@ -7,6 +7,7 @@ import { defineComponent, ref } from "vue"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createLocalStorageMock } from "@/test/localStorage"
 import { passThroughStub } from "@/test/componentStubs"
+import type { Event, Folder } from "@/types"
 import Dashboard from "./Dashboard.vue"
 
 const { createNewMock, deleteFolderMock } = vi.hoisted(() => ({
@@ -15,8 +16,8 @@ const { createNewMock, deleteFolderMock } = vi.hoisted(() => ({
 }))
 
 const authUser = ref({ numEventsCreated: 0 })
-const events = ref([])
-const folders = ref([
+const events = ref<Event[]>([])
+const folders = ref<Folder[]>([
   {
     _id: "folder-1",
     name: "Team",
@@ -171,6 +172,15 @@ describe("Dashboard", () => {
   beforeEach(() => {
     createNewMock.mockReset()
     deleteFolderMock.mockReset()
+    events.value = []
+    folders.value = [
+      {
+        _id: "folder-1",
+        name: "Team",
+        color: "#D3D3D3",
+        eventIds: [],
+      },
+    ]
     vi.stubGlobal("localStorage", createLocalStorageMock())
   })
 
@@ -187,5 +197,41 @@ describe("Dashboard", () => {
 
     await findButtonByText(wrapper, "Delete").trigger("click")
     expect(wrapper.text()).toContain('Delete "Team"?')
+  })
+
+  it("groups events by their canonical public identifier across stores", () => {
+    events.value = [
+      {
+        _id: "7Q2M4XKP",
+        shortId: "7Q2M4XKP",
+        name: "PostgreSQL event",
+      },
+      {
+        _id: "64f5e4d3c2b1a09876543210",
+        shortId: "LEGACY01",
+        name: "MongoDB event",
+      },
+    ]
+    folders.value = [
+      {
+        _id: "folder-1",
+        name: "Team",
+        color: "#D3D3D3",
+        eventIds: ["7Q2M4XKP", "m_LEGACY01"],
+      },
+    ]
+
+    const wrapper = mountDashboard()
+    const draggables = wrapper.findAllComponents(DraggableStub)
+    const teamEvents = draggables[0].props("list") as Array<{ name: string }>
+    const unfoldedEvents = draggables[1].props("list") as Array<{
+      name: string
+    }>
+
+    expect(teamEvents.map((event) => event.name)).toEqual([
+      "PostgreSQL event",
+      "MongoDB event",
+    ])
+    expect(unfoldedEvents).toHaveLength(0)
   })
 })

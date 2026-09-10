@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -307,17 +308,7 @@ func postgresDashboardEvent(event pgstore.Event, owned bool, externalUserID stri
 // @Router /user/events/{eventId}/set-folder [post]
 func setEventFolder(c *gin.Context) {
 	source, storageID := eventsource.Parse(c.Param("eventId"))
-	if source == eventsource.PostgreSQL {
-		c.JSON(http.StatusUnprocessableEntity, responses.Error{Error: errs.PostgreSQLEventUnsupported})
-		return
-	}
-	if source != eventsource.MongoDB {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
-		return
-	}
-
-	eventId, err := primitive.ObjectIDFromHex(storageID)
-	if err != nil {
+	if source == eventsource.Unknown {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
 		return
 	}
@@ -331,24 +322,55 @@ func setEventFolder(c *gin.Context) {
 	}
 
 	session := sessions.Default(c)
-	userIdString := session.Get("userId").(string)
-	userId, err := primitive.ObjectIDFromHex(userIdString)
-	if err != nil {
+	accountUserID, ok := session.Get("userId").(string)
+	if !ok || accountUserID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
-	var folderId *primitive.ObjectID
+	var folderId *string
 	if body.FolderId != nil {
-		id, err := primitive.ObjectIDFromHex(*body.FolderId)
-		if err != nil {
+		if !validFolderID(*body.FolderId) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid folder ID"})
 			return
 		}
-		folderId = &id
+		folderId = body.FolderId
 	}
 
-	err = db.SetEventFolder(eventId, folderId, userId)
+	repository := postgresRepository(c)
+	if repository == nil {
+		return
+	}
+
+	var member pgstore.FolderMember
+	switch source {
+	case eventsource.PostgreSQL:
+		event, err := repository.GetEventByShortID(c.Request.Context(), storageID)
+		if errors.Is(err, pgx.ErrNoRows) || (err == nil && event.IsDeleted) {
+			c.JSON(http.StatusNotFound, responses.Error{Error: errs.EventNotFound})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.Error{Error: "failed-to-load-event"})
+			return
+		}
+		eventID := event.ID
+		member.EventID = &eventID
+	case eventsource.MongoDB:
+		event := db.GetEventByEitherId(storageID)
+		if event == nil {
+			c.JSON(http.StatusNotFound, responses.Error{Error: errs.EventNotFound})
+			return
+		}
+		legacyEventID := event.Id.Hex()
+		member.LegacyEventID = &legacyEventID
+	}
+
+	err := repository.AssignEventToFolder(c.Request.Context(), accountUserID, folderId, member)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Folder not found"})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add event to folder"})
 		return
